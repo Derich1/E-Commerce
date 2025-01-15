@@ -1,0 +1,82 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Fundo escuro */
+  display: flex;
+  justify-content: flex-end; /* Alinha o modal à direita */
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  width: 30%; /* Largura do modal */
+  max-width: 400px;
+  height: 100%; /* Ocupa toda a altura da página */
+  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2); /* Sombra lateral */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: slideIn 0.3s ease-in-out; /* Animação para aparecer */
+}
+
+.modal-content h2 {
+  margin-left: 8px;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.cart-items {
+  list-style: none;
+  padding: 20px;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto; /* Rolagem para muitos itens */
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-footer {
+  padding: 10px 20px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.checkout-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.checkout-button:hover {
+  background-color: #0056b3;
+}
+
+/* Animação para deslizar o modal */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
