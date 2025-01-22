@@ -80,3 +80,19 @@
     transform: translateX(0);
   }
 }
+
+/* Animação para deslizar para fora */
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Classe para animação de saída */
+.slide-out {
+  animation: slideOut 0.3s ease-in-out forwards;
+}
+

@@ -4,6 +4,8 @@ import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { MdOutlineFavoriteBorder, MdOutlineShoppingBag } from "react-icons/md";
 import Modal from "../Modal";
+import Brand from "../../Assets/logo-tia.jpeg"
+import { Link } from "react-router-dom";
 
 type HeaderProps = {
   categories: string[];
@@ -26,25 +28,28 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
   return (
     <header className="header">
       <div className="header-top">
-        <div className="logo">
-          <h1>Minha Loja</h1>
-        </div>
-        <div className="search-bar">
-          <input type="text" placeholder="Pesquisar produtos..." />
+        <Link to="/" className="logo">
+          <img src={Brand} alt="logo da loja" />
+        </Link>
+
+        <div className="input-container">
+          <input type="text" id="modern-input" placeholder=" " />
+          <label htmlFor="modern-input">Pesquisar...</label>
           <button>
-            <FaSearch size={15} />
+            <FaSearch size={20}/>
           </button>
         </div>
+
         <div className="icons">
-          <button className="icon">
+          <Link to="/perfil" className="icon">
             <CgProfile/>
-          </button>
-          <button className="icon">
+          </Link>
+          <Link to="/favoritos" className="icon">
             <MdOutlineFavoriteBorder/>
-          </button>
-          <button className="icon">
+          </Link>
+          <Link to="#" className="icon">
             <MdOutlineShoppingBag onClick={() => setIsCartOpen(true)} />
-          </button>
+          </Link>
         </div>
       </div>
 
