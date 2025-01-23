@@ -1,11 +1,34 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import "./index.css"
+import axios from "axios";
+
+interface FormData {
+  name: string;
+  cpf: string;
+  datanascimento: string;
+  telefone: string;
+  email: string;
+  password: string;
+}
 
 export default function Perfil() {
-  const [isLogado, setIsLogado] = useState(false);
+  const [isLogado, setIsLogado] = useState(false)
+
+  const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+    try {
+      const response = await axios.post("http://localhost:8081/cliente/cadastrar", data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(response.data); // Exibe a resposta do servidor
+    } catch (error: any) {
+      console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
+    }
+  }
 
   const schema = z.object({
     name: z.string().nonempty("O nome é obrigatório"),
@@ -37,7 +60,7 @@ export default function Perfil() {
       .min(6, "A senha deve conter pelo menos 6 caracteres"),
   });
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -55,7 +78,7 @@ export default function Perfil() {
         <div></div>
       ) : (
         <div>
-          <form onSubmit={handleSubmit((data) => console.log(data))}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <h1>Cadastrar</h1>
             <input
               type="text"
