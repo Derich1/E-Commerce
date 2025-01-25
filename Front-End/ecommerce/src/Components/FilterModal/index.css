@@ -1,0 +1,54 @@
+/* Modal fixo no lado esquerdo, abaixo do header */
+.filter-modal-persistent {
+    position: fixed;  /* Fixo em relação à tela */
+    top: 168px;         /* Coloca o modal abaixo do header (ajuste conforme a altura do seu header) */
+    left: 0;           /* Fixa à esquerda */
+    width: auto;      /* Largura do modal */
+    height: calc(100% - 168px);  /* Ocupa toda a altura da tela, menos a altura do header */
+    background: transparent;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow-y: auto; /* Caso a lista seja longa, permite rolagem */
+  }
+  
+  /* Título */
+  .filter-modal-persistent h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;  /* Alinha o texto e o ícone verticalmente */
+    gap: 8px;
+    padding-left: 25px;
+  }
+  
+  /* Lista de Categorias */
+  .categories-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .category-item {
+    padding: 10px 25px;
+    cursor: pointer;
+  }
+  
+  /* Responsividade para dispositivos menores */
+  @media (max-width: 768px) {
+    .filter-modal-persistent {
+        min-width: 150px; /* Reduz a largura mínima para telas pequenas */
+      }
+    
+      /* Ajusta a margem do título e das categorias em telas menores */
+      .filter-modal-persistent h2 {
+        padding-left: 10px; /* Menos margem para telas menores */
+      }
+    
+      .category-item {
+        padding-left: 10px; /* Menos margem nas categorias em telas menores */
+      }
+  }
+  

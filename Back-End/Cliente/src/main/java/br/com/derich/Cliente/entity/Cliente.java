@@ -1,6 +1,7 @@
 package br.com.derich.Cliente.entity;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -8,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Cliente {
 
     @Id
-    private Long id;
+    private ObjectId id;
     private String name;
     private String cpf;
     private String datanascimento;
@@ -16,7 +17,7 @@ public class Cliente {
     private String email;
     private String password;
 
-    public Long getId() {
+    public ObjectId getId() {
         return id;
     }
 

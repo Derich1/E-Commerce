@@ -122,6 +122,7 @@
   
 /* Container geral para os ícones */
 .icons {
+  margin-right: 20px;
   display: flex;          /* Alinha os ícones horizontalmente */
   gap: 10px;              /* Adiciona espaçamento entre os ícones */
   align-items: center;    /* Alinha os ícones verticalmente */

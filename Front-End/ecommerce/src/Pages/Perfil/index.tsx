@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "./index.css"
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
   name: string;
@@ -16,6 +17,7 @@ interface FormData {
 
 export default function Perfil() {
   const [isLogado, setIsLogado] = useState(false)
+  const Navigate = useNavigate()
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
     try {
@@ -23,8 +25,9 @@ export default function Perfil() {
         headers: {
           "Content-Type": "application/json",
         },
-      });
-      console.log(response.data); // Exibe a resposta do servidor
+      })
+      console.log(response.data)
+      Navigate("/")
     } catch (error: any) {
       console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
     }
@@ -58,11 +61,11 @@ export default function Perfil() {
       .string()
       .nonempty("A senha é obrigatória")
       .min(6, "A senha deve conter pelo menos 6 caracteres"),
-  });
+  })
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-  });
+  })
 
   // Função para formatar a data de nascimento
   const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +73,27 @@ export default function Perfil() {
     if (value.length > 2) value = value.slice(0, 2) + "/" + value.slice(2); // Adiciona a primeira barra
     if (value.length > 5) value = value.slice(0, 5) + "/" + value.slice(5); // Adiciona a segunda barra
     e.target.value = value.slice(0, 10); // Limita o tamanho a 10 caracteres
-  };
+  }
+
+  const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "") // Remove caracteres não numéricos
+  
+    if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}` // Adiciona parênteses no DDD
+    if (value.length > 9) value = value.slice(0, 9) + "-" + value.slice(9) // Adiciona o traço
+  
+    e.target.value = value.slice(0, 15); // Limita o tamanho a 15 caracteres
+  }
+
+  const handleCPFInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove caracteres não numéricos
+  
+    if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3) // Adiciona o primeiro ponto
+    if (value.length > 6) value = value.slice(0, 7) + "." + value.slice(7) // Adiciona o segundo ponto
+    if (value.length > 9) value = value.slice(0, 11) + "-" + value.slice(11) // Adiciona o traço
+  
+    e.target.value = value.slice(0, 14) // Limita o tamanho a 14 caracteres
+  }
+  
 
   return (
     <div>
@@ -94,6 +117,7 @@ export default function Perfil() {
               className="input"
               {...register("cpf")}
               id="cpf"
+              onInput={handleCPFInput}
             />
             {errors.cpf && <p>{String(errors.cpf.message)}</p>}
             <input
@@ -111,6 +135,7 @@ export default function Perfil() {
               className="input"
               {...register("telefone")}
               id="telefone"
+              onInput={handlePhoneInput}
             />
             {errors.telefone && <p>{String(errors.telefone.message)}</p>}
             <input

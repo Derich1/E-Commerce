@@ -3,7 +3,7 @@ import "./index.css";
 import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { MdOutlineFavoriteBorder, MdOutlineShoppingBag } from "react-icons/md";
-import Modal from "../Modal";
+import CartModal from "../CartModal";
 import Brand from "../../Assets/logo-tia.jpeg"
 import { Link } from "react-router-dom";
 
@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
   
   const [isCartOpen, setIsCartOpen] = useState(false)
 
-  const [cartItems, setCartItems] =  useState([{id: 1, name: "shampoo", price: 28, quantity: 1}])
+  const [cartItems, setCartItems] =  useState([{id: 1, name: "shampoo", price: 28.00, quantity: 1}])
 
   const updateCartItem = (id: number, newQuantity: number) => {
     setCartItems((prevItems) =>
@@ -62,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
           ))}
         </ul>
       </nav>
-      <Modal isCartOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} updateCartItem={updateCartItem} />
+      <CartModal isCartOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} updateCartItem={updateCartItem} />
     </header>
   );
 };

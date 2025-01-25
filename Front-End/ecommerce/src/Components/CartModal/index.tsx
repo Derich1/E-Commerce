@@ -9,14 +9,14 @@ type CartItem = {
     quantity: number;
 };
 
-type ModalProps = {
+type CartModalProps = {
     isCartOpen: boolean;
     onClose: () => void;
     cartItems: CartItem[];
     updateCartItem: (id: number, quantity: number) => void;
 };
 
-const Modal: React.FC<ModalProps> = ({ isCartOpen, onClose, cartItems, updateCartItem }) => {
+const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, updateCartItem }) => {
   const [isClosing, setIsClosing] = useState(false);
 
   // Função para iniciar animação de saída
@@ -37,6 +37,14 @@ const Modal: React.FC<ModalProps> = ({ isCartOpen, onClose, cartItems, updateCar
     }
   }
 
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => {
+      return total + item.price * item.quantity;
+    }, 0);
+  };
+
+  const totalPrice = calculateTotal();
+
   if (!isCartOpen && !isClosing) return null;
 
   return (
@@ -54,6 +62,7 @@ const Modal: React.FC<ModalProps> = ({ isCartOpen, onClose, cartItems, updateCar
               <li key={item.id} className="cart-item">
                 <div>
                   <span>{item.name}</span>
+                  <br/>
                   <span>R${item.price.toFixed(2)}</span>
                 </div>
                 <div className="quantity-controls">
@@ -71,6 +80,7 @@ const Modal: React.FC<ModalProps> = ({ isCartOpen, onClose, cartItems, updateCar
             </ul>
         )}
         <div className="modal-footer">
+          <p>Valor total: R${totalPrice}</p>
           <button className="checkout-button">Finalizar Compra</button>
         </div>
       </div>
@@ -78,4 +88,4 @@ const Modal: React.FC<ModalProps> = ({ isCartOpen, onClose, cartItems, updateCar
   );
 };
 
-export default Modal;
+export default CartModal;
