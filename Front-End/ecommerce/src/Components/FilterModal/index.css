@@ -1,10 +1,10 @@
 /* Modal fixo no lado esquerdo, abaixo do header */
 .filter-modal-persistent {
     position: fixed;  /* Fixo em relação à tela */
-    top: 168px;         /* Coloca o modal abaixo do header (ajuste conforme a altura do seu header) */
+    top: 200px;         /* Coloca o modal abaixo do header (ajuste conforme a altura do seu header) */
     left: 0;           /* Fixa à esquerda */
     width: auto;      /* Largura do modal */
-    height: calc(100% - 168px);  /* Ocupa toda a altura da tela, menos a altura do header */
+    height: calc(100% - 200px);  /* Ocupa toda a altura da tela, menos a altura do header */
     background: transparent;
     padding: 20px;
     display: flex;
@@ -40,6 +40,7 @@
   @media (max-width: 768px) {
     .filter-modal-persistent {
         min-width: 150px; /* Reduz a largura mínima para telas pequenas */
+        margin-left: 20px;
       }
     
       /* Ajusta a margem do título e das categorias em telas menores */

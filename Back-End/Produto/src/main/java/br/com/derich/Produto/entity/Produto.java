@@ -1,5 +1,7 @@
 package br.com.derich.Produto.entity;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -8,16 +10,34 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Produto {
 
     @Id
-    private ObjectId id;
+    private String id;
+
+    // Esta anotação só funciona em Strings
+    @NotBlank(message = "Este é um campo obrigatório")
     private String nome;
+
+    @NotBlank(message = "Este é um campo obrigatório")
     private String imagemUrl;
+
+    @NotNull(message = "Este é um campo obrigatório")
     private Integer precoEmCentavos;
+
+    @NotNull(message = "Este é um campo obrigatório")
     private Integer estoque;
+
+    @NotNull(message = "Este é um campo obrigatório")
     private Boolean ativo;
+
+    @NotBlank(message = "Este é um campo obrigatório")
     private String marca;
+
+    @NotBlank(message = "Este é um campo obrigatório")
     private String descricao;
 
-    public ObjectId getId() {
+    @NotBlank(message = "Este é um campo obrigatório")
+    private String categoria;
+
+    public String getId() {
         return id;
     }
 
@@ -75,5 +95,13 @@ public class Produto {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
     }
 }

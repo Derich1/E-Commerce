@@ -4,6 +4,8 @@ import Perfil from "./Pages/Perfil";
 import Favoritos from "./Pages/Favoritos";
 import Header from "./Components/Header";
 import FilterModal from "./Components/FilterModal";
+import Produto from "./Pages/Produto";
+import Footer from "./Components/Footer";
 
 export default function AppRoutes() {
     
@@ -17,13 +19,17 @@ export default function AppRoutes() {
 
     return(
         <BrowserRouter>
-            <Header categories={categorias}/>
-            <FilterModal categories={categorias} onFilter={handleFilter}/>
-            <Routes>
-                <Route path="/" element={<Home/>}/>
-                <Route path="/perfil" element={<Perfil/>}/>
-                <Route path="/favoritos" element={<Favoritos/>}/>
-            </Routes>
+        <div className="main-container">
+            <Header categories={categorias} />
+            <FilterModal categories={categorias} onFilter={handleFilter} />
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/perfil" element={<Perfil />} />
+                    <Route path="/favoritos" element={<Favoritos />} />
+                    <Route path="/produto/:id" element={<Produto/>} />
+                </Routes>
+                <Footer/>
+        </div>
         </BrowserRouter>
     )
 }

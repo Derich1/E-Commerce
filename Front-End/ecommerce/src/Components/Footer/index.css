@@ -1,0 +1,92 @@
+/* Reset global */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden; /* Impede rolagem horizontal */
+}
+
+/* Estilo geral do footer */
+.footer {
+  background-color: #222; /* Cor de fundo */
+  color: #fff; /* Cor do texto */
+  padding: 40px 0; /* Espaçamento interno */
+  width: 100%; /* Garante que o footer ocupe 100% da largura */
+  text-align: center;
+  margin-top: auto; /* Faz com que o footer fique no final da tela */
+}
+
+/* Conteúdo do footer */
+.footer-content {
+  display: flex;
+  justify-content: space-between; /* Distribui as seções igualmente */
+  margin-bottom: 20px; /* Espaçamento entre as seções e a parte inferior */
+  flex-wrap: wrap; /* Permite que as seções se ajustem em telas menores */
+  gap: 20px; /* Espaçamento entre as seções */
+  width: 100%; /* Garante que o conteúdo ocupe 100% da largura */
+  max-width: 100%; /* Garante que o conteúdo do footer não ultrapasse 100% da tela */
+  padding: 0 10px; /* Adiciona um pequeno preenchimento lateral para evitar que o conteúdo toque as bordas */
+}
+
+/* Seções individuais dentro do footer */
+.footer-section {
+  flex: 1 1 300px; /* Faz com que as seções ocupem até 300px, mas podem crescer ou encolher */
+  padding: 0 20px;
+  box-sizing: border-box; /* Inclui padding na largura */
+}
+
+/* Cabeçalho de cada seção */
+.footer-section h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+/* Parágrafos e links dentro das seções */
+.footer-section p,
+.footer-section .social-links a {
+  font-size: 16px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  color: #ddd; /* Cor de texto mais suave */
+  text-decoration: none;
+}
+
+/* Links de redes sociais */
+.social-links a {
+  margin: 0 10px;
+  color: #ddd;
+  transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+  color: #7f0070; /* Cor de hover para os links */
+}
+
+/* Estilo da parte inferior do footer */
+.footer-bottom {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* Responsividade: para telas menores */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column; /* Empilha as seções em telas menores */
+    align-items: center; /* Centraliza as seções */
+    padding: 0 15px; /* Evita que as seções toquem as bordas da tela */
+  }
+
+  .footer-section {
+    max-width: 100%; /* Remove o limite de largura para telas menores */
+    margin-bottom: 20px;
+  }
+}
