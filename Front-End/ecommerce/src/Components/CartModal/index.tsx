@@ -3,17 +3,17 @@ import "./index.css"
 import { MdOutlineClose } from "react-icons/md";
 
 type CartItem = {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
+    id: string;
+    nome: string;
+    precoEmCentavos: number;
+    quantidade: number;
 };
 
 type CartModalProps = {
     isCartOpen: boolean;
     onClose: () => void;
     cartItems: CartItem[];
-    updateCartItem: (id: number, quantity: number) => void;
+    updateCartItem: (id: string, newQuantity: number) => void;
 };
 
 const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, updateCartItem }) => {
@@ -39,7 +39,7 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + item.price * item.quantity;
+      return total + item.precoEmCentavos * item.quantidade / 100;
     }, 0);
   };
 
@@ -61,19 +61,19 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
             {cartItems.map((item) => (
               <li key={item.id} className="cart-item">
                 <div>
-                  <span>{item.name}</span>
+                  <span>{item.nome}</span>
                   <br/>
-                  <span>R${item.price.toFixed(2)}</span>
+                  <span>R${item.precoEmCentavos / 100}</span>
                 </div>
                 <div className="quantity-controls">
                   <button
-                    onClick={() => updateCartItem(item.id, item.quantity - 1)}
-                    disabled={item.quantity === 1}
+                    onClick={() => updateCartItem(item.id, item.quantidade - 1)}
+                    disabled={item.quantidade === 1}
                   >
                     -
                   </button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => updateCartItem(item.id, item.quantity + 1)}>+</button>
+                  <span>{item.quantidade}</span>
+                  <button onClick={() => updateCartItem(item.id, item.quantidade + 1)}>+</button>
                 </div>
               </li>
               ))}

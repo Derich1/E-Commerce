@@ -1,19 +1,20 @@
 import React from "react";
+import { useDispatch } from "react-redux";
 import "./index.css"
 import { IoFilter } from "react-icons/io5";
 import { useLocation } from "react-router-dom";
+import { filterProducts } from "../../Redux/productSlice";
 
 type FilterModalProps = {
   categories: string[];
-  onFilter: (category: string) => void;
+
 };
 
-const FilterModal: React.FC<FilterModalProps> = ({
-  categories,
-  onFilter,
-}) => {
+const FilterModal: React.FC<FilterModalProps> = ({ categories }) => {
+  const dispatch = useDispatch();
+
   const handleCategoryClick = (category: string) => {
-    onFilter(category)
+    dispatch(filterProducts(category));
   };
 
   const location = useLocation();

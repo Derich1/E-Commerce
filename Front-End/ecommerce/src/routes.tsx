@@ -9,26 +9,20 @@ import Footer from "./Components/Footer";
 
 export default function AppRoutes() {
     
-    const categorias = ["Perfumes", "Desodorantes", "Colônias", "Lábios"]
-
-    const handleFilter = (category: string) => {
-        console.log("Categoria selecionada:", category);
-        // Lógica para filtrar os produtos
-      };
-    
+    const categorias = ["Todos", "Perfumes", "Desodorantes", "Colônias", "Lábios"]
 
     return(
         <BrowserRouter>
         <div className="main-container">
             <Header categories={categorias} />
-            <FilterModal categories={categorias} onFilter={handleFilter} />
+            <FilterModal categories={categorias}/>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/perfil" element={<Perfil />} />
                     <Route path="/favoritos" element={<Favoritos />} />
                     <Route path="/produto/:id" element={<Produto/>} />
                 </Routes>
-                <Footer/>
+            <Footer/>
         </div>
         </BrowserRouter>
     )

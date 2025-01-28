@@ -2,6 +2,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./index.css"
+import {useDispatch} from "react-redux"
+import { addItemToCart } from "../../Redux/cartSlice";
 
 type Product = {
     id: string;
@@ -15,6 +17,7 @@ type Product = {
 export default function Produto() {
 
     const { id } = useParams(); // Obtém o id do produto a partir da URL
+    const dispatch = useDispatch()
 
     // Estado para armazenar o produto
     const [product, setProduct] = useState<Product | null>(null);
@@ -43,6 +46,21 @@ export default function Produto() {
     // Se o produto não for encontrado, você pode exibir uma mensagem de erro
     if (!product) return <p>Produto não encontrado.</p>;
 
+    const handleAddToCart = () => {
+        if (product) {
+            dispatch(
+              addItemToCart({
+                id: product.id,
+                nome: product.nome,
+                precoEmCentavos: product.precoEmCentavos,
+                quantidade: 1, // Adicionando uma unidade do produto
+              })
+            );
+          }
+    }
+        
+    
+
     return (
         <div className="product-detail">
             <img src={product.imagemUrl} alt={product.nome} className="product-image" />
@@ -56,7 +74,7 @@ export default function Produto() {
                 }).format(product.precoEmCentavos / 100)}
                 </p>
                 <div className="button-group">
-                    <button className="btn-cart">Adicionar ao carrinho</button>
+                    <button className="btn-cart" onClick={handleAddToCart}>Adicionar ao carrinho</button>
                     <button className="btn-buy">Comprar agora</button>
                 </div>
             </div>

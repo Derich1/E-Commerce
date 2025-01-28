@@ -2,8 +2,9 @@
 .main-container {
   display: flex;
   flex-direction: column; /* Organiza os itens em coluna */
+  height: 100%; /* Faz com que o container ocupe a altura total da tela */
   padding-top: 220px; /* Ajuste a altura do header */
-  min-height: 100vh;
+  min-height: 100vh; /* Garante que o conteúdo ocupe toda a altura da tela */
 }
 
 /* Estilos para cada produto */

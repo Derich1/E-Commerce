@@ -1,29 +1,28 @@
-import React, { useState } from "react";
 import "./index.css";
 import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { MdOutlineFavoriteBorder, MdOutlineShoppingBag } from "react-icons/md";
-import CartModal from "../CartModal";
 import Brand from "../../Assets/logo-tia.jpeg"
 import { Link } from "react-router-dom";
+import CartModal from "../CartModal";
+import { RootState } from "../../Redux/store";
+import {useDispatch, useSelector} from "react-redux"
+import { useState } from "react";
+import { updateCartItemAction } from "../../Redux/cartSlice";
 
 type HeaderProps = {
   categories: string[];
 };
 
 const Header: React.FC<HeaderProps> = ({ categories }) => {
-  
+
+  const cartItems = useSelector((state: RootState) => state.cart.items)
+  const dispatch = useDispatch()
   const [isCartOpen, setIsCartOpen] = useState(false)
 
-  const [cartItems, setCartItems] =  useState([{id: 1, name: "shampoo", price: 28.00, quantity: 1}])
-
-  const updateCartItem = (id: number, newQuantity: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
+  const updateCartItem = (id: string, newQuantity: number) => {
+    dispatch(updateCartItemAction({ id, newQuantity }));
+  }
 
   return (
     <header className="header">
@@ -48,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
             <MdOutlineFavoriteBorder/>
           </Link>
           <Link to="#" className="icon">
-            <MdOutlineShoppingBag onClick={() => setIsCartOpen(true)} />
+            <MdOutlineShoppingBag onClick={() => (setIsCartOpen(true))} />
           </Link>
         </div>
       </div>
@@ -62,7 +61,13 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
           ))}
         </ul>
       </nav>
-      <CartModal isCartOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} updateCartItem={updateCartItem} />
+
+      <CartModal
+        isCartOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        updateCartItem={updateCartItem}
+      />
     </header>
   );
 };
