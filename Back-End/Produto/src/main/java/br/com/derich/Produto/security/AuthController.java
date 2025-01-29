@@ -14,6 +14,7 @@ import java.util.Date;
 @RequestMapping("/auth")
 public class AuthController {
 
+    // Garantir que apenas o servidor que gerou o JWT possa validá-lo
     private final String secretKey = "sua_chave_secreta_super_secreta_que_deve_ser_bem_forte";
 
     /**

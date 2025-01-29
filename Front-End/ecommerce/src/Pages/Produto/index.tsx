@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import "./index.css"
 import {useDispatch} from "react-redux"
 import { addItemToCart } from "../../Redux/cartSlice";
 
@@ -62,22 +61,41 @@ export default function Produto() {
     
 
     return (
-        <div className="product-detail">
-            <img src={product.imagemUrl} alt={product.nome} className="product-image" />
-            <div className="product-info">
-                <h1>{product.nome}</h1>
-                <p>{product.descricao}</p>
-                <p className="product-price">
-                {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                }).format(product.precoEmCentavos / 100)}
-                </p>
-                <div className="button-group">
-                    <button className="btn-cart" onClick={handleAddToCart}>Adicionar ao carrinho</button>
-                    <button className="btn-buy">Comprar agora</button>
+        <div className="flex flex-col">
+            {/* Conteúdo principal */}
+            <div className="flex-grow max-w-4xl mx-auto p-6">
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+                    <img
+                        src={product.imagemUrl}
+                        alt={product.nome}
+                        className="w-full lg:w-1/2 h-auto object-cover rounded-lg shadow-md"
+                    />
+                    <div className="w-full lg:w-1/2">
+                        <h1 className="text-2xl font-semibold text-gray-800 mb-4">{product.nome}</h1>
+                        <p className="text-gray-600 mb-6">{product.descricao}</p>
+                        <p className="text-2xl font-bold text-gray-800 mb-6">
+                            {new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                            }).format(product.precoEmCentavos / 100)}
+                        </p>
+                    </div>
                 </div>
             </div>
+
+            <div className="bg-white p-4 shadow-lg w-full flex justify-end pr-40 gap-4">
+                <button
+                    className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
+                    onClick={handleAddToCart}
+                >
+                    Adicionar ao carrinho
+                </button>
+                <button className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+                    Comprar agora
+                </button>
+            </div>
         </div>
+
+
     );
 }

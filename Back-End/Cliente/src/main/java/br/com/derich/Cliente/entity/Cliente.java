@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Cliente {
 
     @Id
-    private ObjectId id;
+    private String id;
     private String name;
     private String cpf;
     private String datanascimento;
@@ -17,7 +17,7 @@ public class Cliente {
     private String email;
     private String password;
 
-    public ObjectId getId() {
+    public String getId() {
         return id;
     }
 

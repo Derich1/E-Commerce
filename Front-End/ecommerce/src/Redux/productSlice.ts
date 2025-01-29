@@ -6,6 +6,7 @@ type Product = {
   precoEmCentavos: number;
   imagemUrl: string;
   marca: string;
+  categoria: string;
 };
 
 type ProductState = {
@@ -31,7 +32,7 @@ const productSlice = createSlice({
         state.filteredProducts = state.allProducts;
       } else {
         state.filteredProducts = state.allProducts.filter(
-          (product) => product.marca === action.payload
+          (product) => product.categoria === action.payload
         );
       }
     },

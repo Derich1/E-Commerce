@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"
-import "./index.css"
 import { Link } from "react-router-dom";
 import { setProducts } from "../../Redux/productSlice";
 import { RootState } from "../../Redux/store";
@@ -44,17 +43,17 @@ export default function Home() {
     if (error) return <p>Erro: {error}</p>;
 
     return(
-        <div className="product-list">
+        <div className="max-w-7xl mx-auto p-6">
             {products.length === 0 ? (
-                <p>Nenhum produto encontrado.</p>
+                <p className="text-center text-xl font-semibold text-red-500">Nenhum produto encontrado.</p>
             ) : (
-                <ul>
+                <ul className="ml-[10%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => (
-                    <li key={product.id}>
-                        <Link to={`/produto/${product.id}`} className="product-item-link">
-                            <h3>{product.nome}</h3>
-                            <img src={product.imagemUrl} />
-                            <p>
+                    <li key={product.id} className="border border-gray-300 rounded-lg overflow-hidden bg-white hover:shadow-lg hover:transform hover:translate-y-1 transition-all duration-300">
+                        <Link to={`/produto/${product.id}`} className="">
+                            <img src={product.imagemUrl} className="w-full h-48 object-cover mb-4 rounded-md"/>
+                            <h3 className="text-lg font-semibold text-center mb-2">{product.nome}</h3>
+                            <p className="text-center text-xl font-bold text-gray-800">
                             {" "}
                             {new Intl.NumberFormat("pt-BR", {
                             style: "currency",

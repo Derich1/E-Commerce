@@ -1,4 +1,15 @@
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: derich.rosario22@gmail.com
+    password: nubq otub srtl dauy
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   application:
     name: Cliente  # Nome do microsserviço
     mongodb:
@@ -14,3 +25,4 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 server:
   port: 8081  # Porta do microsserviço
+

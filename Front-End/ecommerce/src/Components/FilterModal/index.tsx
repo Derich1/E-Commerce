@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import "./index.css"
+import "./"
 import { IoFilter } from "react-icons/io5";
 import { useLocation } from "react-router-dom";
 import { filterProducts } from "../../Redux/productSlice";
@@ -20,18 +20,21 @@ const FilterModal: React.FC<FilterModalProps> = ({ categories }) => {
   const location = useLocation();
 
   // Verifica se a URL contém "/produto" para esconder o filtro
-  const esconderFiltro = location.pathname.includes("/produto");
+  const caminhosParaEsconder = ["/produto", "/login", "cadastro"];
+  const esconderFiltro = caminhosParaEsconder.some(caminho => location.pathname.includes(caminho));
+
 
   return (
     !esconderFiltro && (
-    <div className="filter-modal-persistent">
+    <div className="fixed top-44 left-5 w-1/6 h-full z-50 p-4">
         
-        <h2>Filtrar <IoFilter/></h2>
-        <ul className="categories-list">
+        <h2 className="flex items-center gap-2">Filtrar <IoFilter className=""/></h2>
+        <ul className="mt-[5%] ml-[5%]">
           {categories.map((category) => (
             <li
               key={category}
-              className="category-item"
+              className="cursor-pointer hover:underline"
+              
               onClick={() => handleCategoryClick(category)}
             >
               {category}
