@@ -69,6 +69,10 @@ public class Cliente {
         this.password = password;
     }
 
+    public Cliente() {
+
+    }
+
     public Cliente(ClienteRequestDTO data){
         this.name = data.name();
         this.cpf = data.cpf();

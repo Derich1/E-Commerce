@@ -30,15 +30,13 @@ export default function Login(){
 
       const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
         try {
-            // Enviar os dados para o backend
-            const response = await axios.post("http://localhost:8081/cliente", data);
+            const response = await axios.post("http://localhost:8081/api/login", data);
       
             // Se a autenticação for bem-sucedida, armazenar o token ou redirecionar
             if (response.status === 200) {
               // Exemplo: armazenar o token no localStorage
               localStorage.setItem("token", response.data.token);
-      
-              // Redirecionar para a página principal ou dashboard
+              console.log(response.data)
               Navigate("/");
             }
           } catch (error: any) {
@@ -80,9 +78,9 @@ export default function Login(){
 
               <button 
                   type="submit" 
-                  className="w-full bg-blue-500 text-white py-4 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="cursor-pointer w-full bg-blue-500 text-white py-4 rounded-lg hover:bg-blue-600 transition-colors"
               >
-                  Cadastrar
+                  Login
               </button>
 
               <div className="mt-6 text-center">

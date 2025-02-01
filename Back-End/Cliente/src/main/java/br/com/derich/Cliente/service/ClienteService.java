@@ -17,6 +17,11 @@ public class ClienteService {
     private BCryptPasswordEncoder passwordEncoder;
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){
+
+        if (clienteRepository.findByEmail(data.email()).isPresent()) {
+            throw new IllegalArgumentException("E-mail já cadastrado.");
+        }
+
         // Criação da entidade Cliente a partir do DTO
         Cliente cliente = new Cliente(data);
 

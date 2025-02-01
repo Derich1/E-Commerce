@@ -24,6 +24,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
+
         // Buscar o usuário pelo e-mail
         Cliente cliente = clienteRepository.findByEmail(authRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));

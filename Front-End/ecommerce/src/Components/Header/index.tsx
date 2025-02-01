@@ -8,6 +8,7 @@ import { RootState } from "../../Redux/store";
 import {useDispatch, useSelector} from "react-redux"
 import { useState } from "react";
 import { updateCartItemAction } from "../../Redux/cartSlice";
+import { useAuth } from "../../Hooks/useAuth";
 
 type HeaderProps = {
   categories: string[];
@@ -18,6 +19,7 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
   const cartItems = useSelector((state: RootState) => state.cart.items)
   const dispatch = useDispatch()
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const isAuthenticated = useAuth()
 
   const updateCartItem = (id: string, newQuantity: number) => {
     dispatch(updateCartItemAction({ id, newQuantity }));
@@ -50,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
 
 
         <div className="flex items-center space-x-6">
-          <Link to="/login" className="icon text-gray-700 hover:text-blue-500">
+          <Link to={isAuthenticated ? "/perfil" : "/login"} className="icon text-gray-700 hover:text-blue-500">
             <CgProfile size={30}/>
           </Link>
           <Link to="/favoritos" className="icon text-gray-700 hover:text-blue-500">
