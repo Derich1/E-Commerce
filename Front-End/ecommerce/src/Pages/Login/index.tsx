@@ -36,7 +36,7 @@ export default function Login(){
             if (response.status === 200) {
               // Exemplo: armazenar o token no localStorage
               localStorage.setItem("token", response.data.token);
-              console.log(response.data)
+              console.log(localStorage.getItem("token"))
               Navigate("/");
             }
           } catch (error: any) {

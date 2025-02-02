@@ -52,6 +52,34 @@ public class ClienteController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/perfil")
+    public ResponseEntity<?> buscarDadosUsuario(@RequestHeader("Authorization") String token){
+        return clienteService.buscarDadosUsuario(token);
+    }
+
+    @PostMapping("/favoritos")
+    public ResponseEntity<?> adicionarProdutoFavorito(@RequestHeader("Authorization") String token, @RequestBody String productId) {
+        try {
+            String email = jwtService.extractEmail(token.substring(7)); // Extrair o email do token
+            clienteService.adicionarProdutoFavorito(email, productId);
+            return ResponseEntity.ok("Produto adicionado aos favoritos");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao adicionar produto aos favoritos");
+        }
+    }
+
+    @GetMapping("/favoritos")
+    public ResponseEntity<?> listarProdutosFavoritos(@RequestHeader("Authorization") String token) {
+        try {
+            String email = jwtService.extractEmail(token.substring(7)); // Extrair o email do token
+            List<Produto> favoritos = clienteService.listarProdutosFavoritos(email);
+            return ResponseEntity.ok(favoritos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao recuperar favoritos");
+        }
+    }
+
+
     private String gerarCodigoAleatorio() {
         // Usando SecureRandom para gerar um código seguro
         SecureRandom random = new SecureRandom();

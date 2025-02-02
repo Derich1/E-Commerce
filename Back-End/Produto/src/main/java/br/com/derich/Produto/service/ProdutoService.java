@@ -25,7 +25,6 @@ public class ProdutoService {
     }
 
     public Produto buscarProdutoPorId(String id) {
-        Optional<Produto> produto = produtoRepository.findById(id);
-        return produto.orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        return produtoRepository.findById(id).orElse(null);
     }
 }

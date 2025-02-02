@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {useDispatch} from "react-redux"
 import { addItemToCart } from "../../Redux/cartSlice";
+import { MdOutlineFavoriteBorder } from "react-icons/md";
 
 type Product = {
     id: string;
@@ -60,6 +61,10 @@ export default function Produto() {
         
     
 
+    function handleAddFavorite() {
+        
+    }
+
     return (
         <div className="flex flex-col">
             {/* Conteúdo principal */}
@@ -86,6 +91,12 @@ export default function Produto() {
             <div className="bg-white p-4 shadow-lg w-full flex justify-end pr-40 gap-4">
                 <button
                     className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
+                    onClick={handleAddFavorite}
+                >
+                    <MdOutlineFavoriteBorder size={30}/>
+                </button>
+                <button
+                    className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
                     onClick={handleAddToCart}
                 >
                     Adicionar ao carrinho
@@ -93,6 +104,7 @@ export default function Produto() {
                 <button className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
                     Comprar agora
                 </button>
+                
             </div>
         </div>
 

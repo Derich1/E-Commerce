@@ -1,7 +1,6 @@
 package br.com.derich.Cliente.dto;
 
 import br.com.derich.Cliente.entity.Cliente;
-import org.bson.types.ObjectId;
 
 public record ClienteResponseDTO(String id, String name, String cpf, String datanascimento, String telefone, String email, String password) {
 

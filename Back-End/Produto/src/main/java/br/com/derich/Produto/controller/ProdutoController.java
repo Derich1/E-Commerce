@@ -31,8 +31,9 @@ public class ProdutoController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
-    public Produto getProduto(@PathVariable String id) {
-        return produtoService.buscarProdutoPorId(id);
+    public ResponseEntity<Produto> buscarProdutoPorId(@PathVariable String id) {
+        Produto produto = produtoService.buscarProdutoPorId(id);
+        return produto != null ? ResponseEntity.ok(produto) : ResponseEntity.notFound().build();
     }
 
 }
