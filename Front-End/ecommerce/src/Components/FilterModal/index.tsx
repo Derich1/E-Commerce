@@ -20,7 +20,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ categories }) => {
   const location = useLocation();
 
   // Verifica se a URL contém "/produto" para esconder o filtro
-  const caminhosParaEsconder = ["/produto", "/login", "cadastro", "perfil"];
+  const caminhosParaEsconder = ["/produto", "/login", "/cadastro", "/perfil", "/favoritos"];
   const esconderFiltro = caminhosParaEsconder.some(caminho => location.pathname.includes(caminho));
 
 

@@ -1,6 +1,7 @@
 package br.com.derich.Cliente.service;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
+import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ClienteService {
@@ -29,7 +33,7 @@ public class ClienteService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private final String produtoServiceUrl = "http://produto-service/produto/";
+    private final String produtoServiceUrl = "http://localhost:8082/produto/";
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){
 
@@ -67,36 +71,31 @@ public class ClienteService {
         }
     }
 
-    public void adicionarProdutoFavorito(String email, String productId) {
+    public void adicionarProdutoFavorito(String email, String produtoId) {
         Cliente cliente = clienteRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // Chamar o Produto-Service para obter os dados do produto
-        Produto produto = restTemplate.getForObject(produtoServiceUrl + productId, Produto.class);
-
-        // Verifica se o produto foi encontrado
-        if (produto == null) {
-            throw new RuntimeException("Produto não encontrado");
-        }
-
-        // Adicionar o ID do produto aos favoritos do cliente
-        cliente.getFavoritos().add(produto.getId());
-        clienteRepository.save(cliente); // Salva no MongoDB
+        cliente.adicionarFavorito(produtoId);
+        clienteRepository.save(cliente);
     }
 
-    public List<Produto> listarProdutosFavoritos(String email) {
+    public void removerProdutoFavorito(String email, String produtoId) {
         Cliente cliente = clienteRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // Para cada ID de favorito, consultar o Produto-Service
-        List<Produto> produtosFavoritos = new ArrayList<>();
-        for (String productId : cliente.getFavoritos()) {
-            Produto produto = restTemplate.getForObject(produtoServiceUrl + productId, Produto.class);
-            if (produto != null) {
-                produtosFavoritos.add(produto);
-            }
-        }
-
-        return produtosFavoritos; // Retorna a lista de produtos favoritos com detalhes
+        cliente.removerFavorito(produtoId);
+        clienteRepository.save(cliente);
     }
+
+    public List<ProdutoDTO> listarProdutosFavoritos(String email) {
+        Cliente cliente = clienteRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        Set<String> favoritos = cliente.getFavoritos();
+
+        return favoritos.stream()
+                .map(produtoId -> restTemplate.getForObject(produtoServiceUrl + produtoId, ProdutoDTO.class))
+                .collect(Collectors.toList());
+    }
+
 }

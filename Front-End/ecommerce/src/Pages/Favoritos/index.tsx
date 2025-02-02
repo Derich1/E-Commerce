@@ -1,129 +1,159 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { MdOutlineFavoriteBorder, MdFavorite } from "react-icons/md";
+import { jwtDecode } from "jwt-decode";
+import { useDispatch } from "react-redux";
+import { addItemToCart } from "../../Redux/cartSlice";
 
-type Product = {
+interface Product {
   id: string;
   nome: string;
   precoEmCentavos: number;
   imagemUrl: string;
-  marca: string;
-  descricao: string;
-  isFavorited: boolean; // Novo campo para marcar se o produto está favoritado
-};
+  isFavorited?: boolean;
+}
 
-const Favoritos: React.FC = () => {
-  const [favoritos, setFavoritos] = useState<Product[]>([]); // Lista de produtos favoritados
+const Favoritos = () => {
+  const [favoritos, setFavoritos] = useState<Product[]>(() => {
+    const storedFavoritos = localStorage.getItem("favoritos");
+    return storedFavoritos ? JSON.parse(storedFavoritos) : [];
+  });
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const dispatch = useDispatch()
+
   const token = localStorage.getItem("token");
+  let email = "";
 
-  // Função para buscar os produtos favoritados
+  if (token) {
+    const decoded: any = jwtDecode(token);
+    email = decoded.sub;
+  }
+
   const fetchFavoritos = async () => {
-    if (token) {
-      try {
-        const response = await axios.get<Product[]>(`http://localhost:8081/cliente/favoritos`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    if (!token) return;
 
-        // Adiciona o campo isFavorited diretamente
-        const produtos = response.data.map(product => ({
-          ...product,
-          isFavorited: true,  // Marca todos os produtos retornados como favoritados
-        }));
-        setFavoritos(produtos);
-        setLoading(false);
-      } catch (err) {
-        setError("Erro ao buscar favoritos");
-        setLoading(false);
-      }
+    try {
+      const response = await axios.get<Product[]>("http://localhost:8081/cliente/favoritos", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const produtos = response.data.map((product) => ({
+        ...product,
+        isFavorited: true,
+      }));
+
+      setFavoritos(produtos);
+      localStorage.setItem("favoritos", JSON.stringify(produtos));
+      setLoading(false);
+    } catch (err) {
+      setError("Erro ao buscar favoritos");
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFavoritos(); // Buscar favoritos ao carregar a página
-  }, [token]); // Recarregar se o token mudar
+    fetchFavoritos();
+  }, [token]);
 
   const handleToggleFavorite = async (product: Product) => {
-    if (token) {
-      try {
-        // Alterna o estado de favoritado
-        if (product.isFavorited) {
-          // Remove do favorito
-          await axios.delete(`http://localhost:8081/cliente/favorito/${product.id}`, {
+    if (!token) return;
+
+    try {
+      if (product.isFavorited) {
+        await axios.delete(
+          `http://localhost:8081/cliente/favoritos`,
+          {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          });
-        } else {
-          // Adiciona aos favoritos
-          await axios.post(
-            "http://localhost:8081/cliente/favorito", 
-            { productId: product.id },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-        }
+            data: { email, produtoId: product.id },
+          }
+        );
 
-        // Atualiza o estado localmente
-        setFavoritos(favoritos.map(p => 
-          p.id === product.id ? { ...p, isFavorited: !p.isFavorited } : p
-        ));
-      } catch (err) {
-        console.error("Erro ao alterar favorito:", err);
+        // Remover o produto da lista de favoritos
+        const updatedFavoritos = favoritos.filter((p) => p.id !== product.id);
+        setFavoritos(updatedFavoritos);
+        localStorage.setItem("favoritos", JSON.stringify(updatedFavoritos)); // Atualiza no localStorage
+      } else {
+        await axios.post(
+          `http://localhost:8081/cliente/${email}/favorito/${product.id}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Adiciona o produto aos favoritos
+        const updatedFavoritos = [...favoritos, { ...product, isFavorited: true }];
+        setFavoritos(updatedFavoritos);
+        localStorage.setItem("favoritos", JSON.stringify(updatedFavoritos)); // Atualiza no localStorage
       }
+    } catch (err) {
+      console.error("Erro ao alterar favorito:", err);
     }
   };
 
-  if (loading) return <p>Carregando favoritos...</p>;
-  if (error) return <p>{error}</p>;
+  const handleAddToCart = (product: Product) => {
+    dispatch(
+      addItemToCart({
+        id: product.id,
+        nome: product.nome,
+        precoEmCentavos: product.precoEmCentavos,
+        quantidade: 1,
+      })
+    );
+  };
 
   return (
-    <div className="flex flex-col">
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Meus Favoritos</h1>
+    <div>
+      <h2 className="text-center text-3xl mt-10">Meus Favoritos</h2>
+      {loading ? <p>Carregando...</p> : null}
+      {error ? <p>{error}</p> : null}
 
-        {favoritos.length === 0 ? (
-          <p className="text-center text-gray-500">Você ainda não tem favoritos.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {favoritos.map((product) => (
-              <div key={product.id} className="border p-4 rounded-lg shadow-md">
-                <img
-                  src={product.imagemUrl}
-                  alt={product.nome}
-                  className="w-full h-48 object-cover rounded-md mb-4"
-                />
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">{product.nome}</h2>
-                <p className="text-gray-600 mb-2">{product.descricao}</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(product.precoEmCentavos / 100)}
-                </p>
-
+      <ul className="space-y-4">
+        {favoritos.map((product) => (
+          <li
+            key={product.id}
+            className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center space-x-4">
+              <img
+                src={product.imagemUrl}
+                alt={product.nome}
+                className="w-16 h-16 object-cover rounded-md"
+              />
+              <span className="text-lg font-medium text-gray-800">
+                {product.nome} -{" "}
+                <span className="text-green-500">
+                  R$ {(product.precoEmCentavos / 100).toFixed(2)}
+                </span>
+              </span>
+            </div>
+            <div className="flex space-x-2"> {/* Aqui, usei flex e o space-x-2 */}
                 <button
-                  className="mt-4 text-red-500"
-                  onClick={() => handleToggleFavorite(product)}
+                onClick={() => handleToggleFavorite(product)}
+                className="cursor-pointer bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
                 >
-                  {product.isFavorited ? (
-                    <MdFavorite size={30} />
-                  ) : (
-                    <MdOutlineFavoriteBorder size={30} />
-                  )}
+                Remover Favorito
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                <button
+                className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
+                onClick={() => handleAddToCart(product)}
+                >
+                Adicionar ao carrinho
+                </button>
+                <button className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+                Comprar agora
+                </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

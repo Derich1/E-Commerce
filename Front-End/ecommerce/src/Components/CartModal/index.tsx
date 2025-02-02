@@ -49,7 +49,7 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
   return (
     <div className={`modal-overlay fixed inset-0 bg-black bg-opacity-50 z-50 ${isClosing ? "fade-out" : ""}`} onClick={handleOverlayClick}>
       <div className={`fixed right-0 top-0 bg-white w-[20vw] h-full p-4 shadow-lg transition-transform duration-300 ${isClosing ? "translate-x-full" : ""}`}>
-        <button className="absolute top-4 left-4" onClick={handleClose}>
+        <button className="cursor-pointer absolute top-4 left-4" onClick={handleClose}>
           <MdOutlineClose size={24}/>
         </button>
         <h2 className="text-center text-lg font-semibold mb-4">Seu Carrinho</h2>

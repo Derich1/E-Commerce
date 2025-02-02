@@ -2,6 +2,8 @@ package br.com.derich.Cliente.controller;
 
 import br.com.derich.Cliente.EmailSender;
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
+import br.com.derich.Cliente.dto.FavoritoRequestDTO;
+import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
 import br.com.derich.Cliente.service.JwtService;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -58,25 +61,29 @@ public class ClienteController {
     }
 
     @PostMapping("/favoritos")
-    public ResponseEntity<?> adicionarProdutoFavorito(@RequestHeader("Authorization") String token, @RequestBody String productId) {
-        try {
-            String email = jwtService.extractEmail(token.substring(7)); // Extrair o email do token
-            clienteService.adicionarProdutoFavorito(email, productId);
-            return ResponseEntity.ok("Produto adicionado aos favoritos");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao adicionar produto aos favoritos");
-        }
+    public ResponseEntity<?> adicionarProdutoFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
+        clienteService.adicionarProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
+        return ResponseEntity.ok("Produto adicionado aos favoritos!");
+    }
+
+    @DeleteMapping("/favoritos")
+    public ResponseEntity<?> removerFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
+        clienteService.removerProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
+        return ResponseEntity.ok("Produto removido dos favoritos");
     }
 
     @GetMapping("/favoritos")
-    public ResponseEntity<?> listarProdutosFavoritos(@RequestHeader("Authorization") String token) {
-        try {
-            String email = jwtService.extractEmail(token.substring(7)); // Extrair o email do token
-            List<Produto> favoritos = clienteService.listarProdutosFavoritos(email);
-            return ResponseEntity.ok(favoritos);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao recuperar favoritos");
-        }
+    public ResponseEntity<List<ProdutoDTO>> listarFavoritos(@RequestHeader("Authorization") String token) {
+        // Removendo "Bearer " do token
+        String jwt = token.substring(7);
+
+        // Extrai o e-mail do usuário autenticado
+        String email = jwtService.extractEmail(jwt);
+
+        // Busca os favoritos do usuário autenticado
+        List<ProdutoDTO> favoritos = clienteService.listarProdutosFavoritos(email);
+
+        return ResponseEntity.ok(favoritos);
     }
 
 

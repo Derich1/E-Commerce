@@ -5,6 +5,9 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Document(collection = "cliente")
 public class Cliente {
 
@@ -16,6 +19,24 @@ public class Cliente {
     private String telefone;
     private String email;
     private String password;
+
+    private Set<String> favoritos = new HashSet<>();
+
+    public void adicionarFavorito(String produtoId) {
+        favoritos.add(produtoId);
+    }
+
+    public void removerFavorito(String produtoId) {
+        favoritos.remove(produtoId);
+    }
+
+    public Set<String> getFavoritos() {
+        return favoritos;
+    }
+
+    public void setFavoritos(Set<String> favoritos) {
+        this.favoritos = favoritos;
+    }
 
     public String getId() {
         return id;
