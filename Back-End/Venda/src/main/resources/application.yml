@@ -5,10 +5,10 @@ spring:
     username: guest
     password: guest
   application:
-    name: Produto  # Nome do microsserviço
+    name: Venda  # Nome do microsserviço
     mongodb:
-      database: produto  # Banco de dados MongoDB do microsserviço
-      uri: mongodb://mongo-cliente:27017/produto
+      database: venda  # Banco de dados MongoDB do microsserviço
+      uri: mongodb://mongo-cliente:27017/venda
   cloud:
     zookeeper:
       connect-string: zookeeper:2181  # Endereço do Zookeeper
@@ -18,4 +18,4 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 server:
-  port: 8082 # Porta do microsserviço
+  port: 8083 # Porta do microsserviço

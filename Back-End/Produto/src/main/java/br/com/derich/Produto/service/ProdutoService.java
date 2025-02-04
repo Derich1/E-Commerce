@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-import java.util.Optional;
 
 @Validated
 @Service
@@ -26,6 +25,18 @@ public class ProdutoService {
 
     public Produto buscarProdutoPorId(String id) {
         return produtoRepository.findById(id).orElse(null);
+    }
+
+    public void atualizarEstoque(String id, int quantidade) {
+        Produto produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+
+        if (produto.getEstoque() < quantidade) {
+            throw new RuntimeException("Estoque insuficiente para o produto: " + produto.getNome());
+        }
+
+        produto.setEstoque(produto.getEstoque() - quantidade);
+        produtoRepository.save(produto); // Atualiza o estoque no banco de dados
     }
 
 }

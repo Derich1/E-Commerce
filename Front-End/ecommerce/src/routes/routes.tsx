@@ -9,6 +9,7 @@ import Cadastro from "../Pages/Cadastro";
 import Login from "../Pages/Login";
 import Perfil from "../Pages/Perfil";
 import PrivateRoute from "./PrivateRoute";
+import CheckoutPage from "../Pages/Compra";
 
 export default function AppRoutes() {
     
@@ -27,6 +28,7 @@ export default function AppRoutes() {
                         <Route path="/favoritos" element={<Favoritos />} />
                         <Route path="/produto/:id" element={<Produto/>} />
                         <Route path="/perfil" element={<PrivateRoute> <Perfil/> </PrivateRoute>} />
+                        <Route path="/compra" element={<CheckoutPage/>} />
                     </Routes>
             </main>
             <Footer/>
