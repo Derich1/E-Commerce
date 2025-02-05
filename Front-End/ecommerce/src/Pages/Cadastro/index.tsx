@@ -15,12 +15,12 @@ interface FormData {
 }
 
 export default function Cadastro() {
-  const [isLogado, setIsLogado] = useState(false)
+  const [isLogado] = useState(false)
   const Navigate = useNavigate()
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
     try {
-      const response = await axios.post("http://localhost:8081/cliente/cadastrar", data, {
+      const response = await axios.post("http://cliente:8081/cliente/cadastrar", data, {
         headers: {
           "Content-Type": "application/json",
         },

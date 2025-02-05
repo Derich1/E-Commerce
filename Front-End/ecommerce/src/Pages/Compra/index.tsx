@@ -38,7 +38,7 @@ const Compra: React.FC = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8083/venda", {
+      const response = await fetch("http://venda:8083/venda", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(vendaDTO),

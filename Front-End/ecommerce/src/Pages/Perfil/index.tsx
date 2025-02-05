@@ -15,7 +15,7 @@ const Perfil: React.FC = () => {
     useEffect(() => {
       const fetchUserData = async () => {
         try {
-          const response = await axios.get("http://localhost:8081/cliente/perfil", {
+          const response = await axios.get("http://cliente:8081/cliente/perfil", {
             headers: {
               Authorization: `Bearer ${token}`,
             },

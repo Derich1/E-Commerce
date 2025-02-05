@@ -33,7 +33,8 @@ public class ClienteService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private final String produtoServiceUrl = "http://localhost:8082/produto/";
+    // Usando Spring Cloud ou LoadBalancer não precisa especificar a porta
+    private final String produtoServiceUrl = "http://produto/produto/";
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){
 

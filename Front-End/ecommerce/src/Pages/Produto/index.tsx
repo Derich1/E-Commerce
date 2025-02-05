@@ -40,7 +40,7 @@ export default function Produto() {
 
   const fetchProduct = async () => {
     try {
-      const response = await axios.get<Product>(`http://localhost:8082/produto/${id}`);
+      const response = await axios.get<Product>(`http://produto:8082/produto/${id}`);
       setProduct(response.data);
       setLoading(false);
     } catch (err: any) {
@@ -56,7 +56,7 @@ export default function Produto() {
     try {
       if (product.isFavorited) {
         await axios.delete(
-          `http://localhost:8081/cliente/favoritos`,
+          `http://cliente:8081/cliente/favoritos`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -66,7 +66,7 @@ export default function Produto() {
         );
       } else {
         await axios.post(
-          `http://localhost:8081/cliente/favoritos`,
+          `http://cliente:8081/cliente/favoritos`,
           { email, produtoId: product.id },
           {
             headers: {

@@ -34,7 +34,7 @@ const Favoritos = () => {
     if (!token) return;
 
     try {
-      const response = await axios.get<Product[]>("http://localhost:8081/cliente/favoritos", {
+      const response = await axios.get<Product[]>("http://cliente:8081/cliente/favoritos", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -64,7 +64,7 @@ const Favoritos = () => {
     try {
       if (product.isFavorited) {
         await axios.delete(
-          `http://localhost:8081/cliente/favoritos`,
+          `http://cliente:8081/cliente/favoritos`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ const Favoritos = () => {
         localStorage.setItem("favoritos", JSON.stringify(updatedFavoritos)); // Atualiza no localStorage
       } else {
         await axios.post(
-          `http://localhost:8081/cliente/${email}/favorito/${product.id}`,
+          `http://cliente:8081/cliente/${email}/favorito/${product.id}`,
           {},
           {
             headers: {

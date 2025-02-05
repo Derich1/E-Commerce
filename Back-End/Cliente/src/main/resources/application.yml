@@ -14,15 +14,14 @@ spring:
     name: Cliente  # Nome do microsserviço
     mongodb:
       database: cliente  # Banco de dados MongoDB do microsserviço
-      uri: mongodb://mongo-cliente:27017/cliente
-  cloud:
-    zookeeper:
-      connect-string: zookeeper:2181  # Endereço do Zookeeper
-      discovery:
-        enabled: true  # Habilita o registro do serviço
+      uri: mongodb://ecommerce-database:27018/cliente
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 server:
   port: 8081  # Porta do microsserviço
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
