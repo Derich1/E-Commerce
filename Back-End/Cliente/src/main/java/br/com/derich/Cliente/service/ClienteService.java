@@ -4,6 +4,7 @@ import br.com.derich.Cliente.dto.ClienteRequestDTO;
 import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
+import org.passay.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,11 +38,28 @@ public class ClienteService {
     // Usando Spring Cloud ou LoadBalancer não precisa especificar a porta
     private final String produtoServiceUrl = "http://produto/produto/";
 
+    public static void validatePassword(String password) {
+        PasswordValidator validator = new PasswordValidator(Arrays.asList(
+                new LengthRule(8, 20), // Mínimo 8, máximo 20 caracteres
+                new CharacterRule(EnglishCharacterData.UpperCase, 1), // Pelo menos uma letra maiúscula
+                new CharacterRule(EnglishCharacterData.LowerCase, 1), // Pelo menos uma letra minúscula
+                new CharacterRule(EnglishCharacterData.Digit, 1), // Pelo menos um número
+                new WhitespaceRule() // Não permite espaços em branco
+        ));
+
+        RuleResult result = validator.validate(new PasswordData(password));
+        if (!result.isValid()) {
+            throw new IllegalArgumentException("Senha fraca: " + String.join(", ", validator.getMessages(result)));
+        }
+    }
+
     public Cliente cadastrarCliente(ClienteRequestDTO data){
 
         if (clienteRepository.findByEmail(data.email()).isPresent()) {
             throw new IllegalArgumentException("E-mail já cadastrado.");
         }
+
+        validatePassword(data.password());
 
         // Criação da entidade Cliente a partir do DTO
         Cliente cliente = new Cliente(data);

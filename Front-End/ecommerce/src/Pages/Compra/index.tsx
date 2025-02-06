@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../Redux/store";
 import { clearCart } from "../../Redux/cartSlice";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Compra: React.FC = () => {
@@ -38,17 +39,17 @@ const Compra: React.FC = () => {
     };
 
     try {
-      const response = await fetch("http://venda:8083/venda", {
-        method: "POST",
+      const response = await axios.post("http://localhost:8083/venda", vendaDTO, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vendaDTO),
       });
 
-      if (!response.ok) throw new Error("Erro ao finalizar a compra");
+      const vendaId = response.data.id; // Pegando o ID da venda
 
-      alert("Compra finalizada com sucesso!");
-      dispatch(clearCart()); // Limpa o carrinho após a compra
-      navigate("/sucesso"); // Redireciona para página de sucesso
+      // Armazenando o ID da venda no localStorage
+      localStorage.setItem("vendaId", vendaId);
+
+      navigate("/pagamento")
+
     } catch (error) {
       alert("Erro ao processar a compra. Tente novamente.");
       console.error(error);

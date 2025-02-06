@@ -17,7 +17,7 @@ public class EmailSender {
         try {
             MimeMessage message = emailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("derich.rosario22@gmail.com");
+            helper.setFrom("Empresa do pai");
             helper.setTo(toEmail);
             helper.setSubject("Código de Verificação");
             helper.setText("Seu código de verificação é: " + verificationCode);

@@ -20,7 +20,7 @@ export default function Cadastro() {
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
     try {
-      const response = await axios.post("http://cliente:8081/cliente/cadastrar", data, {
+      const response = await axios.post("http://localhost:8081/cliente/cadastrar", data, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -107,7 +107,7 @@ export default function Cadastro() {
       {isLogado ? (
         <div></div>
       ) : (
-        <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
+        <div className="mt-10 max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
           <form onSubmit={handleSubmit(onSubmit)}>
               <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Cadastrar</h1>
 

@@ -1,12 +1,23 @@
 package br.com.derich.Venda.service;
 
+import br.com.derich.Venda.DTO.PagamentoRequestDTO;
 import br.com.derich.Venda.DTO.VendaDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
+import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.mercadopago.client.payment.PaymentPayerRequest;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +45,46 @@ public class VendaService {
 
         venda.setProdutos(produtos);
         return vendaRepository.save(venda);
+    }
+
+    public Payment processarPagamento(String vendaId, PagamentoRequestDTO request) throws MPException {
+        // Verificar se a venda existe
+        Venda venda = vendaRepository.findById(vendaId)
+                .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
+
+        PaymentClient client = new PaymentClient();
+
+        BigDecimal valorEmReais = BigDecimal.valueOf(venda.getTotal()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        PaymentPayerRequest payer = PaymentPayerRequest.builder()
+                .email(request.getEmail())
+                .build();
+
+        PaymentCreateRequest pagamento = PaymentCreateRequest.builder()
+                .transactionAmount(valorEmReais)
+                .token(request.getToken())
+                .description("Pagamento da venda " + vendaId)
+                .payer(payer)
+                .paymentMethodId(request.getMetodoPagamento())
+                .installments(request.getInstallments())
+                .installments(1)
+                .build();
+        try {
+            Payment payment = client.create(pagamento);
+            String status = payment.getStatus();
+            if ("approved".equalsIgnoreCase(status)) {
+                venda.setStatus("APROVADO");
+            } else {
+                venda.setStatus("RECUSADO");
+            }
+            vendaRepository.save(venda);
+            return payment;
+
+        } catch (MPApiException ex) {
+            throw new RuntimeException("Erro do Mercado Pago: " + ex.getApiResponse().getContent());
+        } catch (MPException ex) {
+            throw new RuntimeException("Erro ao processar pagamento: " + ex.getMessage());
+        }
     }
 
 }

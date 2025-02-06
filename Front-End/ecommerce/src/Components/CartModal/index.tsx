@@ -86,7 +86,7 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
         )}
         <div className="relative h-full mt-6">
           <p className="font-semibold">Valor total: R${totalPrice}</p>
-          <Link to="/compra" className="cursor-pointer absolute bottom-40 sm:bottom-35 lg:bottom-25 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg z-50 text-sm sm:text-base lg:text-lg">
+          <Link to="/compra" onClick={handleClose} className="cursor-pointer absolute bottom-40 sm:bottom-35 lg:bottom-25 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg z-50 text-sm sm:text-base lg:text-lg">
             Finalizar Compra
           </Link>
         </div>

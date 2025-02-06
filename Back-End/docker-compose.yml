@@ -46,15 +46,15 @@ services:
     pull_policy: never
     container_name: "ecommerce-cliente"
     environment:
-      PORT: "8081"
-      MONGODB_URL: ecommerce-mongo-database
-      DISCOVERY_HOST: service-discovery
-      RABBITMQ_HOST: rabbitmq      # Passa o nome do container do RabbitMQ
-      RABBITMQ_PORT: "5672"
+      - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/cliente
+      - PORT=8081
+      - DISCOVERY_HOST=service-discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
-      - "8081:8080"
+      - "8081:8081"
     depends_on:
       - service-discovery
       - ecommerce-mongo-database

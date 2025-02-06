@@ -14,7 +14,7 @@ spring:
     name: Cliente  # Nome do microsserviço
     mongodb:
       database: cliente  # Banco de dados MongoDB do microsserviço
-      uri: mongodb://ecommerce-database:27018/cliente
+      uri: mongodb://ecommerce-mongo-database:27018/cliente
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration

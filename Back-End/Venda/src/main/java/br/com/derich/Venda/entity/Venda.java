@@ -12,12 +12,13 @@ public class Venda {
     private String id;
     private String clienteId;
     private List<ProdutoComprado> produtos;
-    private double total;
+    private Long total;
     private String status; // PENDENTE, APROVADO, CANCELADO
     private String metodoPagamento; // CARTAO_CREDITO, PIX, BOLETO
     private String statusPagamento; // AGUARDANDO, PAGO, CANCELADO
     private String enderecoEntrega;
     private String dataVenda;
+    private String pagamentoId;
 
     public static class ProdutoComprado {
         private String produtoId;
@@ -78,11 +79,11 @@ public class Venda {
         this.produtos = produtos;
     }
 
-    public double getTotal() {
+    public Long getTotal() {
         return total;
     }
 
-    public void setTotal(double total) {
+    public void setTotal(Long total) {
         this.total = total;
     }
 
@@ -124,5 +125,13 @@ public class Venda {
 
     public void setDataVenda(String dataVenda) {
         this.dataVenda = dataVenda;
+    }
+
+    public String getPagamentoId() {
+        return pagamentoId;
+    }
+
+    public void setPagamentoId(String pagamentoId) {
+        this.pagamentoId = pagamentoId;
     }
 }
