@@ -3,7 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { BiSolidHide, BiSolidShow } from "react-icons/bi";
 
 interface FormData {
   name: string;
@@ -12,11 +13,17 @@ interface FormData {
   telefone: string;
   email: string;
   password: string;
+  passwordConfirm: string;
 }
 
 export default function Cadastro() {
   const [isLogado] = useState(false)
   const Navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  // Mensagem de erro vinda do backend
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
     try {
@@ -24,51 +31,66 @@ export default function Cadastro() {
         headers: {
           "Content-Type": "application/json",
         },
-      })
-      console.log(response.data)
-
-      // Armazenar o token para manter o usuário logado
+      });
+  
+      console.log(response.data);
+  
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
       }
-
-      Navigate("/")
+  
+      Navigate("/");
     } catch (error: any) {
       console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
+  
+      // Verifica se o backend retornou uma mensagem de erro e armazena no estado
+      if (error.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage("Ocorreu um erro ao cadastrar. Tente novamente.");
+      }
     }
-  }
+  };
+  
 
-  const schema = z.object({
-    name: z.string().nonempty("O nome é obrigatório"),
-    cpf: z
-      .string()
-      .nonempty("O CPF é obrigatório")
-      .transform((value) => value.replace(/\D/g, "")) // Remove pontos e traço antes da validação
-      .refine((value) => /^\d{11}$/.test(value), {
-        message: "O CPF deve conter 11 dígitos numéricos",
-      }),
-    datanascimento: z
-      .string()
-      .nonempty("A data de nascimento é obrigatória")
-      .refine((value) => /^\d{2}\/\d{2}\/\d{4}$/.test(value), {
-        message: "A data deve estar no formato DD/MM/YYYY",
-      }),
+  const schema = z
+    .object({
+      name: z.string().nonempty("O nome é obrigatório"),
+      cpf: z
+        .string()
+        .nonempty("O CPF é obrigatório")
+        .transform((value) => value.replace(/\D/g, "")) // Remove pontos e traço antes da validação
+        .refine((value) => /^\d{11}$/.test(value), {
+          message: "O CPF deve conter 11 dígitos numéricos",
+        }),
+      datanascimento: z
+        .string()
+        .nonempty("A data de nascimento é obrigatória")
+        .refine((value) => /^\d{2}\/\d{2}\/\d{4}$/.test(value), {
+          message: "A data deve estar no formato DD/MM/YYYY",
+        }),
       telefone: z
-      .string()
-      .nonempty("O telefone é obrigatório")
-      .transform((value) => value.replace(/\D/g, "")) // Remove parênteses e traço antes da validação
-      .refine((value) => /^\d{11}$/.test(value), {
-        message: "O telefone deve incluir DDD seguido de 9 dígitos",
-      }),    
-    email: z
-      .string()
-      .nonempty("O e-mail é obrigatório")
-      .email("Digite um e-mail válido"),
-    password: z
-      .string()
-      .nonempty("A senha é obrigatória")
-      .min(6, "A senha deve conter pelo menos 6 caracteres"),
-  })
+        .string()
+        .nonempty("O telefone é obrigatório")
+        .transform((value) => value.replace(/\D/g, "")) // Remove caracteres não numéricos
+        .refine((value) => /^\d{11}$/.test(value), {
+          message: "O telefone deve incluir DDD seguido de 9 dígitos",
+        }),
+      email: z
+        .string()
+        .nonempty("O e-mail é obrigatório")
+        .email("Digite um e-mail válido"),
+      password: z
+        .string()
+        .nonempty("A senha é obrigatória")
+        .min(6, "A senha deve conter pelo menos 6 caracteres"),
+      passwordConfirm: z.string().nonempty("A confirmação de senha é obrigatória"),
+    })
+    .refine((data) => data.password === data.passwordConfirm, {
+      message: "As senhas devem coincidir",
+      path: ["passwordConfirm"],
+    });
+
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -92,14 +114,24 @@ export default function Cadastro() {
   }
 
   const handleCPFInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove caracteres não numéricos
+    let value = e.target.value.replace(/\D/g, ""); // Remove tudo que não for número
   
-    if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3) // Adiciona o primeiro ponto
-    if (value.length > 6) value = value.slice(0, 7) + "." + value.slice(7) // Adiciona o segundo ponto
-    if (value.length > 9) value = value.slice(0, 11) + "-" + value.slice(11) // Adiciona o traço
+    // Captura o evento nativo como InputEvent
+    const inputEvent = e.nativeEvent as InputEvent;
   
-    e.target.value = value.slice(0, 14) // Limita o tamanho a 14 caracteres
-  }
+    // Se o usuário pressionou backspace, mantém o valor sem reformatar
+    if (inputEvent.inputType === "deleteContentBackward") {
+      e.target.value = value;
+      return;
+    }
+  
+    // Formata o CPF conforme o usuário digita
+    if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3);
+    if (value.length > 6) value = value.slice(0, 7) + "." + value.slice(7);
+    if (value.length > 9) value = value.slice(0, 11) + "-" + value.slice(11);
+  
+    e.target.value = value.slice(0, 14); // Limita a 14 caracteres (xxx.xxx.xxx-xx)
+  };  
   
 
   return (
@@ -177,6 +209,31 @@ export default function Cadastro() {
                       {...register("password")}
                   />
                   {errors.password && <p className="text-red-500 text-sm mt-1">{String(errors.password.message)}</p>}
+                  {errorMessage && ( <p className="text-red-500 text-sm mt-2 text-center">{errorMessage}</p>)}
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 text-gray-500"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <BiSolidHide /> : <BiSolidShow />}
+                  </button>
+              </div>
+
+              <div className="mb-6">
+                  <input
+                      type="password"
+                      placeholder="Confirme sua Senha"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      {...register("passwordConfirm")}
+                  />
+                  {errors.passwordConfirm && <p className="text-red-500 text-sm mt-1">{String(errors.passwordConfirm.message)}</p>}
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 text-gray-500"
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                  >
+                    {showPassword ? <BiSolidHide /> : <BiSolidShow />}
+                  </button>
               </div>
 
               <button 
@@ -186,6 +243,9 @@ export default function Cadastro() {
                   Cadastrar
               </button>
           </form>
+          <Link to="/login" className="text-blue-500 hover:text-blue-700 text-center mt-10">
+            Já possui conta? Faça o login
+          </Link>
       </div>
       )}
     </div>

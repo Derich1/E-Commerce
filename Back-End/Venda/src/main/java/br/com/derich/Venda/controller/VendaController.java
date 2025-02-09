@@ -26,17 +26,17 @@ public class VendaController {
 
     private static final String QUEUE_NAME = "venda.finalizada";
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public ResponseEntity<String> criarVenda(@RequestBody VendaDTO vendaDTO) {
-        // 1. Salvar a venda no banco de dados
         Venda venda = vendaService.salvarVenda(vendaDTO);
 
-        // 2. Publicar a venda no RabbitMQ
         rabbitTemplate.convertAndSend(QUEUE_NAME, vendaDTO);
 
         return ResponseEntity.ok("Venda realizada com sucesso! ID: " + venda.getId());
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/{id}/pagamento")
     public ResponseEntity<?> processarPagamento(@PathVariable String id, @RequestBody PagamentoRequestDTO request) {
         try {

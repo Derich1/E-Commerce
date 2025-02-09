@@ -5,6 +5,7 @@ type CartItem = {
   nome: string;
   precoEmCentavos: number;
   quantidade: number;
+  imagemUrl: string;
 };
 
 type CartState = {

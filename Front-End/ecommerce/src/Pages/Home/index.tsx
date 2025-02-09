@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Link } from "react-router-dom";
 import { setProducts } from "../../Redux/productSlice";
 import { RootState } from "../../Redux/store";
+import FilterModal from "../../Components/FilterModal";
 
 type Product = {
     id: string;
@@ -21,6 +22,7 @@ export default function Home() {
   
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
+    const categorias = ["Todos", "Perfumes", "Desodorantes", "Colônias", "Lábios"]
 
     const fetchProducts = async () => {
         try {
@@ -39,13 +41,16 @@ export default function Home() {
     }, []);
     
     // Exibição do componente
-    if (loading) return <p>Carregando produtos...</p>;
+    if (loading) return <p className="text-center text-3xl mt-20">Carregando produtos...</p>;
     if (error) return <p>Erro: {error}</p>;
 
     return(
+        <main className="flex-grow">
+        <FilterModal categories={categorias}/>
         <div className="max-w-7xl mx-auto p-6">
             {products.length === 0 ? (
                 <p className="text-center text-xl font-semibold text-red-500">Nenhum produto encontrado.</p>
+        
             ) : (
                 <ul className="ml-[10%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => (
@@ -66,5 +71,6 @@ export default function Home() {
                 </ul>
             )}
         </div>
+        </main>
     )
 }

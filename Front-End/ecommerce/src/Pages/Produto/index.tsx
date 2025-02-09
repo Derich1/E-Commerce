@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addItemToCart } from "../../Redux/cartSlice";
 import { MdOutlineFavoriteBorder, MdFavorite } from "react-icons/md";
@@ -19,6 +19,7 @@ type Product = {
 export default function Produto() {
   const { id } = useParams(); // Obtém o id do produto a partir da URL
   const dispatch = useDispatch();
+  const navigate = useNavigate()
 
   const [favoritos, setFavoritos] = useState<Product[]>(() => {
     const storedFavoritos = localStorage.getItem("favoritos");
@@ -37,6 +38,11 @@ export default function Produto() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleBuyNow = (product: Product) => {
+    handleAddToCart(product)
+    navigate("/compra");
+  };
 
   const fetchProduct = async () => {
     try {
@@ -103,7 +109,7 @@ export default function Produto() {
 
   if (!product) return <p>Produto não encontrado.</p>;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (product: Product) => {
     if (product) {
       dispatch(
         addItemToCart({
@@ -111,6 +117,7 @@ export default function Produto() {
           nome: product.nome,
           precoEmCentavos: product.precoEmCentavos,
           quantidade: 1,
+          imagemUrl: product.imagemUrl
         })
       );
     }
@@ -156,11 +163,11 @@ export default function Produto() {
         </button>
         <button
           className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
-          onClick={handleAddToCart}
+          onClick={() => handleAddToCart(product)}
         >
           Adicionar ao carrinho
         </button>
-        <button className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+        <button onClick={() => handleBuyNow(product)} className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
           Comprar agora
         </button>
       </div>

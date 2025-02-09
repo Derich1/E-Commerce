@@ -55,23 +55,27 @@ public class ClienteController {
         return ResponseEntity.ok(response);
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/perfil")
     public ResponseEntity<?> buscarDadosUsuario(@RequestHeader("Authorization") String token){
         return clienteService.buscarDadosUsuario(token);
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/favoritos")
     public ResponseEntity<?> adicionarProdutoFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
         clienteService.adicionarProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
         return ResponseEntity.ok("Produto adicionado aos favoritos!");
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("/favoritos")
     public ResponseEntity<?> removerFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
         clienteService.removerProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
         return ResponseEntity.ok("Produto removido dos favoritos");
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/favoritos")
     public ResponseEntity<List<ProdutoDTO>> listarFavoritos(@RequestHeader("Authorization") String token) {
         // Removendo "Bearer " do token

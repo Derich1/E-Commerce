@@ -80,20 +80,20 @@ services:
       - rabbitmq
 
 
-  venda-service:
+  venda:
     image: venda
     pull_policy: never
     container_name: "ecommerce-venda"
     environment:
-      PORT: "8083"
-      MONGODB_URL: ecommerce-mongo-database
-      DISCOVERY_HOST: service-discovery
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: "5672"
+      - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/venda
+      - PORT=8083
+      - DISCOVERY_HOST=service-discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
-      - "8083:8080"
+      - "8083:8083"
     depends_on:
       - service-discovery
       - ecommerce-mongo-database

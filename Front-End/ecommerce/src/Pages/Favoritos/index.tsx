@@ -3,6 +3,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { addItemToCart } from "../../Redux/cartSlice";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -21,9 +22,15 @@ const Favoritos = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   const token = localStorage.getItem("token");
   let email = "";
+
+  const handleBuyNow = (product: Product) => {
+    handleAddToCart(product);
+    navigate("/compra");
+  };
 
   if (token) {
     const decoded: any = jwtDecode(token);
@@ -105,6 +112,7 @@ const Favoritos = () => {
         nome: product.nome,
         precoEmCentavos: product.precoEmCentavos,
         quantidade: 1,
+        imagemUrl: product.imagemUrl
       })
     );
   };
@@ -147,7 +155,7 @@ const Favoritos = () => {
                 >
                 Adicionar ao carrinho
                 </button>
-                <button className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+                <button onClick={() => handleBuyNow(product)} className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
                 Comprar agora
                 </button>
             </div>

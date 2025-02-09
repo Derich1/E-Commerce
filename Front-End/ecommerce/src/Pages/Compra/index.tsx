@@ -1,41 +1,65 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
-import { clearCart } from "../../Redux/cartSlice";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Compra: React.FC = () => {
-  const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const totalPrice = cartItems.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "",
     address: "",
-    paymentMethod: "credit_card",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [cepError, setCepError] = useState("");
+
+  // Formatar CEP automaticamente (XXXXX-XXX)
+  const formatCep = (cep: string) => {
+    return cep
+      .replace(/\D/g, "") // Remove caracteres não numéricos
+      .replace(/^(\d{5})(\d)/, "$1-$2") // Adiciona o traço após os primeiros 5 dígitos
+      .slice(0, 9); // Limita o tamanho máximo
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Compra finalizada com sucesso!");
-    dispatch(clearCart());
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const formattedCep = formatCep(value);
+
+    setFormData({ ...formData, [name]: formattedCep });
+
+    if (formattedCep.length === 9) {
+      validarCep(formattedCep);
+    } else {
+      setCepError("Digite um CEP válido.");
+    }
+  };
+
+  const validarCep = async (cep: string) => {
+    try {
+      const response = await axios.get(`https://viacep.com.br/ws/${cep.replace("-", "")}/json/`);
+      if (response.data.erro) {
+        setCepError("CEP inválido.");
+      } else {
+        setCepError(""); // Remove o erro se o CEP for válido
+      }
+    } catch (error) {
+      setCepError("Erro ao validar CEP.");
+    }
   };
 
   const finalizarCompra = async () => {
+    if (cepError || formData.address.length < 9) {
+      return;
+    }
+
     const vendaDTO = {
       produtos: cartItems.map((item) => ({
         produtoId: item.id,
         quantidade: item.quantidade,
       })),
-      cliente: formData.name,
       endereco: formData.address,
-      metodoPagamento: formData.paymentMethod,
     };
 
     try {
@@ -43,19 +67,14 @@ const Compra: React.FC = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const vendaId = response.data.id; // Pegando o ID da venda
-
-      // Armazenando o ID da venda no localStorage
+      const vendaId = response.data.id;
       localStorage.setItem("vendaId", vendaId);
-
-      navigate("/pagamento")
-
+      navigate("/pagamento");
     } catch (error) {
-      alert("Erro ao processar a compra. Tente novamente.");
+      setCepError("Erro ao processar a compra. Tente novamente.");
       console.error(error);
     }
   };
-
 
   return (
     <div className="mt-10 max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -67,51 +86,40 @@ const Compra: React.FC = () => {
         ) : (
           <ul>
             {cartItems.map((item) => (
-              <li key={item.id} className="flex justify-between border-b py-2">
-                {item.nome} x {item.quantidade} - R$ {(item.precoEmCentavos / 100).toFixed(2)}
+              <li key={item.id} className="flex items-center gap-4 border-b pb-4">
+                <img src={item.imagemUrl} alt={item.nome} className="w-20 h-20 object-cover rounded-lg shadow" />
+                <div className="flex flex-col">
+                  <p className="font-medium">{item.nome}</p>
+                  <p className="text-gray-600">Quantidade: {item.quantidade}</p>
+                  <p className="text-gray-800 font-semibold">
+                    R$ {(item.precoEmCentavos / 100).toFixed(2)}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
         )}
         <p className="text-lg font-bold mt-4">Total: R$ {(totalPrice / 100).toFixed(2)}</p>
       </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Nome Completo"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
+
+      <form className="space-y-4">
         <input
           type="text"
           name="address"
-          placeholder="Endereço de Entrega"
+          placeholder="Digite seu CEP"
           value={formData.address}
           onChange={handleChange}
-          className="w-full p-2 border rounded"
+          className={`w-full p-2 border rounded ${cepError ? "border-red-500" : "border-gray-300"}`}
           required
         />
-        <select
-          name="paymentMethod"
-          value={formData.paymentMethod}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        >
-          <option value="credit_card">Cartão de Crédito</option>
-          <option value="pix">PIX</option>
-          <option value="boleto">Boleto Bancário</option>
-        </select>
-        
+        {cepError && <p className="text-sm text-red-500 mt-1">{cepError}</p>}
+
         <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-700"
+          type="button"
+          className={"cursor-pointer w-full p-2 rounded text-white bg-blue-500 hover:bg-blue-700"}
           onClick={finalizarCompra}
         >
-          Confirmar Compra
+          Continuar Compra
         </button>
       </form>
     </div>
