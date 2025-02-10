@@ -1,10 +1,9 @@
 package br.com.derich.Venda.service;
 
+import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoRequestDTO;
-import br.com.derich.Venda.DTO.VendaDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
-import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.payment.PaymentCreateRequest;
 import com.mercadopago.exceptions.MPApiException;
@@ -12,7 +11,6 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.mercadopago.client.payment.PaymentPayerRequest;
 

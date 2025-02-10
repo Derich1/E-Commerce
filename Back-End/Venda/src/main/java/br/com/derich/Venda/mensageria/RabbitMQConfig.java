@@ -1,4 +1,4 @@
-package br.com.derich.Produto.mensageria;
+package br.com.derich.Venda.mensageria;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -27,4 +27,3 @@ public class RabbitMQConfig {
         return rabbitTemplate;
     }
 }
-

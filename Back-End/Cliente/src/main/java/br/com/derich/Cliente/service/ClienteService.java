@@ -1,6 +1,7 @@
 package br.com.derich.Cliente.service;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
+import br.com.derich.Cliente.dto.LoginRequestDTO;
 import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
@@ -51,6 +52,24 @@ public class ClienteService {
         if (!result.isValid()) {
             throw new IllegalArgumentException("Senha fraca: " + String.join(", ", validator.getMessages(result)));
         }
+    }
+
+    public String login(LoginRequestDTO loginRequest) {
+        // Buscar o cliente pelo email
+        Cliente cliente = clienteRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (cliente == null) {
+            throw new RuntimeException("Cliente não encontrado.");
+        }
+
+        // Verificar se a senha está correta
+        if (!passwordEncoder.matches(loginRequest.getSenha(), cliente.getPassword())) {
+            throw new RuntimeException("Senha incorreta.");
+        }
+
+        // Gerar e retornar o token JWT
+        return jwtService.generateToken(cliente.getEmail());
     }
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){

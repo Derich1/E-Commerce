@@ -1,9 +1,9 @@
 package br.com.derich.Cliente.entity;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +12,7 @@ import java.util.Set;
 public class Cliente {
 
     @Id
+    @Field("_id") // Garante que o campo id seja tratado como String
     private String id;
     private String name;
     private String cpf;

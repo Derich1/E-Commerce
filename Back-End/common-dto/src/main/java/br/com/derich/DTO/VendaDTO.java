@@ -1,8 +1,11 @@
-package br.com.derich.Venda.DTO;
+package br.com.derich.DTO;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class VendaDTO {
+public class VendaDTO implements Serializable {
+
+    private static final long serialVersionUID = 8512250869286023497L;
 
     private String vendaId;
     private String clienteId;
@@ -13,7 +16,10 @@ public class VendaDTO {
     private String statusPagamento; // AGUARDANDO, PAGO, CANCELADO
     private String enderecoEntrega;
     private String dataVenda;
-    private String pagamentoId;
+    private String emailCliente;
+
+    // Construtores vazios para que o RabbitMQ consiga desserializar a mensagem
+
 
     public String getVendaId() {
         return vendaId;
@@ -87,20 +93,13 @@ public class VendaDTO {
         this.dataVenda = dataVenda;
     }
 
-    public String getPagamentoId() {
-        return pagamentoId;
-    }
-
-    public void setPagamentoId(String pagamentoId) {
-        this.pagamentoId = pagamentoId;
-    }
-
     public static class ProdutoCompradoDTO {
 
         private String produtoId;
         private int quantidade;
         private String nome;
         private double precoUnitario;
+
 
         public String getProdutoId() {
             return produtoId;
@@ -133,5 +132,13 @@ public class VendaDTO {
         public void setPrecoUnitario(double precoUnitario) {
             this.precoUnitario = precoUnitario;
         }
+    }
+
+    public String getEmailCliente() {
+        return emailCliente;
+    }
+
+    public void setEmailCliente(String emailCliente) {
+        this.emailCliente = emailCliente;
     }
 }

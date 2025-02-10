@@ -4,28 +4,45 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { clearCart } from "../../Redux/cartSlice";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../../Redux/store";
 
-initMercadoPago('YOUR_PUBLIC_KEY');
+initMercadoPago('TEST-7e414755-c026-434d-a4c7-7945e1158e4d');
 
 const Pagamento: React.FC = () => {
   const [preferenceId, setPreferenceId] = useState<string>("");
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const produtos = useSelector((state: RootState) => state.cart.items); // Pegando produtos do Redux
+  const emailCliente = useSelector((state: RootState) => state.user.user?.email); // Pegando email do usuário
 
-  // Obter preferenceId do backend
+
   useEffect(() => {
-    const fetchPreference = async () => {
-      const response = await fetch("/api/criar-preferencia");
-      const data = await response.json();
-      setPreferenceId(data.preferenceId);
+    if (produtos.length === 0 || !emailCliente) return;
+    const criarVenda = async () => {
+      try {
+        const response = await axios.post("http://localhost:8083/venda", {
+          emailCliente,
+          produtos,
+        });
+
+        const vendaId = response.data.preferenceId; // Pegamos o ID da preferência
+        setPreferenceId(vendaId);
+        localStorage.setItem("vendaId", vendaId); // Guardamos o ID da venda para o pagamento
+      } catch (error) {
+        console.error("Erro ao criar venda:", error);
+      }
     };
-    
-    fetchPreference();
-  }, []);
+
+    if (produtos.length > 0) {
+      criarVenda();
+    }
+  }, [produtos]);
+
 
   const initialization = {
-    amount: 100,
-    preferenceId: preferenceId,  // Passa o preferenceId dinâmico
+    amount: produtos.reduce((acc, produto) => acc + produto.precoEmCentavos * produto.quantidade, 0),
+    preferenceId: preferenceId!,  // Passa o preferenceId dinâmico
   };
 
   const customization = {
@@ -60,15 +77,21 @@ const Pagamento: React.FC = () => {
 
   const onSubmit = async ({ formData }: any) => {
     const vendaId = localStorage.getItem("vendaId")
+
+    if (!vendaId) {
+      console.error("Venda ID não encontrado");
+      return;
+    }
+
     try {
-      const response = await axios.post(`http://localhost:8083//${vendaId}/pagamento`, formData, {
+      const response = await axios.post(`http://localhost:8083/${vendaId}/pagamento`, formData, {
         headers: {
           "Content-Type": "application/json",
         },
       });
       dispatch(clearCart())
+      console.log(response.data)
       navigate("/sucesso")
-      return response.data;
     } catch (error) {
       console.error("Erro no pagamento:", error);
       throw error;
@@ -95,7 +118,7 @@ const Pagamento: React.FC = () => {
           onError={onError}
         />
       ) : (
-        <p>Carregando...</p>
+        <p>Erro ao carregar a preferência de pagamento.</p>
       )}
     </div>
   );

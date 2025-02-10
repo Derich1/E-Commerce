@@ -3,6 +3,7 @@ package br.com.derich.Cliente.controller;
 import br.com.derich.Cliente.EmailSender;
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
 import br.com.derich.Cliente.dto.FavoritoRequestDTO;
+import br.com.derich.Cliente.dto.LoginRequestDTO;
 import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
@@ -31,8 +32,29 @@ public class ClienteController {
     private JwtService jwtService;
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequestDTO loginRequest) {
+        try {
+            // Chama o serviço para fazer o login e gerar o token
+            String token = clienteService.login(loginRequest);
+
+            // Cria a resposta com o token
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Login bem-sucedido!");
+            response.put("token", token);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Retorna erro em caso de falha
+            Map<String, String> response = new HashMap<>();
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(401).body(response); // 401 Unauthorized
+        }
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/cadastrar")
-    public ResponseEntity<Map<String, String>>cadastrarCliente(@RequestBody ClienteRequestDTO data) {
+    public ResponseEntity<Map<String, String>> cadastrarCliente(@RequestBody ClienteRequestDTO data) {
 
         Cliente cliente = clienteService.cadastrarCliente(data);
 
@@ -57,7 +79,7 @@ public class ClienteController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/perfil")
-    public ResponseEntity<?> buscarDadosUsuario(@RequestHeader("Authorization") String token){
+    public ResponseEntity<?> buscarDadosUsuario(@RequestHeader("Authorization") String token) {
         return clienteService.buscarDadosUsuario(token);
     }
 
@@ -89,7 +111,6 @@ public class ClienteController {
 
         return ResponseEntity.ok(favoritos);
     }
-
 
     private String gerarCodigoAleatorio() {
         // Usando SecureRandom para gerar um código seguro

@@ -8,6 +8,7 @@ const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const totalPrice = cartItems.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
   const navigate = useNavigate();
+  const venda = useSelector((state: RootState) => state.venda)
 
   const [formData, setFormData] = useState({
     address: "",
@@ -55,11 +56,19 @@ const Compra: React.FC = () => {
     }
 
     const vendaDTO = {
-      produtos: cartItems.map((item) => ({
+      clienteId: venda.clienteId,
+      produtos: cartItems.map(item => ({
         produtoId: item.id,
         quantidade: item.quantidade,
+        nome: item.nome, // Nome do produto
+        precoUnitario: item.precoEmCentavos, // Preço do produto
       })),
-      endereco: formData.address,
+      total: cartItems.reduce((acc, item) => acc + (item.precoEmCentavos * item.quantidade), 0),
+      status: venda.status,
+      metodoPagamento: venda.metodoPagamento,
+      statusPagamento: venda.statusPagamento,
+      enderecoEntrega: formData.address,
+      dataVenda: new Date().toISOString(),
     };
 
     try {

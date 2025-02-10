@@ -243,7 +243,7 @@ export default function Cadastro() {
                   Cadastrar
               </button>
           </form>
-          <Link to="/login" className="text-blue-500 hover:text-blue-700 text-center mt-10">
+          <Link to="/login" className="text-blue-500 hover:text-blue-700 text-center pt-10">
             Já possui conta? Faça o login
           </Link>
       </div>
