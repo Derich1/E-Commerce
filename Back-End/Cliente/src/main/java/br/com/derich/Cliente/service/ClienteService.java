@@ -2,22 +2,23 @@ package br.com.derich.Cliente.service;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
 import br.com.derich.Cliente.dto.LoginRequestDTO;
+import br.com.derich.Cliente.dto.LoginResponseDTO;
 import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.passay.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +28,7 @@ public class ClienteService {
     private IClienteRepository clienteRepository;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtService jwtService;
@@ -54,8 +55,8 @@ public class ClienteService {
         }
     }
 
-    public String login(LoginRequestDTO loginRequest) {
-        // Buscar o cliente pelo email
+    public LoginResponseDTO login(LoginRequestDTO loginRequest) {
+
         Cliente cliente = clienteRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -63,13 +64,13 @@ public class ClienteService {
             throw new RuntimeException("Cliente não encontrado.");
         }
 
-        // Verificar se a senha está correta
         if (!passwordEncoder.matches(loginRequest.getSenha(), cliente.getPassword())) {
             throw new RuntimeException("Senha incorreta.");
         }
 
-        // Gerar e retornar o token JWT
-        return jwtService.generateToken(cliente.getEmail());
+        String token = jwtService.generateToken(cliente.getEmail());
+
+        return new LoginResponseDTO(cliente.getId(), cliente.getName(), cliente.getEmail(), token);
     }
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){

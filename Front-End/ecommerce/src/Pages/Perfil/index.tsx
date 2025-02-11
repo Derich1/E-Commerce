@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { loginSuccess, logout } from "../../Redux/userSlice";
 
 interface UserProfile {
   name: string;
@@ -11,9 +13,11 @@ interface UserProfile {
 
 const Perfil: React.FC = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("perfil");
     const navigate = useNavigate()
+    const dispatch = useDispatch()
+
+    const token = localStorage.getItem("token")
 
   
     useEffect(() => {
@@ -29,26 +33,33 @@ const Perfil: React.FC = () => {
           console.error("Erro ao buscar dados do perfil:", error);
 
           if (error.response?.status === 401) {
-            localStorage.removeItem("token"); // 🔴 Remove token inválido
-            navigate("/login"); // 🔄 Redireciona para login
+            handleDisconnect()
           }
         }
       };
   
-      if (token) {
+      if (!user && token) {
         fetchUserData();
       }
-    }, [token]);
+    }, [user, token]);
   
     useEffect(() => {
       const storedToken = localStorage.getItem("token");
-      setToken(storedToken); // Atualiza o estado com o token salvo
-  
-      if (!storedToken) {
-        navigate("/login");
+      const storedUser = localStorage.getItem("user");
+
+      if (storedToken && storedUser) {
+        dispatch(loginSuccess({ token: storedToken, user: JSON.parse(storedUser) }));
       }
-    }, [navigate]);
+    }, []);
   
+    const handleDisconnect = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      dispatch(logout());
+      setUser(null)
+      navigate("/login");
+    };
+    
   
     // Se os dados do usuário ainda estão carregando, exibir um loading
     if (!user) {
@@ -108,6 +119,7 @@ const Perfil: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-600">Data de Nascimento</label>
                 <p className="mt-1 text-gray-800">{user.datanascimento}</p>
               </div>
+              <button onClick={handleDisconnect} className="cursor-pointer mt-4 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Sair da conta</button>
             </div>
           </div>
         )}

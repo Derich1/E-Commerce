@@ -8,8 +8,6 @@ import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
-import com.mercadopago.resources.preference.PreferenceItem;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +25,17 @@ public class VendaController {
     @Autowired
     private VendaService vendaService;
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+//    @Autowired
+//    private RabbitTemplate rabbitTemplate;
 
-    private static final String QUEUE_NAME = "venda.finalizada";
+//    private static final String QUEUE_NAME = "venda.finalizada";
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public ResponseEntity<?> criarVenda(@RequestBody VendaDTO vendaDTO) {
         Venda venda = vendaService.salvarVenda(vendaDTO);
 
-        rabbitTemplate.convertAndSend(QUEUE_NAME, vendaDTO);
+//        rabbitTemplate.convertAndSend(QUEUE_NAME, vendaDTO);
 
         // Criar a preferência de pagamento no Mercado Pago
         try {

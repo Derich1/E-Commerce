@@ -1,24 +1,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod"
+import { loginSuccess } from "../../Redux/userSlice";
 
 interface FormData {
     email: string;
-    password: string;
+    senha: string;
 }
 
 export default function Login(){
 
-    const Navigate = useNavigate()
+    const navigate = useNavigate()
+    const dispatch = useDispatch()
 
     const schema = z.object({
         email: z
           .string()
           .nonempty("O e-mail é obrigatório")
           .email("Digite um e-mail válido"),
-        password: z
+        senha: z
           .string()
           .nonempty("A senha é obrigatória")
           .min(6, "A senha deve conter pelo menos 6 caracteres"),
@@ -28,27 +31,28 @@ export default function Login(){
         resolver: zodResolver(schema),
       })
 
-      const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+      const onSubmit: SubmitHandler<FormData> = async (data) => {
         try {
-            const response = await axios.post("http://localhost:8081/cliente/login", data);
+          const response = await axios.post("http://localhost:8081/cliente/login", data);
+          console.log(response); 
+          if (response.status === 200) {
+            const { token, id, nome, email } = response.data;
       
-            // Se a autenticação for bem-sucedida, armazenar o token ou redirecionar
-            if (response.status === 200) {
-              // Exemplo: armazenar o token no localStorage
-              localStorage.setItem("token", response.data.token);
-              console.log(localStorage.getItem("token"))
-              Navigate("/");
-            }
-          } catch (error: any) {
-            // Tratar erros de autenticação ou conexão
-            if (error.response && error.response.status === 401) {
-              alert("E-mail ou senha incorretos.");
-            } else {
-              console.error("Erro ao fazer login:", error);
-              alert("Ocorreu um erro. Tente novamente mais tarde.");
-            }
+            // Armazena no Redux
+            dispatch(loginSuccess({ token, user: { id, nome, email } }));
+      
+            // Salva no localStorage para manter login persistente
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify({ id, nome, email }));
+      
+            navigate("/");
           }
-      }
+        } catch (error) {
+          console.error("Erro ao fazer login:", error);
+          alert("E-mail ou senha incorretos.");
+        }
+      };
+      
     
     return (
         <>
@@ -71,9 +75,9 @@ export default function Login(){
                       type="password"
                       placeholder="Senha"
                       className="input w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      {...register("password")}
+                      {...register("senha")}
                   />
-                  {errors.password && <p className="text-red-500 text-sm mt-1">{String(errors.password.message)}</p>}
+                  {errors.senha && <p className="text-red-500 text-sm mt-1">{String(errors.senha.message)}</p>}
               </div>
 
               <button 

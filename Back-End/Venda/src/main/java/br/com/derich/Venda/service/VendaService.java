@@ -9,7 +9,6 @@ import com.mercadopago.client.payment.PaymentCreateRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.mercadopago.client.payment.PaymentPayerRequest;
@@ -25,8 +24,8 @@ public class VendaService {
     @Autowired
     private IVendaRepository vendaRepository;
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
+//    @Autowired
+//    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
 
     public Venda salvarVenda(VendaDTO vendaDTO) {
         Venda venda = new Venda();
@@ -65,13 +64,14 @@ public class VendaService {
                 .payer(payer)
                 .paymentMethodId(request.getMetodoPagamento())
                 .installments(request.getInstallments())
-                .installments(1)
                 .build();
         try {
             Payment payment = client.create(pagamento);
             String status = payment.getStatus();
             if ("approved".equalsIgnoreCase(status)) {
                 venda.setStatus("APROVADO");
+            } else if ("pending".equalsIgnoreCase(status)) {
+                venda.setStatus("PENDENTE");
             } else {
                 venda.setStatus("RECUSADO");
             }

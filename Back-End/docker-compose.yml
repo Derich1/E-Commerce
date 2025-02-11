@@ -23,14 +23,14 @@ services:
     volumes:
       - mongo_data:/data/db  # Volume persistente
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: "ecommerce-rabbitmq"
-    networks:
-      - ecommerce-net
-    ports:
-      - "5672:5672"    # Porta de comunicação dos clientes RabbitMQ
-      - "15672:15672"  # Porta para a interface de gerenciamento
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: "ecommerce-rabbitmq"
+#    networks:
+#      - ecommerce-net
+#    ports:
+#      - "5672:5672"    # Porta de comunicação dos clientes RabbitMQ
+#      - "15672:15672"  # Porta para a interface de gerenciamento
 
   frontend:
     build:
@@ -49,8 +49,8 @@ services:
       - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/cliente
       - PORT=8081
       - DISCOVERY_HOST=service-discovery
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
+#      - RABBITMQ_HOST=rabbitmq
+#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -58,7 +58,7 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-      - rabbitmq
+#      - rabbitmq
 
   produto:
     image: produto
@@ -68,8 +68,8 @@ services:
       - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/produto
       - PORT=8082
       - DISCOVERY_HOST=service-discovery
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
+#      - RABBITMQ_HOST=rabbitmq
+#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -77,7 +77,7 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-      - rabbitmq
+#      - rabbitmq
 
 
   venda:
@@ -88,8 +88,8 @@ services:
       - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/venda
       - PORT=8083
       - DISCOVERY_HOST=service-discovery
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
+#      - RABBITMQ_HOST=rabbitmq
+#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -97,7 +97,7 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-      - rabbitmq
+#      - rabbitmq
 
 volumes:
   mongo_data:

@@ -1,15 +1,11 @@
 package br.com.derich.Cliente.controller;
 
 import br.com.derich.Cliente.EmailSender;
-import br.com.derich.Cliente.dto.ClienteRequestDTO;
-import br.com.derich.Cliente.dto.FavoritoRequestDTO;
-import br.com.derich.Cliente.dto.LoginRequestDTO;
-import br.com.derich.Cliente.dto.ProdutoDTO;
+import br.com.derich.Cliente.dto.*;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
 import br.com.derich.Cliente.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,22 +29,14 @@ public class ClienteController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequestDTO loginRequest) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
         try {
-            // Chama o serviço para fazer o login e gerar o token
-            String token = clienteService.login(loginRequest);
-
-            // Cria a resposta com o token
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Login bem-sucedido!");
-            response.put("token", token);
-
+            // Chama o serviço para realizar o login
+            LoginResponseDTO response = clienteService.login(loginRequest);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // Retorna erro em caso de falha
-            Map<String, String> response = new HashMap<>();
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(401).body(response); // 401 Unauthorized
+            // Caso haja erro, retorna erro de autorização (401)
+            return ResponseEntity.status(401).body(null);
         }
     }
 
