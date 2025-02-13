@@ -10,6 +10,7 @@ import Perfil from "../Pages/Perfil";
 import PrivateRoute from "./PrivateRoute";
 import Compra from "../Pages/Compra";
 import Pagamento from "../Pages/Pagamento";
+import StatusPage from "../Pages/StatusPage";
 
 export default function AppRoutes() {
     
@@ -29,6 +30,7 @@ export default function AppRoutes() {
                     <Route path="/perfil" element={<PrivateRoute> <Perfil/> </PrivateRoute>} />
                     <Route path="/compra" element={<Compra/>} />
                     <Route path="/pagamento" element={<Pagamento/>} />
+                    <Route path="/status/:status" element={<StatusPage/>} />
                 </Routes>
                 </main>
             <Footer/>

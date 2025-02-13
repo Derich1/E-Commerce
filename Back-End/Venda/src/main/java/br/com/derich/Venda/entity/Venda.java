@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+import java.util.UUID;
 
 @Document(collection = "venda")
 public class Venda {
@@ -19,6 +20,7 @@ public class Venda {
     private String enderecoEntrega;
     private String dataVenda;
     private String pagamentoId;
+    private String emailCliente;
 
     public static class ProdutoComprado {
         private String produtoId;
@@ -59,8 +61,17 @@ public class Venda {
         }
     }
 
+    // Sem esse campo o id gerado no banco de dados seria ObjectId
+    public Venda() {
+        this.id = UUID.randomUUID().toString(); // Gera um UUID único ao criar uma venda
+    }
+
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getClienteId() {
@@ -133,5 +144,13 @@ public class Venda {
 
     public void setPagamentoId(String pagamentoId) {
         this.pagamentoId = pagamentoId;
+    }
+
+    public String getEmailCliente() {
+        return emailCliente;
+    }
+
+    public void setEmailCliente(String emailCliente) {
+        this.emailCliente = emailCliente;
     }
 }

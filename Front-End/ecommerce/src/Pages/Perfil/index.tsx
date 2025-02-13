@@ -49,6 +49,7 @@ const Perfil: React.FC = () => {
 
       if (storedToken && storedUser) {
         dispatch(loginSuccess({ token: storedToken, user: JSON.parse(storedUser) }));
+        console.log(user)
       }
     }, []);
   

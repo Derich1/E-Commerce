@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Document(collection = "cliente")
 public class Cliente {
@@ -94,6 +95,7 @@ public class Cliente {
     }
 
     public Cliente(ClienteRequestDTO data){
+        this.id = UUID.randomUUID().toString();
         this.name = data.name();
         this.cpf = data.cpf();
         this.datanascimento = data.datanascimento();

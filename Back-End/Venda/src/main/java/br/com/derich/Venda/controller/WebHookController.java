@@ -4,10 +4,7 @@ import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -19,6 +16,7 @@ public class WebHookController {
     @Autowired
     private IVendaRepository vendaRepository;
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public ResponseEntity<String> receberNotificacao(@RequestBody Map<String, Object> payload) {
         System.out.println("Notificação recebida: " + payload);

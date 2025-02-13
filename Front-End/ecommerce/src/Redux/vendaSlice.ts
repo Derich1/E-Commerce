@@ -16,6 +16,7 @@ interface VendaState {
   statusPagamento: string;
   enderecoEntrega: string;
   dataVenda: string;
+  preferenceId: string;
 }
 
 const initialState: VendaState = {
@@ -27,6 +28,7 @@ const initialState: VendaState = {
   statusPagamento: "",
   enderecoEntrega: "",
   dataVenda: "",
+  preferenceId: ""
 };
 
 const vendaSlice = createSlice({
@@ -36,9 +38,12 @@ const vendaSlice = createSlice({
     setVenda: (state, action: PayloadAction<VendaState>) => {
       return { ...state, ...action.payload };
     },
+    setPreferenceId: (state, action: PayloadAction<string>) => {
+      state.preferenceId = action.payload;
+    },
     resetVenda: () => initialState, // Reseta os dados da venda
   },
 });
 
-export const { setVenda, resetVenda } = vendaSlice.actions;
+export const { setVenda, setPreferenceId, resetVenda } = vendaSlice.actions;
 export default vendaSlice.reducer;

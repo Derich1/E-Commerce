@@ -3,12 +3,15 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setPreferenceId } from "../../Redux/vendaSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const totalPrice = cartItems.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user)
+  const dispatch = useDispatch()
 
   const [formData, setFormData] = useState({
     address: "",
@@ -61,7 +64,7 @@ const Compra: React.FC = () => {
         produtoId: item.id,
         quantidade: item.quantidade,
         nome: item.nome, // Nome do produto
-        precoUnitario: item.precoEmCentavos, // Preço do produto
+        precoUnitario: item.precoEmCentavos / 100, // Preço do produto
       })),
       total: totalPrice,
       status: "Pendente",
@@ -69,6 +72,7 @@ const Compra: React.FC = () => {
       statusPagamento: "Pendente",
       enderecoEntrega: formData.address,
       dataVenda: new Date().toISOString(),
+      emailCliente: user.user?.email
     };
 
     try {
@@ -78,6 +82,7 @@ const Compra: React.FC = () => {
 
       const vendaId = response.data.id;
       localStorage.setItem("vendaId", vendaId);
+      dispatch(setPreferenceId(response.data.preferenceId))
       navigate("/pagamento");
     } catch (error) {
       setCepError("Erro ao processar a compra. Tente novamente.");

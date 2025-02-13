@@ -5,6 +5,7 @@ import br.com.derich.Venda.DTO.PagamentoRequestDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.service.VendaService;
 import com.mercadopago.client.preference.*;
+import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
@@ -65,28 +66,50 @@ public class VendaController {
                                     .email(vendaDTO.getEmailCliente()) // Supondo que vendaDTO tenha email do cliente
                                     .build()
                     )
-//                    .backUrls(
-//                            PreferenceBackUrlsRequest.builder()
-//                                    .success("http://www.your-site.com/success")
-//                                    .failure("http://www.your-site.com/failure")
-//                                    .pending("http://www.your-site.com/pending")
-//                                    .build()
-//                    )
+                    .backUrls(
+                            PreferenceBackUrlsRequest.builder()
+                                    .success("http://localhost:80/sucesso")
+                                    .failure("http://localhost:80/falha")
+                                    .pending("http://localhost:80/pendente")
+                                    .build()
+                    )
                     .autoReturn("approved")
                     .build();
 
             Preference response = client.create(preferenceRequest);
-            return ResponseEntity.ok(Map.of("preferenceId", response.getId()));
+            return ResponseEntity.ok(Map.of(
+                    "id", venda.getId(),
+                    "preferenceId", response.getId()
+            ));
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar a preferência: " + e.getMessage());
+        } catch (MPApiException ex) {
+            System.out.printf(
+                    "MercadoPago Error. Status: %s, Content: %s%n",
+                    ex.getApiResponse().getStatusCode(), ex.getApiResponse().getContent());
+        } catch (MPException ex) {
+            ex.printStackTrace();
         }
-
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarVenda(@PathVariable String id, @RequestBody VendaDTO vendaDTO) {
+        try {
+            Venda vendaAtualizada = vendaService.atualizarVenda(id, vendaDTO);
+            return ResponseEntity.ok(vendaAtualizada);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao atualizar venda: " + e.getMessage());
+        }
+    }
+
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/{id}/pagamento")
     public ResponseEntity<?> processarPagamento(@PathVariable String id, @RequestBody PagamentoRequestDTO request) {
+
+        System.out.println("Dados enviados ao Mercado Pago: " + request);
+
         try {
             Payment pagamento = vendaService.processarPagamento(id, request);
             String status = pagamento.getStatus();
