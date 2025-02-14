@@ -1,6 +1,7 @@
 package br.com.derich.DTO;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class VendaDTO implements Serializable {
@@ -9,7 +10,7 @@ public class VendaDTO implements Serializable {
 
     private String vendaId;
     private String clienteId;
-    private List<ProdutoCompradoDTO> produtos;
+    private List<ProdutoCompradoDTO> produtos = new ArrayList<>();
     private Long total;
     private String status; // PENDENTE, APROVADO, CANCELADO
     private String metodoPagamento; // CARTAO_CREDITO, PIX, BOLETO
@@ -38,7 +39,7 @@ public class VendaDTO implements Serializable {
     }
 
     public List<ProdutoCompradoDTO> getProdutos() {
-        return produtos;
+        return produtos != null ? produtos : new ArrayList<>();
     }
 
     public void setProdutos(List<ProdutoCompradoDTO> produtos) {

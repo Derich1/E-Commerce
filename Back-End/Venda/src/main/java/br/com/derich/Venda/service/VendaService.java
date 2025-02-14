@@ -4,10 +4,10 @@ import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoRequestDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
+import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.payment.PaymentCreateRequest;
 import com.mercadopago.exceptions.MPApiException;
-import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,55 +82,59 @@ public class VendaService {
         return vendaRepository.save(venda);
     }
 
+    public Payment processarPagamento(String vendaId, PagamentoRequestDTO request) throws Exception {
 
-
-    public Payment processarPagamento(String vendaId, PagamentoRequestDTO request) throws MPException {
-
-        System.out.println("ID da venda: " + vendaId);
-        System.out.println("Dados do pagamento: " + request);
-
-
-        // Verificar se a venda existe
+        // 1. Buscar a venda
         Venda venda = vendaRepository.findById(vendaId)
                 .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
+        // 3. Criar cliente de pagamento
         PaymentClient client = new PaymentClient();
 
-        String descricaoVenda = "Pedido #" + vendaId;
+        BigDecimal totalVenda = new BigDecimal(venda.getTotal());
 
-        BigDecimal valorEmReais = BigDecimal.valueOf(venda.getTotal());
-
-        // Criar pagador
-        PaymentPayerRequest payer = PaymentPayerRequest.builder()
-                .email(request.getEmail())
+        // 4. Construir requisição
+        PaymentCreateRequest createRequest = PaymentCreateRequest.builder()
+                .transactionAmount(totalVenda) // Usar BigDecimal do total da venda
+                .description("Pagamento para venda #" + vendaId)
+                .paymentMethodId(request.getMetodoPagamento())
+                .payer(
+                        PaymentPayerRequest.builder()
+                                .email(request.getEmail())
+                                .firstName(request.getNome()) // Novo campo obrigatório
+                                .lastName(request.getSobrenome()) // Novo campo obrigatório
+                                .identification(
+                                        IdentificationRequest.builder()
+                                                .type(request.getTipoDocumento())
+                                                .number(request.getNumeroDocumento())
+                                                .build()
+                                )
+                                .build()
+                )
+                .token(request.getToken()) // Token sempre vem do DTO
+                .installments(request.getInstallments()) // Parcelas sempre vem do DTO
                 .build();
 
-        // Criar requisição de pagamento
-        PaymentCreateRequest.PaymentCreateRequestBuilder pagamentoBuilder = PaymentCreateRequest.builder()
-                .transactionAmount(valorEmReais)
-                .description(descricaoVenda)
-                .payer(payer)
-                .paymentMethodId(request.getPaymentMethodId());
-
-        if ("pix".equalsIgnoreCase(request.getPaymentMethodId())) {
-            request.setToken(null); // Limpar o campo token, se necessário
-            request.setMetodoPagamento("Pix");
-        } else {
-            pagamentoBuilder
-                    .token(request.getToken()) // Token do cartão (gerado no frontend)
-                    .installments(request.getInstallments()); // Número de parcelas (para crédito)
-        }
-
         try {
-            Payment payment = client.create(pagamentoBuilder.build());
+            // 5. Processar pagamento
+            Payment payment = client.create(createRequest);
+
+            venda.setPagamentoId(payment.getId());
+            vendaRepository.save(venda);
+
+            // 6. Atualizar status da venda
             atualizarStatusVenda(venda, payment.getStatus());
 
             return payment;
 
         } catch (MPApiException ex) {
-            throw new RuntimeException("Erro do Mercado Pago: " + ex.getApiResponse().getContent());
-        } catch (MPException ex) {
-            throw new RuntimeException("Erro ao processar pagamento: " + ex.getMessage());
+            String errorDetails = String.format("Erro MP [%d]: %s",
+                    ex.getApiResponse().getStatusCode(),
+                    ex.getApiResponse().getContent());
+            throw new RuntimeException(errorDetails);
+
+        } catch (Exception ex) {
+            throw new RuntimeException("Falha no processamento: " + ex.getMessage());
         }
     }
 

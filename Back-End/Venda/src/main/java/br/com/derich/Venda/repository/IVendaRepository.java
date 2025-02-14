@@ -7,5 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IVendaRepository extends MongoRepository<Venda, String> {
 
-    Venda findByPagamentoId(String pagamentoId);
+    Venda findByPagamentoId(Long pagamentoId);
+
 }

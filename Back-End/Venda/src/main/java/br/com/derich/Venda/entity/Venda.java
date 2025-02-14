@@ -19,7 +19,7 @@ public class Venda {
     private String statusPagamento; // AGUARDANDO, PAGO, CANCELADO
     private String enderecoEntrega;
     private String dataVenda;
-    private String pagamentoId;
+    private Long pagamentoId;
     private String emailCliente;
 
     public static class ProdutoComprado {
@@ -138,11 +138,11 @@ public class Venda {
         this.dataVenda = dataVenda;
     }
 
-    public String getPagamentoId() {
+    public Long getPagamentoId() {
         return pagamentoId;
     }
 
-    public void setPagamentoId(String pagamentoId) {
+    public void setPagamentoId(Long pagamentoId) {
         this.pagamentoId = pagamentoId;
     }
 

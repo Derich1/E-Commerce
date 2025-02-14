@@ -9,6 +9,7 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +33,9 @@ public class VendaController {
 //    private static final String QUEUE_NAME = "venda.finalizada";
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping
-    public ResponseEntity<?> criarVenda(@RequestBody VendaDTO vendaDTO) {
+    @PostMapping("/criar")
+    public ResponseEntity<?> criarVenda(@Valid @RequestBody VendaDTO vendaDTO) {
+
         Venda venda = vendaService.salvarVenda(vendaDTO);
 
 //        rabbitTemplate.convertAndSend(QUEUE_NAME, vendaDTO);
@@ -89,6 +91,7 @@ public class VendaController {
         } catch (MPException ex) {
             ex.printStackTrace();
         }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
@@ -107,19 +110,46 @@ public class VendaController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/{id}/pagamento")
     public ResponseEntity<?> processarPagamento(@PathVariable String id, @RequestBody PagamentoRequestDTO request) {
-
-        System.out.println("Dados enviados ao Mercado Pago: " + request);
-
         try {
+            System.out.println("Iniciando processamento para venda: " + id);
+            System.out.println("Método de pagamento recebido: " + request.getMetodoPagamento());
+
             Payment pagamento = vendaService.processarPagamento(id, request);
-            String status = pagamento.getStatus();
-            if ("approved".equalsIgnoreCase(status)) {
-                return ResponseEntity.ok(Map.of("status", "success", "message", "Pagamento aprovado"));
+            System.out.println("Pagamento criado: " + pagamento);
+
+            if ("pix".equalsIgnoreCase(request.getMetodoPagamento())) {
+                // Valide se os dados do Pix existem
+                if (pagamento.getPointOfInteraction() == null ||
+                        pagamento.getPointOfInteraction().getTransactionData() == null) {
+                    System.out.println("Dados do Pix não encontrados na resposta do Mercado Pago");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(Map.of("error", "Dados do Pix não gerados"));
+                }
+
+                System.out.println("QR Code: " + pagamento.getPointOfInteraction().getTransactionData().getQrCode());
+                System.out.println("QR Code Base64: " + pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64());
+
+                return ResponseEntity.ok(Map.of(
+                        "status", pagamento.getStatus(),
+                        "pix_data", Map.of(
+                                "qr_code", pagamento.getPointOfInteraction().getTransactionData().getQrCode(),
+                                "qr_code_base64", pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64()
+                        )
+                ));
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Pagamento recusado", "details", status));
+                return ResponseEntity.ok(Map.of("status", pagamento.getStatus()));
             }
-        } catch (MPException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro: " + e.getMessage());
+
+        } catch (MPApiException ex) {
+            System.out.println("Erro MP API - Status: " + ex.getStatusCode());
+            System.out.println("Conteúdo: " + ex.getApiResponse().getContent());
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            System.out.println("Erro inesperado: " + ex.getMessage());
+            ex.printStackTrace(); // Isso aparecerá nos logs do servidor
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro interno: " + ex.getMessage()));
         }
     }
 }

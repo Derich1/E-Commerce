@@ -58,6 +58,8 @@ const Compra: React.FC = () => {
       return;
     }
 
+    console.log(cartItems)
+
     const vendaDTO = {
       clienteId: user.user?.id,
       produtos: cartItems.map(item => ({
@@ -74,9 +76,10 @@ const Compra: React.FC = () => {
       dataVenda: new Date().toISOString(),
       emailCliente: user.user?.email
     };
+    console.log("Payload enviado:", JSON.stringify(vendaDTO, null, 2));
 
     try {
-      const response = await axios.post("http://localhost:8083/venda", vendaDTO, {
+      const response = await axios.post("http://localhost:8083/venda/criar", vendaDTO, {
         headers: { "Content-Type": "application/json" },
       });
 

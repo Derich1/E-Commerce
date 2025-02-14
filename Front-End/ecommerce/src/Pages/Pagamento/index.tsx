@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { initMercadoPago } from "@mercadopago/sdk-react";
+import { CardNumber, ExpirationDate, initMercadoPago, SecurityCode } from "@mercadopago/sdk-react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "../../Redux/cartSlice";
@@ -11,78 +11,118 @@ initMercadoPago("TEST-7e414755-c026-434d-a4c7-7945e1158e4d"); // Chave de teste
 const Pagamento: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const produtos = useSelector((state: RootState) => state.cart.items);
+  // const produtos = useSelector((state: RootState) => state.cart.items);
   const [vendaId, setVendaId] = useState<string | null>(null);
   const [metodoPagamento, setMetodoPagamento] = useState("pix");
   const user = useSelector((state: RootState) => state.user.user)
-  
-  // Dados do cartão (se necessário)
+  const [pixData, setPixData] = useState<{ qrCode: string; code: string } | null>(null);
+
   const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiration, setCardExpiration] = useState("");
-  const [cardCVV, setCardCVV] = useState("");
-  const [cardHolderName, setCardHolderName] = useState("");
+  // const [cardExpiration, setCardExpiration] = useState("");
+  // const [cardCVV, setCardCVV] = useState("");
+  // const [cardHolderName, setCardHolderName] = useState("");
   const [installments, setInstallments] = useState(1);
+  const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
+  const [tipoDocumento, setTipoDocumento] = useState("CPF");
+  const [numeroDocumento, setNumeroDocumento] = useState("");
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const id = localStorage.getItem("vendaId");
     setVendaId(id);
   }, []);
 
+  useEffect(() => {
+    console.log("VendaId atualizado:", vendaId);
+  }, [vendaId]);
+
+  const gerarPix = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8083/venda/${vendaId}/pagamento`,
+        {
+          metodoPagamento: "pix",
+          nome,
+          sobrenome,
+          tipoDocumento,
+          numeroDocumento,
+          email: user?.email || "convidade@exemplo.com",
+        }
+      );
+  
+      setPixData({
+        qrCode: response.data.pix_data.qr_code,
+        code: response.data.pix_data.qr_code_base64,
+      });
+  
+    } catch (error: any) {
+      setError(error.response?.data?.error || "Erro ao gerar Pix");
+    }
+  }
+
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!vendaId) {
-      console.error("Venda ID não encontrado");
-      return;
-    }
+    setLoading(true);
+    setError(null);
 
     try {
-      let token = null;
+      if (!vendaId) throw new Error("Venda não encontrada");
 
-      // Se for crédito ou débito, precisa gerar o token do cartão
+      let requestData: any = {
+        nome,
+        sobrenome,
+        tipoDocumento,
+        numeroDocumento,
+        metodoPagamento: metodoPagamento,
+        email: user?.email || "convidade@exemplo.com",
+      };
+
+      // Fluxo para Cartões
       if (metodoPagamento !== "pix") {
-        const { id } = await (window as any).MercadoPago.createCardToken({
-          cardNumber,
-          cardExpirationMonth: cardExpiration.split("/")[0],
-          cardExpirationYear: "20" + cardExpiration.split("/")[1],
-          securityCode: cardCVV,
-          cardholderName: cardHolderName,
-          identificationType: "CPF",
-          identificationNumber: "12345678909",
+        const tokenData = await (window as any).MercadoPago.createCardToken({
+          cardholderName: `${nome} ${sobrenome}`,
+          identificationType: tipoDocumento,
+          identificationNumber: numeroDocumento,
         });
 
-        token = id;
-        console.log("Token gerado:", token);
+        requestData = {
+          ...requestData,
+          token: tokenData.id,
+          installments: metodoPagamento === "credit_card" ? installments : 1
+        };
       }
 
-      const transactionAmount = produtos.reduce(
-        (acc, produto) => acc + produto.precoEmCentavos * produto.quantidade,
-        0
-      ) / 100;
+      const response = await axios.post(
+        `http://localhost:8083/venda/${vendaId}/pagamento`,
+        requestData
+      );
 
-      const response = await axios.post(`http://localhost:8083/venda/${vendaId}/pagamento`, {
-        token,
-        paymentMethodId: metodoPagamento,
-        installments: metodoPagamento === "credit_card" ? installments : 1,
-        transactionAmount,
-        description: "Compra no meu site",
-        email: user?.email, // Caso ele entre no site sem precisar logar o email estará vazio pq no momento do login q ele salva.
-        metodoPagamento: metodoPagamento
-      });
+      console.log(response.data)
 
-      if (response.data.status === "approved") {
-        dispatch(clearCart());
-        navigate("/sucesso");
+      if (metodoPagamento === "pix") {
+        setPixData({
+          qrCode: response.data.pix_data.qr_code,
+          code: response.data.pix_data.qr_code_base64
+        });
       } else {
-        console.error("Pagamento recusado:", response.data);
+        if (response.data.status === "approved") {
+          dispatch(clearCart());
+          navigate("/sucesso");
+        }
       }
-    } catch (error) {
-      console.error("Erro no pagamento:", error);
+
+    } catch (error: any) {
+      setError(error.response?.data?.message || "Erro no pagamento");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
+      {error && <div className="error-message">{error}</div>}
       <h2>Pagamento</h2>
       <form onSubmit={handlePayment}>
         <div>
@@ -94,23 +134,77 @@ const Pagamento: React.FC = () => {
           </select>
         </div>
 
+        <div>
+            <label>Nome</label>
+            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          </div>
+
+          <div>
+            <label>Sobrenome</label>
+            <input type="text" value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} required />
+          </div>
+
+          <div>
+            <label>Tipo de Documento</label>
+            <select value={tipoDocumento} onChange={(e) => setTipoDocumento(e.target.value)}>
+              <option value="CPF">CPF</option>
+              <option value="CNPJ">CNPJ</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Número do Documento</label>
+            <input 
+              type="text" 
+              value={numeroDocumento} 
+              onChange={(e) => setNumeroDocumento(e.target.value)} 
+              required 
+            />
+          </div>
+
+          {metodoPagamento === "pix" && (
+          <div>
+            {!pixData ? (
+              <button 
+                type="button" 
+                onClick={gerarPix}
+                disabled={loading}
+              >
+                {loading ? "Gerando QR Code..." : "Gerar Pix"}
+              </button>
+            ) : (
+              <>
+                <h3>Pagamento via Pix</h3>
+                <img src={`data:image/png;base64,${pixData.code}`} alt="QR Code" />
+                <input type="text" value={pixData.qrCode} readOnly />
+                
+                <button 
+                  type="submit" 
+                >
+                  Já paguei
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {(metodoPagamento === "credit_card" || metodoPagamento === "debit_card") && (
           <>
             <div>
               <label>Número do Cartão</label>
+              <CardNumber />
               <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} required />
             </div>
             <div>
               <label>Nome no Cartão</label>
-              <input type="text" value={cardHolderName} onChange={(e) => setCardHolderName(e.target.value)} required />
             </div>
             <div>
               <label>Validade (MM/YY)</label>
-              <input type="text" value={cardExpiration} onChange={(e) => setCardExpiration(e.target.value)} required />
+              <ExpirationDate />
             </div>
             <div>
               <label>CVV</label>
-              <input type="text" value={cardCVV} onChange={(e) => setCardCVV(e.target.value)} required />
+              <SecurityCode />
             </div>
 
             {metodoPagamento === "credit_card" && (
@@ -127,7 +221,13 @@ const Pagamento: React.FC = () => {
           </>
         )}
 
-        <button type="submit">Pagar</button>
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="payment-button"
+        >
+          {loading ? "Processando..." : "Finalizar Pagamento"}
+        </button>
       </form>
     </div>
   );
