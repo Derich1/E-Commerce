@@ -5,6 +5,9 @@ import { useDispatch } from "react-redux";
 import { addItemToCart } from "../../Redux/cartSlice";
 import { MdOutlineFavoriteBorder, MdFavorite } from "react-icons/md";
 import { jwtDecode } from "jwt-decode";
+import { useSelector } from "react-redux";
+import { RootState } from "../../Redux/store";
+import { setImmediatePurchase } from "../../Redux/vendaSlice";
 
 type Product = {
   id: string;
@@ -16,10 +19,19 @@ type Product = {
   isFavorited?: boolean;
 };
 
+type ProdutoComprado = {
+  id: string;
+  nome: string;
+  precoEmCentavos: number;
+  quantidade: number;
+  imagemUrl: string;
+}
+
 export default function Produto() {
   const { id } = useParams(); // Obtém o id do produto a partir da URL
   const dispatch = useDispatch();
   const navigate = useNavigate()
+  const user = useSelector((state: RootState) => state.user)
 
   const [favoritos, setFavoritos] = useState<Product[]>(() => {
     const storedFavoritos = localStorage.getItem("favoritos");
@@ -40,7 +52,25 @@ export default function Produto() {
   const [error, setError] = useState<string | null>(null);
 
   const handleBuyNow = (product: Product) => {
-    handleAddToCart(product)
+    if (!user.user) {
+      alert("Conecte-se a uma conta para prosseguir com a compra");
+      navigate("/login");
+      return;
+    }
+
+    // Converte Product para ProdutoComprado
+    const produtoComprado: ProdutoComprado = {
+      id: product.id, // Garante que ID está correto
+      quantidade: 1, // Compra imediata assume quantidade 1
+      nome: product.nome, 
+      precoEmCentavos: product.precoEmCentavos, 
+      imagemUrl: product.imagemUrl
+    };
+  
+    // Armazena temporariamente o produto para compra imediata
+    dispatch(setImmediatePurchase(produtoComprado));
+  
+    // Redireciona para a página de checkout
     navigate("/compra");
   };
 
@@ -110,6 +140,11 @@ export default function Produto() {
   if (!product) return <p>Produto não encontrado.</p>;
 
   const handleAddToCart = (product: Product) => {
+    if (!user.user){
+      alert("Conect-se a uma conta para adicionar item ao carrinho")
+      navigate("/login")
+    }
+
     if (product) {
       dispatch(
         addItemToCart({

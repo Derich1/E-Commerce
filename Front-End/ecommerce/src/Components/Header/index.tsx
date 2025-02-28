@@ -14,7 +14,7 @@ type HeaderProps = {
   categories: string[];
 };
 
-const Header: React.FC<HeaderProps> = ({ categories }) => {
+const Header: React.FC<HeaderProps> = () => {
 
   const cartItems = useSelector((state: RootState) => state.cart.items)
   const dispatch = useDispatch()
@@ -63,23 +63,6 @@ const Header: React.FC<HeaderProps> = ({ categories }) => {
           </Link>
         </div>
       </div>
-
-      <nav className="bg-gray-100 py-2">
-        <div className="container mx-auto">
-          <ul className="flex space-x-6 justify-center">
-            {categories.map((category, index) => (
-              <li key={index}>
-                <a 
-                  href={`#${category.toLowerCase()}`} 
-                  className="text-gray-700 hover:text-blue-500 font-medium"
-                >
-                  {category}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
 
       <CartModal
         isCartOpen={isCartOpen}

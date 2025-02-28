@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface ProdutoComprado {
-  produtoId: string;
-  quantidade: number;
+  id: string;
   nome: string;
-  precoUnitario: number;
+  precoEmCentavos: number;
+  quantidade: number;
+  imagemUrl: string;
 }
 
 interface VendaState {
@@ -17,6 +18,7 @@ interface VendaState {
   enderecoEntrega: string;
   dataVenda: string;
   preferenceId: string;
+  immediatePurchase?: ProdutoComprado | null
 }
 
 const initialState: VendaState = {
@@ -28,7 +30,8 @@ const initialState: VendaState = {
   statusPagamento: "",
   enderecoEntrega: "",
   dataVenda: "",
-  preferenceId: ""
+  preferenceId: "",
+  immediatePurchase: null
 };
 
 const vendaSlice = createSlice({
@@ -42,8 +45,14 @@ const vendaSlice = createSlice({
       state.preferenceId = action.payload;
     },
     resetVenda: () => initialState, // Reseta os dados da venda
+    setImmediatePurchase: (state, action: PayloadAction<ProdutoComprado>) => {
+      state.immediatePurchase = action.payload;
+    },
+    clearImmediatePurchase: (state) => {
+      state.immediatePurchase = null;
+    },
   },
 });
 
-export const { setVenda, setPreferenceId, resetVenda } = vendaSlice.actions;
+export const { setVenda, setPreferenceId, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
 export default vendaSlice.reducer;

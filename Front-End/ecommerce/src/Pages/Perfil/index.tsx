@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../../Redux/userSlice";
+import { toast } from "react-toastify";
 
 interface UserProfile {
   name: string;
@@ -11,14 +12,22 @@ interface UserProfile {
   datanascimento: string;
 }
 
+interface ChangePasswordFormData {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
 const Perfil: React.FC = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [activeTab, setActiveTab] = useState("perfil");
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
     const token = localStorage.getItem("token")
-
   
     useEffect(() => {
       const fetchUserData = async () => {
@@ -52,13 +61,84 @@ const Perfil: React.FC = () => {
         console.log(user)
       }
     }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    };  
   
+    const [formData, setFormData] = useState<ChangePasswordFormData>({
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    });
+
     const handleDisconnect = () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       dispatch(logout());
       setUser(null)
       navigate("/login");
+    };
+
+    const handlePasswordChange = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setSuccessMessage(null);
+  
+      const { currentPassword, newPassword, confirmNewPassword } = formData;
+  
+      // Validação: nova senha e confirmação devem ser iguais
+      if (newPassword !== confirmNewPassword) {
+        setError("A nova senha e a confirmação devem ser iguais.");
+        return;
+      }
+  
+      // Validação: nova senha não pode ser igual à senha atual
+      if (currentPassword === newPassword) {
+        setError("A nova senha não pode ser a mesma que a senha atual.");
+        return;
+      }
+
+      console.log("Token enviado:", token);
+  
+      try {
+        setLoading(true);
+        
+        const verifyResponse = await axios.post("http://localhost:8081/cliente/verify-password", 
+        { senhaAtual: currentPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+       );
+        if (!verifyResponse.data.valid) {
+          setError("A senha atual está incorreta.");
+          setLoading(false);
+          return;
+        }
+  
+        // Se a verificação passou, atualiza a senha do usuário.
+        const response = await axios.post("http://localhost:8081/cliente/change-password", 
+        { senhaNova: newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+        if (response.status === 200) {
+          toast.success("Senha alterada com sucesso!")
+          navigate("/")
+        } else {
+          setError("Erro ao alterar a senha. Tente novamente.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Erro ao alterar a senha. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
     };
     
   
@@ -135,36 +215,54 @@ const Perfil: React.FC = () => {
         {activeTab === "senha" && (
           <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
             <h1 className="cursor-pointer text-3xl font-bold text-center text-gray-800 mb-6">Alterar Senha</h1>
-            <form>
+            <form onSubmit={handlePasswordChange} className="max-w-md mx-auto p-4">
+              <h2 className="text-2xl font-bold mb-4">Alterar Senha</h2>
+              
+              {error && <div className="text-red-500 mb-4">{error}</div>}
+              {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
+              
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-600">Senha Atual</label>
+                <label className="block text-gray-700">Senha Atual</label>
                 <input
                   type="password"
-                  className="w-full mt-1 p-3 border rounded-lg"
-                  placeholder="Digite sua senha atual"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  className="w-full border px-3 py-2 rounded"
+                  required
                 />
               </div>
+              
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-600">Nova Senha</label>
+                <label className="block text-gray-700">Nova Senha</label>
                 <input
                   type="password"
-                  className="w-full mt-1 p-3 border rounded-lg"
-                  placeholder="Digite sua nova senha"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  className="w-full border px-3 py-2 rounded"
+                  required
                 />
               </div>
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-600">Confirme a Nova Senha</label>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700">Confirme a Nova Senha</label>
                 <input
                   type="password"
-                  className="w-full mt-1 p-3 border rounded-lg"
-                  placeholder="Confirme sua nova senha"
+                  name="confirmNewPassword"
+                  value={formData.confirmNewPassword}
+                  onChange={handleInputChange}
+                  className="w-full border px-3 py-2 rounded"
+                  required
                 />
               </div>
+              
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                disabled={loading}
+                className="w-full cursor-pointer bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
               >
-                Alterar Senha
+                {loading ? "Alterando..." : "Alterar Senha"}
               </button>
             </form>
           </div>

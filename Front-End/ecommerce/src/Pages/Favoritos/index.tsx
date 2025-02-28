@@ -38,8 +38,10 @@ const Favoritos = () => {
   }
 
   const fetchFavoritos = async () => {
-    if (!token) return;
-
+    if (!token) {
+      setLoading(false)
+      return;
+    }
     try {
       const response = await axios.get<Product[]>("http://localhost:8081/cliente/favoritos", {
         headers: {
@@ -123,7 +125,12 @@ const Favoritos = () => {
       {loading ? <p>Carregando...</p> : null}
       {error ? <p>{error}</p> : null}
 
-      <ul className="space-y-4">
+      {!loading && !error && favoritos.length === 0 ? (
+      <p className="text-center text-2xl my-auto text-gray-600 mt-6">
+        Você ainda não tem nenhum produto favorito.
+      </p>
+       ) : (
+        <ul className="space-y-4">
         {favoritos.map((product) => (
           <li
             key={product.id}
@@ -162,8 +169,9 @@ const Favoritos = () => {
           </li>
         ))}
       </ul>
+       )} 
     </div>
-  );
-};
+  )
+}
 
 export default Favoritos;

@@ -6,10 +6,12 @@ import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
 import br.com.derich.Cliente.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +71,25 @@ public class ClienteController {
     @GetMapping("/perfil")
     public ResponseEntity<?> buscarDadosUsuario(@RequestHeader("Authorization") String token) {
         return clienteService.buscarDadosUsuario(token);
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/verify-password")
+    public ResponseEntity<?> verificarSenha(@RequestBody SenhaRequestDTO request) {
+        boolean isValid = clienteService.verifyPassword(request.getSenhaAtual());
+        System.out.println("Senha verificada");
+        return ResponseEntity.ok(Collections.singletonMap("valid", isValid));
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/change-password")
+    public ResponseEntity<?> alterarSenha(@RequestBody MudarSenhaRequestDTO request) {
+        boolean changed = clienteService.changePassword(request.getSenhaNova());
+        if (changed) {
+            System.out.println("Senha alterada");
+            return ResponseEntity.ok(Collections.singletonMap("message", "Senha alterada com sucesso!"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("error", "Erro ao alterar senha."));
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")

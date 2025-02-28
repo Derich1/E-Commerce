@@ -11,6 +11,7 @@ import PrivateRoute from "./PrivateRoute";
 import Compra from "../Pages/Compra";
 import Pagamento from "../Pages/Pagamento";
 import StatusPage from "../Pages/StatusPage";
+import { ToastContainer } from "react-toastify";
 
 export default function AppRoutes() {
     
@@ -20,6 +21,7 @@ export default function AppRoutes() {
         <BrowserRouter>
         <div className="flex flex-col min-h-screen">
             <Header categories={categorias} />
+            <ToastContainer />
                 <main className="flex-grow">
                 <Routes>
                     <Route path="/" element={<Home />} />

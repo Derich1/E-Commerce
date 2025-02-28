@@ -26,7 +26,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ categories }) => {
 
   return (
     !esconderFiltro && (
-    <div className="fixed top-44 left-5 w-1/6 h-full z-50 p-4">
+    <div className="fixed top-25 left-5 w-1/6 h-full z-50 p-4">
         
         <h2 className="flex items-center gap-2">Filtrar <IoFilter className=""/></h2>
         <ul className="mt-[5%] ml-[5%]">

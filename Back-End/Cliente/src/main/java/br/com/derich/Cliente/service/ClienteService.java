@@ -6,13 +6,12 @@ import br.com.derich.Cliente.dto.LoginResponseDTO;
 import br.com.derich.Cliente.dto.ProdutoDTO;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.passay.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -109,6 +108,31 @@ public class ClienteService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido ou expirado");
         }
+    }
+
+    public Cliente getAuthenticatedUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println("Tentando buscar usuário com username: " + email);
+        return clienteRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+    }
+
+    public boolean verifyPassword(String senhaAtual) {
+        try {
+            Cliente cliente = getAuthenticatedUser();
+            System.out.println("Comparando senha: senhaAtual=" + senhaAtual + " | senha armazenada=" + cliente.getPassword());
+            return passwordEncoder.matches(senhaAtual, cliente.getPassword());
+        } catch (Exception e) {
+            System.out.println("Erro na verificação de senha: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean changePassword(String senhaNova) {
+        Cliente cliente = getAuthenticatedUser();
+        cliente.setPassword(passwordEncoder.encode(senhaNova));
+        clienteRepository.save(cliente);
+        return true;
     }
 
     public void adicionarProdutoFavorito(String email, String produtoId) {

@@ -5,6 +5,8 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { BiSolidHide, BiSolidShow } from "react-icons/bi";
+import { useDispatch } from "react-redux";
+import { updateUser } from "../../Redux/userSlice";
 
 interface FormData {
   name: string;
@@ -17,12 +19,12 @@ interface FormData {
 }
 
 export default function Cadastro() {
-  const [isLogado] = useState(false)
-  const Navigate = useNavigate()
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   // Mensagem de erro vinda do backend
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const dispatch = useDispatch()
 
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
@@ -33,13 +35,14 @@ export default function Cadastro() {
         },
       });
   
-      console.log(response.data);
-  
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
       }
+
+      const { token, id, nome, email } = response.data;
+      dispatch(updateUser({ token, user: { id, nome, email } }));
   
-      Navigate("/");
+      navigate("/");
     } catch (error: any) {
       console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
   
@@ -135,12 +138,8 @@ export default function Cadastro() {
   
 
   return (
-    <div>
-      {isLogado ? (
-        <div></div>
-      ) : (
-        <div className="mt-10 max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
-          <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="my-10 max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
+          <form onSubmit={handleSubmit(onSubmit)} className="mb-10">
               <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Cadastrar</h1>
 
               <div className="mb-4">
@@ -201,9 +200,9 @@ export default function Cadastro() {
                   {errors.email && <p className="text-red-500 text-sm mt-1">{String(errors.email.message)}</p>}
               </div>
 
-              <div className="mb-6">
+              <div className="mb-6 relative">
                   <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Senha"
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       {...register("password")}
@@ -215,13 +214,13 @@ export default function Cadastro() {
                     className="absolute right-3 top-3 text-gray-500"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <BiSolidHide /> : <BiSolidShow />}
+                    {showPassword ? <BiSolidShow /> : <BiSolidHide />}
                   </button>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-6 relative">
                   <input
-                      type="password"
+                      type={showPasswordConfirm ? "text" : "password"}
                       placeholder="Confirme sua Senha"
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       {...register("passwordConfirm")}
@@ -232,7 +231,7 @@ export default function Cadastro() {
                     className="absolute right-3 top-3 text-gray-500"
                     onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
                   >
-                    {showPassword ? <BiSolidHide /> : <BiSolidShow />}
+                    {showPasswordConfirm ? <BiSolidShow /> : <BiSolidHide />}
                   </button>
               </div>
 
@@ -243,13 +242,10 @@ export default function Cadastro() {
                   Cadastrar
               </button>
           </form>
-          <div className="mt-10">
+          <div className="-mt-6">
             <Link to="/login" className="text-blue-500 hover:text-blue-700 text-center">
               Já possui conta? Faça o login
             </Link>
           </div>
-      </div>
-      )}
     </div>
-  );
-}
+)}

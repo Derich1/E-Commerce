@@ -8,10 +8,13 @@ import { setPreferenceId } from "../../Redux/vendaSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
-  const totalPrice = cartItems.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
+  const immediatePurchase = useSelector((state: RootState) => state.venda.immediatePurchase);
+  const itemsToCheckout = immediatePurchase ? [immediatePurchase] : cartItems;
+  const totalPrice = itemsToCheckout.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch()
+  
 
   const [formData, setFormData] = useState({
     address: "",
@@ -58,12 +61,15 @@ const Compra: React.FC = () => {
       return;
     }
 
-    console.log(cartItems)
+    if (!user.user){
+      alert("Conect-se a uma conta para poder prosseguir com a compra")
+      navigate("/login")
+    }
 
     const vendaDTO = {
       clienteId: user.user?.id,
-      produtos: cartItems.map(item => ({
-        produtoId: item.id,
+      produtos: itemsToCheckout.map(item => ({
+        produtoId: item.id || item.id,
         quantidade: item.quantidade,
         nome: item.nome, // Nome do produto
         precoUnitario: item.precoEmCentavos / 100, // Preço do produto
@@ -76,7 +82,6 @@ const Compra: React.FC = () => {
       dataVenda: new Date().toISOString(),
       emailCliente: user.user?.email
     };
-    console.log("Payload enviado:", JSON.stringify(vendaDTO, null, 2));
 
     try {
       const response = await axios.post("http://localhost:8083/venda/criar", vendaDTO, {
@@ -86,6 +91,7 @@ const Compra: React.FC = () => {
       const vendaId = response.data.id;
       localStorage.setItem("vendaId", vendaId);
       dispatch(setPreferenceId(response.data.preferenceId))
+      // dispatch(clearImmediatePurchase());
       navigate("/pagamento");
     } catch (error) {
       setCepError("Erro ao processar a compra. Tente novamente.");
@@ -98,12 +104,12 @@ const Compra: React.FC = () => {
       <h2 className="text-2xl font-bold mb-4">Finalizar Compra</h2>
       <div className="mb-6">
         <h3 className="text-xl font-semibold">Resumo do Pedido</h3>
-        {cartItems.length === 0 ? (
+        {itemsToCheckout.length === 0 ? (
           <p>Seu carrinho está vazio.</p>
         ) : (
           <ul>
-            {cartItems.map((item) => (
-              <li key={item.id} className="flex items-center gap-4 border-b pb-4">
+            {itemsToCheckout.map((item) => (
+              <li key={item.id || item.id} className="flex items-center gap-4 border-b pb-4">
                 <img src={item.imagemUrl} alt={item.nome} className="w-20 h-20 object-cover rounded-lg shadow" />
                 <div className="flex flex-col">
                   <p className="font-medium">{item.nome}</p>

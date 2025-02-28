@@ -34,7 +34,7 @@ export default function Login(){
       const onSubmit: SubmitHandler<FormData> = async (data) => {
         try {
           const response = await axios.post("http://localhost:8081/cliente/login", data);
-          console.log(response); 
+
           if (response.status === 200) {
             const { token, id, nome, email } = response.data;
       
