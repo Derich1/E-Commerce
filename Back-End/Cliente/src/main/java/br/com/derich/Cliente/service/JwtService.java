@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "minhaChaveSecretaSuperSeguraParaJWT123456"; // Chave secreta (use uma mais segura)
+    private static final String SECRET_KEY = "${secretKey}";
     private static final long EXPIRATION_TIME = 86400000; // 1 dia em milissegundos
 
     private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());

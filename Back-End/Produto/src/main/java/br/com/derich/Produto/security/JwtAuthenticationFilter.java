@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String secretKey = "sua_chave_secreta_super_secreta_que_deve_ser_bem_forte";
+    private final String secretKey = "${secretKey}";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .getBody();
 
                 String username = claims.getSubject();
-                if ("seu_usuario_admin".equals(username)) {
+                if ("${usuarioAdmin}".equals(username)) {
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(username, null, null));
                 }

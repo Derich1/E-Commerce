@@ -15,7 +15,7 @@ import java.util.Date;
 public class AuthController {
 
     // Garantir que apenas o servidor que gerou o JWT possa validá-lo
-    private final String secretKey = "sua_chave_secreta_super_secreta_que_deve_ser_bem_forte";
+    private final String secretKey = "${secretKey}";
 
     /**
      * Entre no endpoint /auth/login
@@ -29,7 +29,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-        if ("seu_usuario_admin".equals(request.getUsername()) && "sua_senha_forte".equals(request.getPassword())) {
+        if ("${usuarioAdmin}".equals(request.getUsername()) && "${senhaAdmin}".equals(request.getPassword())) {
             String token = Jwts.builder()
                     .setSubject(request.getUsername())
                     .setIssuedAt(new Date())

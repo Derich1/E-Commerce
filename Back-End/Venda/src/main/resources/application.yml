@@ -8,7 +8,7 @@ spring:
     name: Venda  # Nome do microsserviço
     mongodb:
       database: venda  # Banco de dados MongoDB do microsserviço
-      uri: mongodb://ecommerce-mongo-database:27018/venda
+      uri: ${mongoDBUrl}
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -22,4 +22,4 @@ eureka:
 
 mercadopago:
   access:
-    token: TEST-8948901045439209-020514-aca24c9fe05d35a793925d4cf8633506-751468139
+    token: ${tokenMP}

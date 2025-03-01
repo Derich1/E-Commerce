@@ -46,7 +46,7 @@ services:
     pull_policy: never
     container_name: "ecommerce-cliente"
     environment:
-      - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/cliente
+      - spring.data.mongodb.uri=${mongoDBCliente}
       - PORT=8081
       - DISCOVERY_HOST=service-discovery
 #      - RABBITMQ_HOST=rabbitmq
@@ -65,7 +65,7 @@ services:
     pull_policy: never
     container_name: "ecommerce-produto"
     environment:
-      - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/produto
+      - spring.data.mongodb.uri=${mongoDBProduto}
       - PORT=8082
       - DISCOVERY_HOST=service-discovery
 #      - RABBITMQ_HOST=rabbitmq
@@ -85,7 +85,7 @@ services:
     pull_policy: never
     container_name: "ecommerce-venda"
     environment:
-      - spring.data.mongodb.uri=mongodb://ecommerce-mongo-database:27017/venda
+      - spring.data.mongodb.uri=${mongoDBVenda}
       - PORT=8083
       - DISCOVERY_HOST=service-discovery
 #      - RABBITMQ_HOST=rabbitmq

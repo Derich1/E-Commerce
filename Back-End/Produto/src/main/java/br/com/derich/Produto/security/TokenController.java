@@ -12,7 +12,7 @@ import java.util.Date;
 @RestController
 public class TokenController {
 
-    private final String secretKey = "sua_chave_secreta_super_secreta_que_deve_ser_bem_forte";
+    private final String secretKey = "${secretKey}";
 
     @GetMapping("/token")
     public String generateToken() {
