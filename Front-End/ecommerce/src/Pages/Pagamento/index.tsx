@@ -32,7 +32,7 @@ const PaymentBrick: React.FC = () => {
 
     script.onload = async () => {
       if (window.MercadoPago && containerRef.current) {
-        const mp = new window.MercadoPago('TEST-7e414755-c026-434d-a4c7-7945e1158e4d', {
+        const mp = new window.MercadoPago("${mercadoPagoTeste}", {
           locale: 'pt',
         });
         const bricksBuilder = mp.bricks();
