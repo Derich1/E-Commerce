@@ -9,6 +9,7 @@ import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "${secretKey}";
+    private final String secretKey;
+    private Key key;  // Não é final agora, pois será inicializado no construtor
     private static final long EXPIRATION_TIME = 86400000; // 1 dia em milissegundos
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    public JwtService(@Value("${secret.key}") String secretKey) {
+        this.secretKey = secretKey;
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
 
     public String generateToken(String email) {
         return Jwts.builder()
