@@ -38,6 +38,7 @@ public class ClienteController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // Caso haja erro, retorna erro de autorização (401)
+            System.out.println(e.getMessage());
             return ResponseEntity.status(401).body(null);
         }
     }

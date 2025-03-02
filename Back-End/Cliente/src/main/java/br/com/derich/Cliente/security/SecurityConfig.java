@@ -35,9 +35,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
+                        .requestMatchers("/cliente/login", "/cliente/registrar", "/cliente/perfil").permitAll() // Permite login sem autenticação
+                        .anyRequest().authenticated() // Todas as outras rotas precisam de autenticação
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro apenas em rotas protegidas
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();

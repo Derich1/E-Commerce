@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../../Redux/userSlice";
 import { toast } from "react-toastify";
+import { jwtDecode } from 'jwt-decode';
 
 interface UserProfile {
   name: string;
@@ -18,6 +19,11 @@ interface ChangePasswordFormData {
   confirmNewPassword: string;
 }
 
+interface DecodedToken {
+  exp: number;  // Propriedade de expiração
+  [key: string]: any;  // Outras propriedades que o token pode ter
+}
+
 const Perfil: React.FC = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [activeTab, setActiveTab] = useState("perfil");
@@ -28,8 +34,23 @@ const Perfil: React.FC = () => {
     const dispatch = useDispatch()
 
     const token = localStorage.getItem("token")
-  
+
+    const isTokenExpired = (token: string | null): boolean => {
+      if (!token) {
+        return true; // Se o token for null ou undefined, consideramos como expirado
+      }
+      try {
+        const decoded = jwtDecode<DecodedToken>(token); // Fornecendo o tipo correto para o retorno
+        const expirationTime = decoded.exp * 1000; // A expiração vem em segundos, por isso multiplicamos por 1000
+        return Date.now() > expirationTime;
+      } catch (e) {
+        console.error('Erro ao decodificar token:', e);
+        return true; // Considera expirado se não conseguir decodificar
+      }
+    };
+
     useEffect(() => {
+      console.log(token)
       const fetchUserData = async () => {
         try {
           const response = await axios.get("http://localhost:8081/cliente/perfil", {
@@ -59,6 +80,10 @@ const Perfil: React.FC = () => {
       if (storedToken && storedUser) {
         dispatch(loginSuccess({ token: storedToken, user: JSON.parse(storedUser) }));
         console.log(user)
+      }
+
+      if (isTokenExpired(token)) {
+        handleDisconnect()
       }
     }, []);
 
@@ -273,4 +298,4 @@ const Perfil: React.FC = () => {
   };
   
   export default Perfil;
-  
+
