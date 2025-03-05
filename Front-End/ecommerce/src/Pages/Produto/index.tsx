@@ -51,6 +51,12 @@ export default function Produto() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    console.log("Logando o usuário assim que carrega:")
+    console.log(user.token)
+    console.log(user.user)
+  }, [])
+
   const handleBuyNow = (product: Product) => {
     if (!user.user) {
       alert("Conecte-se a uma conta para prosseguir com a compra");

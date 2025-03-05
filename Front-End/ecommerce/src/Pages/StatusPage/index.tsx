@@ -4,24 +4,24 @@ const StatusPage = () => {
   const { status } = useParams<{ status: string }>();
 
   const statusInfo = {
-    sucesso: {
+    approved: {
       title: "Pagamento Aprovado!",
       message: "Obrigado por sua compra! Seu pagamento foi aprovado com sucesso.",
       color: "text-green-600",
     },
-    falha: {
+    rejected: {
       title: "Pagamento Falhou!",
       message: "Ops! Algo deu errado e seu pagamento não foi aprovado. Tente novamente.",
       color: "text-red-600",
     },
-    pendente: {
+    pending: {
       title: "Pagamento Pendente!",
       message: "Seu pagamento ainda está sendo processado. Aguarde a confirmação.",
       color: "text-yellow-600",
     },
   };
 
-  const info = statusInfo[status as keyof typeof statusInfo] || statusInfo.pendente;
+  const info = statusInfo[status as keyof typeof statusInfo] || statusInfo.pending;
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 text-center p-4">

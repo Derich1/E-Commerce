@@ -4,7 +4,7 @@ import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setPreferenceId } from "../../Redux/vendaSlice";
+import { setPreferenceId, setTotal } from "../../Redux/vendaSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
@@ -74,7 +74,7 @@ const Compra: React.FC = () => {
         nome: item.nome, // Nome do produto
         precoUnitario: item.precoEmCentavos / 100, // Preço do produto
       })),
-      total: totalPrice,
+      total: totalPrice / 100,
       status: "Pendente",
       metodoPagamento: "",
       statusPagamento: "Pendente",
@@ -91,6 +91,8 @@ const Compra: React.FC = () => {
       const vendaId = response.data.id;
       localStorage.setItem("vendaId", vendaId);
       dispatch(setPreferenceId(response.data.preferenceId))
+
+      dispatch(setTotal(totalPrice / 100));
       // dispatch(clearImmediatePurchase());
       navigate("/pagamento");
     } catch (error) {
@@ -125,7 +127,7 @@ const Compra: React.FC = () => {
         <p className="text-lg font-bold mt-4">Total: R$ {(totalPrice / 100).toFixed(2)}</p>
       </div>
 
-      <form className="space-y-4">
+      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
           name="address"

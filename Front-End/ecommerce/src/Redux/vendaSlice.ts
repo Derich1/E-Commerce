@@ -44,6 +44,9 @@ const vendaSlice = createSlice({
     setPreferenceId: (state, action: PayloadAction<string>) => {
       state.preferenceId = action.payload;
     },
+    setTotal: (state, action: PayloadAction<number>) => {
+      state.total = action.payload;
+    },
     resetVenda: () => initialState, // Reseta os dados da venda
     setImmediatePurchase: (state, action: PayloadAction<ProdutoComprado>) => {
       state.immediatePurchase = action.payload;
@@ -54,5 +57,5 @@ const vendaSlice = createSlice({
   },
 });
 
-export const { setVenda, setPreferenceId, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
+export const { setVenda, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
 export default vendaSlice.reducer;

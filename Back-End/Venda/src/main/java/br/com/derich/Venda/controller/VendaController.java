@@ -1,13 +1,13 @@
 package br.com.derich.Venda.controller;
 
 import br.com.derich.DTO.VendaDTO;
-import br.com.derich.Venda.DTO.PagamentoRequestDTO;
+import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
+import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.service.VendaService;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
-import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,50 +106,20 @@ public class VendaController {
         }
     }
 
-
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping("/{id}/pagamento")
-    public ResponseEntity<?> processarPagamento(@PathVariable String id, @RequestBody PagamentoRequestDTO request) {
-        try {
-            System.out.println("Iniciando processamento para venda: " + id);
-            System.out.println("Método de pagamento recebido: " + request.getMetodoPagamento());
-
-            Payment pagamento = vendaService.processarPagamento(id, request);
-            System.out.println("Pagamento criado: " + pagamento);
-
-            if ("pix".equalsIgnoreCase(request.getMetodoPagamento())) {
-                // Valide se os dados do Pix existem
-                if (pagamento.getPointOfInteraction() == null ||
-                        pagamento.getPointOfInteraction().getTransactionData() == null) {
-                    System.out.println("Dados do Pix não encontrados na resposta do Mercado Pago");
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(Map.of("error", "Dados do Pix não gerados"));
-                }
-
-                System.out.println("QR Code: " + pagamento.getPointOfInteraction().getTransactionData().getQrCode());
-                System.out.println("QR Code Base64: " + pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64());
-
-                return ResponseEntity.ok(Map.of(
-                        "status", pagamento.getStatus(),
-                        "pix_data", Map.of(
-                                "qr_code", pagamento.getPointOfInteraction().getTransactionData().getQrCode(),
-                                "qr_code_base64", pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64()
-                        )
-                ));
-            } else {
-                return ResponseEntity.ok(Map.of("status", pagamento.getStatus()));
-            }
-
-        } catch (MPApiException ex) {
-            System.out.println("Erro MP API - Status: " + ex.getStatusCode());
-            System.out.println("Conteúdo: " + ex.getApiResponse().getContent());
-            return ResponseEntity.status(ex.getStatusCode())
-                    .body(Map.of("error", ex.getMessage()));
-        } catch (Exception ex) {
-            System.out.println("Erro inesperado: " + ex.getMessage());
-            ex.printStackTrace(); // Isso aparecerá nos logs do servidor
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Erro interno: " + ex.getMessage()));
-        }
+    @PostMapping("/processarPagamento")
+    public ResponseEntity<PaymentResponseDTO> processarPagamento(@RequestBody PagamentoCartaoRequestDTO pagamentoCartaoRequestDTO) throws Exception {
+        PaymentResponseDTO payment = vendaService.processarPagamento(pagamentoCartaoRequestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
+
+//    @CrossOrigin(origins = "*", allowedHeaders = "*")
+//    @GetMapping
+//    public ResponseEntity<List<Venda>> mostrarVendas(String idUsuario) {
+//        // Obter o id do usuário autenticado. Aqui, assumimos que o nome do usuário é o id.
+//        // Caso você tenha uma implementação customizada, adapte conforme necessário.
+//        List<Venda> vendas = vendaService.findByUserId(idUsuario);
+//
+//        return ResponseEntity.ok(orders);
+//    }
 }

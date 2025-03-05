@@ -49,8 +49,16 @@ const Perfil: React.FC = () => {
       }
     };
 
+    const formatPhoneNumber = (phone: any) => {
+    
+      // Remove todos os caracteres não numéricos
+      const phoneNumber = phone.replace(/\D/g, '');
+    
+      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7, 11)}`;
+    };
+    
+
     useEffect(() => {
-      console.log(token)
       const fetchUserData = async () => {
         try {
           const response = await axios.get("http://localhost:8081/cliente/perfil", {
@@ -219,7 +227,7 @@ const Perfil: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-600">Telefone</label>
-                <p className="mt-1 text-gray-800">{user.telefone}</p>
+                <p className="mt-1 text-gray-800">{formatPhoneNumber(user.telefone)}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-600">Data de Nascimento</label>

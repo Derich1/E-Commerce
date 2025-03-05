@@ -40,6 +40,8 @@ services:
       - ecommerce-net
     ports:
       - "80:80"  # A aplicação será servida na porta 80
+    env_file:
+      - .env
 
   cliente:
     image: cliente

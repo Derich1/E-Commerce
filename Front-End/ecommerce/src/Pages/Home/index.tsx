@@ -24,6 +24,8 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null)
     const categorias = ["Todos", "Perfumes", "Desodorantes", "Colônias", "Lábios"]
 
+    console.log("Chave MercadoPago:", import.meta.env.VITE_MERCADOPAGO);
+
     const fetchProducts = async () => {
         try {
           const response = await axios.get<Product[]>("http://localhost:8082/produto");
