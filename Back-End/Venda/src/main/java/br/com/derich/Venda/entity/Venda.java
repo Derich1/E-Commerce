@@ -27,6 +27,7 @@ public class Venda {
         private String nome;
         private int quantidade;
         private double precoUnitario;
+        private String imagemUrl;
 
         public String getProdutoId() {
             return produtoId;
@@ -58,6 +59,14 @@ public class Venda {
 
         public void setPrecoUnitario(double precoUnitario) {
             this.precoUnitario = precoUnitario;
+        }
+
+        public String getImagemUrl() {
+            return imagemUrl;
+        }
+
+        public void setImagemUrl(String imagemUrl) {
+            this.imagemUrl = imagemUrl;
         }
     }
 

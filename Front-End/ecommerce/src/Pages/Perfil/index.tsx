@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../../Redux/userSlice";
 import { toast } from "react-toastify";
 import { jwtDecode } from 'jwt-decode';
+import { format } from "date-fns";
 
 interface UserProfile {
   name: string;
@@ -24,12 +25,31 @@ interface DecodedToken {
   [key: string]: any;  // Outras propriedades que o token pode ter
 }
 
+interface Produto {
+  nome: string;
+  precoUnitario: number;
+  quantidade: number;
+  imagemUrl: string;
+}
+
+interface Venda {
+  id: string;
+  dataVenda: Date; // ou Date, dependendo de como você trabalha com a data
+  produtos: Produto[];
+  total: number;
+  enderecoEntrega: string;
+  metodoPagamento: string;
+  status: string;
+}
+
+
 const Perfil: React.FC = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [activeTab, setActiveTab] = useState("perfil");
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [vendas, setVendas] = useState<Venda[]>([])
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
@@ -48,6 +68,10 @@ const Perfil: React.FC = () => {
         return true; // Considera expirado se não conseguir decodificar
       }
     };
+
+    const formatId = (id: any) => {
+      return parseInt(id.split("-")[0], 16);
+    }
 
     const formatPhoneNumber = (phone: any) => {
     
@@ -95,6 +119,13 @@ const Perfil: React.FC = () => {
       }
     }, []);
 
+    useEffect(() => {
+      if (activeTab === "pedidos") {
+        handlePedidos();
+      }
+    }, [activeTab]);
+    
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     };  
@@ -112,6 +143,21 @@ const Perfil: React.FC = () => {
       setUser(null)
       navigate("/login");
     };
+
+    const handlePedidos = async () => {
+      const email = user?.email
+
+      try {
+        const response = await axios.get("http://localhost:8083/venda/pedidos", {
+          params: { email: email }
+        });
+        console.log("Resposta pedidos: ", response.data)
+        setVendas(response.data)
+
+      } catch (e) {
+        console.log(e)
+      }
+    }
 
     const handlePasswordChange = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -241,9 +287,65 @@ const Perfil: React.FC = () => {
         {activeTab === "pedidos" && (
           <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
             <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Meus Pedidos</h1>
-            <p className="text-center text-gray-600">Nenhum pedido encontrado.</p>
+            {vendas.length > 0 ? (
+              <ul className="space-y-4">
+                {vendas.map((venda) => (
+                  <li key={venda.id} className="border p-4 rounded-lg shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-xl font-semibold text-gray-700">
+                        Pedido: {formatId(venda.id)}
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Data: {format(venda.dataVenda, "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                    <ul className="space-y-2">
+                      {venda.produtos.map((produto, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-center gap-4 p-2 border-b last:border-b-0"
+                        >
+                          <img
+                            src={produto.imagemUrl}
+                            alt={produto.nome}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <div className="flex-1">
+                            <p className="text-lg font-medium text-gray-800">
+                              {produto.nome}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Quantidade: {produto.quantidade}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Preço: R$ {produto.precoUnitario}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Campos adicionais na última linha de cada pedido */}
+                    <div className="mt-4">
+                      <span className="block text-sm text-gray-800">
+                        Total: R$ {venda.total}
+                      </span>
+                      <span className="block text-sm text-gray-800">
+                        Método de pagamento: {venda.metodoPagamento}
+                      </span>
+                      <span className="block text-sm text-gray-800">
+                        Status: {venda.status}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-gray-600">Nenhum pedido encontrado.</p>
+            )}
           </div>
+          
         )}
+
 
         {activeTab === "senha" && (
           <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">

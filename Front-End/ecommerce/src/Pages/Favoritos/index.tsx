@@ -42,6 +42,7 @@ const Favoritos = () => {
       setLoading(false)
       return;
     }
+
     try {
       const response = await axios.get<Product[]>("http://localhost:8081/cliente/favoritos", {
         headers: {
@@ -59,9 +60,14 @@ const Favoritos = () => {
       setLoading(false);
     } catch (err) {
       setError("Erro ao buscar favoritos");
+      console.log("Erro recebido: ", err)
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    console.log("Token: ", token)
+  }, [])
 
   useEffect(() => {
     fetchFavoritos();

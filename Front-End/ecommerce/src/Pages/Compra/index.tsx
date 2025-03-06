@@ -73,6 +73,7 @@ const Compra: React.FC = () => {
         quantidade: item.quantidade,
         nome: item.nome, // Nome do produto
         precoUnitario: item.precoEmCentavos / 100, // Preço do produto
+        imagemUrl: item.imagemUrl
       })),
       total: totalPrice / 100,
       status: "Pendente",

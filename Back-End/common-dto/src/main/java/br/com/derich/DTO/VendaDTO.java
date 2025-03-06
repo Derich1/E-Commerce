@@ -100,6 +100,7 @@ public class VendaDTO implements Serializable {
         private int quantidade;
         private String nome;
         private double precoUnitario;
+        private String imagemUrl;
 
 
         public String getProdutoId() {
@@ -132,6 +133,14 @@ public class VendaDTO implements Serializable {
 
         public void setPrecoUnitario(double precoUnitario) {
             this.precoUnitario = precoUnitario;
+        }
+
+        public String getImagemUrl() {
+            return imagemUrl;
+        }
+
+        public void setImagemUrl(String imagemUrl) {
+            this.imagemUrl = imagemUrl;
         }
     }
 

@@ -4,6 +4,7 @@ import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.entity.Venda;
+import br.com.derich.Venda.repository.IVendaRepository;
 import br.com.derich.Venda.service.VendaService;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
@@ -11,6 +12,7 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.preference.Preference;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,9 @@ public class VendaController {
 
     @Autowired
     private VendaService vendaService;
+
+    @Autowired
+    private IVendaRepository vendaRepository;
 
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate;
@@ -113,13 +118,12 @@ public class VendaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
 
-//    @CrossOrigin(origins = "*", allowedHeaders = "*")
-//    @GetMapping
-//    public ResponseEntity<List<Venda>> mostrarVendas(String idUsuario) {
-//        // Obter o id do usuário autenticado. Aqui, assumimos que o nome do usuário é o id.
-//        // Caso você tenha uma implementação customizada, adapte conforme necessário.
-//        List<Venda> vendas = vendaService.findByUserId(idUsuario);
-//
-//        return ResponseEntity.ok(orders);
-//    }
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @GetMapping("/pedidos")
+    public ResponseEntity<List<Venda>> mostrarVendas(String email) {
+
+        List<Venda> vendas = vendaRepository.findByEmailClienteOrderByDataVendaDesc(email);
+
+        return ResponseEntity.ok(vendas);
+    }
 }

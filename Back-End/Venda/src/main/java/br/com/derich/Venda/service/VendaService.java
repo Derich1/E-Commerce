@@ -57,6 +57,7 @@ public class VendaService {
                     produto.setQuantidade(dto.getQuantidade());
                     produto.setNome(dto.getNome());
                     produto.setPrecoUnitario(dto.getPrecoUnitario());
+                    produto.setImagemUrl(dto.getImagemUrl());
                     return produto;
                 })
                 .collect(Collectors.toList());
