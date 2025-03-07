@@ -9,6 +9,7 @@ interface ProdutoComprado {
 }
 
 interface VendaState {
+  vendaId: string;
   clienteId: string;
   produtos: ProdutoComprado[];
   total: number;
@@ -22,6 +23,7 @@ interface VendaState {
 }
 
 const initialState: VendaState = {
+  vendaId: "",
   clienteId: "",
   produtos: [],
   total: 0,
@@ -41,6 +43,9 @@ const vendaSlice = createSlice({
     setVenda: (state, action: PayloadAction<VendaState>) => {
       return { ...state, ...action.payload };
     },
+    setVendaId: (state, action: PayloadAction<string>) => {
+      state.vendaId = action.payload;
+    },
     setPreferenceId: (state, action: PayloadAction<string>) => {
       state.preferenceId = action.payload;
     },
@@ -57,5 +62,5 @@ const vendaSlice = createSlice({
   },
 });
 
-export const { setVenda, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
+export const { setVenda, setVendaId, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
 export default vendaSlice.reducer;

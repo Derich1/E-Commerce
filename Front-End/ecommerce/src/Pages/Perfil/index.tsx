@@ -50,10 +50,24 @@ const Perfil: React.FC = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [vendas, setVendas] = useState<Venda[]>([])
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
     const token = localStorage.getItem("token")
+
+    const paymentMethods: any = {
+      credit_card: "Cartão de Crédito",
+      debit_card: "Cartão de Débito",
+      boleto: "Boleto Bancário",
+      pix: "Pix"
+    };
+
+    const capitalizeFirstLetter = (string: string) => {
+      return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+    };
+    
 
     const isTokenExpired = (token: string | null): boolean => {
       if (!token) {
@@ -124,6 +138,12 @@ const Perfil: React.FC = () => {
         handlePedidos();
       }
     }, [activeTab]);
+
+    const showMore = () => {
+      if (hasMore) {
+        setPage((prevPage) => prevPage + 1); // Incrementa o número da página
+      }
+    };
     
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,19 +165,33 @@ const Perfil: React.FC = () => {
     };
 
     const handlePedidos = async () => {
+      setLoading(true);
       const email = user?.email
 
       try {
         const response = await axios.get("http://localhost:8083/venda/pedidos", {
-          params: { email: email }
+          params: {
+            email: email,
+            page: page,
+            size: 10,
+          },
         });
         console.log("Resposta pedidos: ", response.data)
-        setVendas(response.data)
+        // Atualiza o estado com as vendas carregadas
+        setVendas((prevVendas) => [...prevVendas, ...response.data.content]);
 
+        // Se a resposta contiver menos de 10 itens, significa que não há mais resultados
+        setHasMore(response.data.content.length === 10);
       } catch (e) {
         console.log(e)
+      } finally {
+        setLoading(false);
       }
     }
+
+    useEffect(() => {
+      handlePedidos();
+    }, [page]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -330,18 +364,38 @@ const Perfil: React.FC = () => {
                         Total: R$ {venda.total}
                       </span>
                       <span className="block text-sm text-gray-800">
-                        Método de pagamento: {venda.metodoPagamento}
+                        Método de pagamento: {paymentMethods[venda.metodoPagamento || venda.metodoPagamento]}
                       </span>
                       <span className="block text-sm text-gray-800">
-                        Status: {venda.status}
+                        Status: {capitalizeFirstLetter(venda.status)}
                       </span>
                     </div>
                   </li>
                 ))}
               </ul>
+              
             ) : (
               <p className="text-center text-gray-600">Nenhum pedido encontrado.</p>
             )}
+
+            {loading ? (
+                    <p className="text-center text-gray-600">Carregando...</p>
+                  ) : (
+                    hasMore && (
+                      <div className="text-center mt-4">
+                        <button
+                          onClick={showMore}
+                          className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Mostrar mais
+                        </button>
+                      </div>
+                    )
+                  )}
+
+                  {!hasMore && (
+                    <p className="text-center text-gray-600 mt-4">Não há mais pedidos.</p>
+              )}
           </div>
           
         )}

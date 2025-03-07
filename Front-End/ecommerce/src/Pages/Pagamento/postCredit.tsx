@@ -8,7 +8,9 @@ export async function postCredit(
     installments: number,
     email: string,
     identificationType: string,
-    identificationNumber: string
+    identificationNumber: string,
+    selectedPaymentType: string,
+    vendaId: string
 ) {
     const body = {
         token,
@@ -23,7 +25,9 @@ export async function postCredit(
                 type: identificationType,
                 number: identificationNumber
             }
-        }
+        },
+        payment_type_id: selectedPaymentType,
+        vendaId
     }
 
     console.log("Payload enviado:", JSON.stringify(body));

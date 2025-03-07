@@ -4,7 +4,7 @@ import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setPreferenceId, setTotal } from "../../Redux/vendaSlice";
+import { setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
@@ -91,6 +91,7 @@ const Compra: React.FC = () => {
 
       const vendaId = response.data.id;
       localStorage.setItem("vendaId", vendaId);
+      dispatch(setVendaId(response.data.id))
       dispatch(setPreferenceId(response.data.preferenceId))
 
       dispatch(setTotal(totalPrice / 100));

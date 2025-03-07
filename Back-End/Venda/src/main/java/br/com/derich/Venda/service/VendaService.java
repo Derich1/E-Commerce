@@ -116,6 +116,19 @@ public class VendaService {
 
             Payment createdPayment = paymentClient.create(paymentCreateRequest);
 
+            Venda venda = vendaRepository.findById(pagamentoCartaoRequestDTO.getVendaId())
+                    .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
+
+            venda.setStatus("aprovado");
+            System.out.println("Status setado para aprovado");
+            venda.setMetodoPagamento(createdPayment.getPaymentTypeId()); // Agora ele pega "credit_card", "debit_card" ou "pix"
+            System.out.println("Método de pagamento setado");
+            venda.setStatusPagamento(createdPayment.getStatus());
+            System.out.println("Status do pagamento setado para aprovado");
+
+            // Salva as alterações no banco de dados
+            vendaRepository.save(venda);
+
             return new PaymentResponseDTO(
                     createdPayment.getId(),
                     String.valueOf(createdPayment.getStatus()),

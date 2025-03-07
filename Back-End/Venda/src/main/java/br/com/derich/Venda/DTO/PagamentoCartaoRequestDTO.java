@@ -6,11 +6,15 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class PagamentoCartaoRequestDTO {
+
+    private String vendaId;
+
     @NotNull
     private String token;
 
     private String issuerId;
 
+    // Bandeira do cartão
     @NotNull
     private String paymentMethodId;
 
@@ -26,6 +30,8 @@ public class PagamentoCartaoRequestDTO {
 
     @NotNull
     private PayerDTO payer;
+
+    private String payment_type_id;
 
     public PagamentoCartaoRequestDTO() {
     }
@@ -84,5 +90,21 @@ public class PagamentoCartaoRequestDTO {
 
     public void setPayer(PayerDTO payer) {
         this.payer = payer;
+    }
+
+    public String getPayment_type_id() {
+        return payment_type_id;
+    }
+
+    public void setPayment_type_id(String payment_type_id) {
+        this.payment_type_id = payment_type_id;
+    }
+
+    public String getVendaId() {
+        return vendaId;
+    }
+
+    public void setVendaId(String vendaId) {
+        this.vendaId = vendaId;
     }
 }

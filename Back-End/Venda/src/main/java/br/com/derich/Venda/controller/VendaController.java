@@ -12,6 +12,9 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.preference.Preference;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -120,9 +123,11 @@ public class VendaController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/pedidos")
-    public ResponseEntity<List<Venda>> mostrarVendas(String email) {
+    public ResponseEntity<Page<Venda>> mostrarVendas(String email, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 
-        List<Venda> vendas = vendaRepository.findByEmailClienteOrderByDataVendaDesc(email);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("dataVenda")));
+
+        Page<Venda> vendas = vendaRepository.findByEmailClienteOrderByDataVendaDesc(email, pageable);
 
         return ResponseEntity.ok(vendas);
     }
