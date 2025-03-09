@@ -2,13 +2,21 @@ package br.com.derich.Venda.controller;
 
 import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
+import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
 import br.com.derich.Venda.service.VendaService;
+import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.common.IdentificationRequest;
+import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.client.payment.PaymentPayerRequest;
 import com.mercadopago.client.preference.*;
+import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +29,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
 @RestController
 @RequestMapping("/venda")
@@ -131,4 +139,47 @@ public class VendaController {
 
         return ResponseEntity.ok(vendas);
     }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/pix")
+    public ResponseEntity<?> pix(@RequestBody PaymentPixRequestDTO request) {
+
+        try {
+            System.out.println("Método de pagamento recebido: " + request.getPaymentMethodId());
+
+            Payment pagamento = vendaService.pix(request);
+            System.out.println("Pagamento criado: " + pagamento);
+
+
+            // Valide se os dados do Pix existem
+            if (pagamento.getPointOfInteraction() == null ||
+                    pagamento.getPointOfInteraction().getTransactionData() == null) {
+                System.out.println("Dados do Pix não encontrados na resposta do Mercado Pago");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "Dados do Pix não gerados"));
+            }
+
+                System.out.println("QR Code: " + pagamento.getPointOfInteraction().getTransactionData().getQrCode());
+                System.out.println("QR Code Base64: " + pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64());
+
+                return ResponseEntity.ok(Map.of(
+                        "status", pagamento.getStatus(),
+                        "pix_data", Map.of(
+                                "qr_code", pagamento.getPointOfInteraction().getTransactionData().getQrCode(),
+                                "qr_code_base64", pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64()
+                        )
+                ));
+        } catch (MPApiException ex) {
+            System.out.println("Erro MP API - Status: " + ex.getStatusCode());
+            System.out.println("Conteúdo: " + ex.getApiResponse().getContent());
+            return ResponseEntity.status(ex.getStatusCode())
+            .body(Map.of("error", ex.getMessage()));
+            } catch (Exception ex) {
+            System.out.println("Erro inesperado: " + ex.getMessage());
+            ex.printStackTrace(); // Isso aparecerá nos logs do servidor
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "Erro interno: " + ex.getMessage()));
+            }
+        }
+
 }
