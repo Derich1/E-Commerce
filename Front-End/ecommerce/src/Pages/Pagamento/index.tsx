@@ -22,7 +22,7 @@ const Pagamento: React.FC = () => {
   const [selectedPaymentType, setSelectedPaymentType] = useState<"credit_card" | "debit_card" | "pix" | null>(null);
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
-  const fromPostalCode = "13210750"
+  const fromPostalCode = import.meta.env.VITE_POSTALCODE
   const toPostalCode = useSelector((state: RootState) => state.endereco.cep)
   const produtoId = useSelector((state: RootState) => state.venda.produtos.map(produto => produto.id))
   const [freteResult, setFreteResult] = useState(null);
