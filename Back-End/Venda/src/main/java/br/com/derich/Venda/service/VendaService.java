@@ -4,6 +4,8 @@ import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
 import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
+import br.com.derich.Venda.DTO.melhorenvio.EntregaRequest;
+import br.com.derich.Venda.DTO.melhorenvio.FreteRequest;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
 import com.mercadopago.MercadoPagoConfig;
@@ -16,10 +18,14 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.mercadopago.client.payment.PaymentPayerRequest;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -33,6 +39,14 @@ public class VendaService {
 
     @Value("${mercadopago.access.token}")
     private String mercadoPagoAccessToken;
+
+    @Value("${melhorenvio.token}")
+    private String tokenMelhorEnvio;
+
+    @Value("${melhorenvio.email.contato}")
+    private String emailParaContato;
+
+    private String nomeAplicacao = "Ecommerce";
 
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
@@ -123,7 +137,7 @@ public class VendaService {
             Venda venda = vendaRepository.findById(pagamentoCartaoRequestDTO.getVendaId())
                     .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
-            venda.setStatus("aprovado");
+            venda.setStatus("Aprovado");
             System.out.println("Status setado para aprovado");
             venda.setMetodoPagamento(createdPayment.getPaymentTypeId()); // Agora ele pega "credit_card", "debit_card" ou "pix"
             System.out.println("Método de pagamento setado");
@@ -162,7 +176,7 @@ public class VendaService {
                 PaymentCreateRequest.builder()
                         .transactionAmount(request.getTransactionAmount())
                         .description(request.getDescription())
-                        .paymentMethodId(request.getPaymentMethodId())
+                        .paymentMethodId("Pix")
                         .dateOfExpiration(OffsetDateTime.of(request.getDateOfExpiration(), ZoneOffset.UTC))
                         .payer(
                                 PaymentPayerRequest.builder()
@@ -181,12 +195,12 @@ public class VendaService {
         Venda venda = vendaRepository.findById(request.getVendaId())
                 .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
-        venda.setStatus("aprovado");
+        venda.setStatus("Aprovado");
         System.out.println("Status setado para aprovado");
-        venda.setMetodoPagamento(request.getPaymentMethodId()); // Esperado "pix"
+        venda.setMetodoPagamento("Pix");
         System.out.println("Método de pagamento setado");
         venda.setStatusPagamento(createdPayment.getStatus());
-        System.out.println("Status do pagamento setado para aprovado");
+        System.out.println("Status do pagamento setado");
 
         // Salva as alterações no banco de dados
         vendaRepository.save(venda);
@@ -210,6 +224,140 @@ public class VendaService {
                 break;
         }
         vendaRepository.save(venda);
+    }
+
+    // API Melhor envio
+    public String calcularFrete(FreteRequest freteRequest) throws IOException, InterruptedException {
+
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate";
+
+        // Aqui você pode criar o JSON e fazer a requisição para Melhor Envio
+        String jsonBody = String.format("""
+            {
+                "from": {"postal_code": "%s"},
+                "to": {"postal_code": "%s"},
+                "products": [
+                    {
+                        "id": "%s",
+                        "width": %d,
+                        "height": %d,
+                        "length": %d,
+                        "weight": %d,
+                        "insurance_value": %d,
+                        "quantity": %d
+                    }
+                ]
+            }
+        """, freteRequest.getFromPostalCode(), freteRequest.getToPostalCode(), freteRequest.getProdutoId(), freteRequest.getWidth(), freteRequest.getHeight(), freteRequest.getLength(),
+                freteRequest.getWeight(), freteRequest.getPrecoEmCentavos() / 100, freteRequest.getQuantidade());
+
+        // Aqui você chamaria a API do Melhor Envio com esse JSON
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+
+        return jsonBody; // Retornando o JSON só para teste
+    }
+
+    public String inserirFretesNoCarrinhoMelhorEnvio(EntregaRequest entregaRequest) throws IOException, InterruptedException {
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/cart";
+
+        String jsonBody = String.format("""
+            {
+              "from": {
+                "postal_code": "%s",
+                "name": "%s",
+                "address": "%s",
+                "city": "%s",
+                "document": "%s"
+              },
+              "to": {
+                "postal_code": "%s",
+                "name": "%s",
+                "address": "%s",
+                "city": "%s",
+                "document": "%s"
+              },
+              "options": {
+                "receipt": %b,
+                "own_hand": %b,
+                "reverse": %b,
+                "non_commercial": %b,
+                "insurance_value": %d
+              },
+              "service": %d,
+              "products": [
+                {
+                  "name": "%s",
+                  "quantity": "%s",
+                  "unitary_value": "%s"
+                }
+              ],
+              "volumes": [
+                {
+                  "height": %d,
+                  "width": %d,
+                  "length": %d,
+                  "weight": %d
+                }
+              ]
+            }
+            """,
+                // "from" - remetente
+                entregaRequest.getFromPostalCode(),    // Ex: "13210750"
+                entregaRequest.getFromName(),          // Ex: "Derich"
+                entregaRequest.getFromAddress(),       // Ex: "Rua hércules Malatesta"
+                entregaRequest.getFromCity(),          // Ex: "Jundiaí"
+                entregaRequest.getFromDocument(),      // Ex: "46716086854"
+
+                // "to" - destinatário
+                toPostalCode,      // Ex: "04691-030"
+                toName,            // Ex: "Iasmin"
+                toAddress,         // Ex: "Rua Álvaro Afonso"
+                toCity,            // Ex: "São Paulo"
+                toDocument,        // Ex: "41407451855"
+
+                // "options"
+                receipt,           // Ex: false
+                ownHand,           // Ex: false
+                reverse,           // Ex: false
+                nonCommercial,     // Ex: false
+                insuranceValue,    // Ex: 42
+
+                // "service"
+                service,           // Ex: 2
+
+                // "products"
+                productName,       // Ex: "Teste"
+                productQuantity,   // Ex: "1" (ou use %d se for número)
+                productUnitaryValue, // Ex: "10000" (ou %d, conforme o tipo)
+
+                // "volumes"
+                volumeHeight,      // Ex: 10
+                volumeWidth,       // Ex: 5
+                volumeLength,      // Ex: 9
+                volumeWeight       // Ex: 2
+        );
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+
+        return response.body();
     }
 
 }

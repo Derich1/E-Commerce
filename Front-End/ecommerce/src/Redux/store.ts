@@ -3,13 +3,15 @@ import productReducer from "./productSlice";
 import cartReducer from "./cartSlice"
 import vendaReducer from "./vendaSlice"
 import userReducer from "./userSlice"
+import enderecoReducer from "./enderecoSlice"
 
 export const store = configureStore({
   reducer: {
     products: productReducer,
     cart: cartReducer,
     venda: vendaReducer,
-    user: userReducer
+    user: userReducer,
+    endereco: enderecoReducer
   },
 });
 

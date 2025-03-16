@@ -6,6 +6,9 @@ interface ProdutoComprado {
   precoEmCentavos: number;
   quantidade: number;
   imagemUrl: string;
+  width: number;
+  height: number;
+  length: number;
 }
 
 interface VendaState {

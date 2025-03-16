@@ -1,10 +1,11 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { postCredit } from "./postCredit"; // Função para processar cartão
 import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
 import { useNavigate } from "react-router-dom";
 import PixPaymentForm from "./pix"; // Componente para PIX
 import { loadMercadoPago } from "@mercadopago/sdk-js";
+import axios from "axios";
 
 declare global {
   interface Window {
@@ -13,14 +14,19 @@ declare global {
 }
 
 const Pagamento: React.FC = () => {
+
   const transactionAmount = useSelector((state: RootState) => state.venda.total);
   const navigate = useNavigate();
   const cardFormRef = useRef<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  // Agora inclui "pix" no tipo:
   const [selectedPaymentType, setSelectedPaymentType] = useState<"credit_card" | "debit_card" | "pix" | null>(null);
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
+  const fromPostalCode = "13210750"
+  const toPostalCode = useSelector((state: RootState) => state.endereco.cep)
+  const produtoId = useSelector((state: RootState) => state.venda.produtos.map(produto => produto.id))
+  const [freteResult, setFreteResult] = useState(null);
+  const produtos = useSelector((state: RootState) => state.venda.produtos)
 
   // Inicializa o cardForm apenas para crédito ou débito
   useLayoutEffect(() => {
@@ -119,6 +125,34 @@ const Pagamento: React.FC = () => {
     initCardForm();
   }, [selectedPaymentType, transactionAmount, vendaId, mercadoPagoTeste, navigate]);
 
+
+  useEffect(() => {
+    const frete = async () => {
+
+      const freteRequest = {
+        produtoId,
+        fromPostalCode,
+        toPostalCode,
+        produtos
+      }
+  
+      try {
+        const response = await axios.post(
+          "http://localhost:8083/venda/calcularFrete",
+          freteRequest
+        );
+        setFreteResult(response.data);
+  
+      } catch (error) {
+        console.error("Erro ao calcular o frete:", error);
+      }
+    }
+
+    frete()
+  }, [])
+
+  
+
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
       {/* Seletor de métodos de pagamento */}
@@ -155,42 +189,45 @@ const Pagamento: React.FC = () => {
       {/* Renderiza o formulário de pagamento de acordo com o método selecionado */}
       {selectedPaymentType === "pix" ? (
         <>
-          <p>COMPONENTE PIX</p>
           <PixPaymentForm />
+          <p>{freteResult}</p>
         </>
       ) : (
-        <form
-          id="form-checkout"
-          ref={formRef}
-          className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md space-y-4 mt-6 ${
-            selectedPaymentType ? "visible" : "invisible"
-          }`}
-        >
-          <span>5031 4332 1540 6351</span>
-          <div id="form-checkout__cardNumber" className="h-10 border p-2 rounded"></div>
-          <div id="form-checkout__expirationDate" className="h-10 border p-2 rounded"></div>
-          <div id="form-checkout__securityCode" className="h-10 border p-2 rounded"></div>
-          <input type="text" id="form-checkout__cardholderName" className="w-full border p-2 rounded" />
-          <select id="form-checkout__issuer" className="w-full border p-2 rounded"></select>
-          <select
-            id="form-checkout__installments"
-            className={`w-full border p-2 rounded ${
-              selectedPaymentType === "credit_card" ? "" : "hidden"
+        <>
+          <form
+            id="form-checkout"
+            ref={formRef}
+            className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md space-y-4 mt-6 ${
+              selectedPaymentType ? "visible" : "invisible"
             }`}
-          ></select>
-          <select id="form-checkout__identificationType" className="w-full border p-2 rounded"></select>
-          <input type="text" id="form-checkout__identificationNumber" className="w-full border p-2 rounded" />
-          <input type="email" id="form-checkout__cardholderEmail" className="w-full border p-2 rounded" />
-
-          <button
-            type="submit"
-            id="form-checkout__submit"
-            className="w-full cursor-pointer bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
           >
-            Pay
-          </button>
-          <progress value="0" className="w-full">Loading...</progress>
-        </form>
+            <span>5031 4332 1540 6351</span>
+            <div id="form-checkout__cardNumber" className="h-10 border p-2 rounded"></div>
+            <div id="form-checkout__expirationDate" className="h-10 border p-2 rounded"></div>
+            <div id="form-checkout__securityCode" className="h-10 border p-2 rounded"></div>
+            <input type="text" id="form-checkout__cardholderName" className="w-full border p-2 rounded" />
+            <select id="form-checkout__issuer" className="w-full border p-2 rounded"></select>
+            <select
+              id="form-checkout__installments"
+              className={`w-full border p-2 rounded ${
+                selectedPaymentType === "credit_card" ? "" : "hidden"
+              }`}
+            ></select>
+            <select id="form-checkout__identificationType" className="w-full border p-2 rounded"></select>
+            <input type="text" id="form-checkout__identificationNumber" className="w-full border p-2 rounded" />
+            <input type="email" id="form-checkout__cardholderEmail" className="w-full border p-2 rounded" />
+
+            <button
+              type="submit"
+              id="form-checkout__submit"
+              className="w-full cursor-pointer bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
+            >
+              Pay
+            </button>
+            <progress value="0" className="w-full">Loading...</progress>
+          </form>
+          <p>{freteResult}</p>
+        </>
       )}
     </div>
   );

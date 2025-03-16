@@ -24,3 +24,8 @@ eureka:
 mercadopago:
   access:
     token: ${tokenMP}
+
+melhorenvio:
+  token: ${tokenMelhorEnvio}
+  email:
+    contato: ${emailContato}

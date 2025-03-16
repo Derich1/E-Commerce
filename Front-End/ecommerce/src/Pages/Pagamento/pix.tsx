@@ -6,7 +6,7 @@ import { clearCart } from "../../Redux/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "../../Redux/store";
 
-initMercadoPago("TEST-7e414755-c026-434d-a4c7-7945e1158e4d"); // Chave de teste
+
 
 const Pagamento: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,6 +22,9 @@ const Pagamento: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null);
   const transactionAmount = useSelector((state: RootState) => state.venda.total);
+  const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
+
+  initMercadoPago(mercadoPagoTeste)
 
   const gerarPix = async () => {
     try {
@@ -93,6 +96,23 @@ const Pagamento: React.FC = () => {
     }
   };
 
+  const handleDocumentInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove não numéricos
+
+    if (tipoDocumento === "CPF") {
+      if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3);
+      if (value.length > 7) value = value.slice(0, 7) + "." + value.slice(7);
+      if (value.length > 11) value = value.slice(0, 11) + "-" + value.slice(11);
+      setNumeroDocumento(value.slice(0, 14));
+    } else {
+      if (value.length > 2) value = value.slice(0, 2) + "." + value.slice(2);
+      if (value.length > 6) value = value.slice(0, 6) + "." + value.slice(6);
+      if (value.length > 10) value = value.slice(0, 10) + "/" + value.slice(10);
+      if (value.length > 15) value = value.slice(0, 15) + "-" + value.slice(15);
+      setNumeroDocumento(value.slice(0, 18));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mx-auto">
@@ -134,13 +154,8 @@ const Pagamento: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <label className="text-gray-700 mb-1">Número do Documento</label>
-            <input
-              type="text"
-              value={numeroDocumento}
-              onChange={(e) => setNumeroDocumento(e.target.value)}
-              required
-              className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <input type="text" value={numeroDocumento} onChange={handleDocumentInput} className="p-2 border rounded w-full" maxLength={tipoDocumento === "CPF" ? 14 : 18} />
+
           </div>
 
             <div className="flex flex-col items-center">
@@ -167,24 +182,9 @@ const Pagamento: React.FC = () => {
                     readOnly
                     className="p-2 border rounded w-full text-center mb-2"
                   />
-                  <button
-                    type="submit"
-                    className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors"
-                  >
-                    Já paguei
-                  </button>
                 </>
               )}
             </div>
-
-          {/* Botão Finalizar */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-          >
-            {loading ? "Processando..." : "Finalizar Pagamento"}
-          </button>
         </form>
       </div>
     </div>

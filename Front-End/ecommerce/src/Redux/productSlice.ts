@@ -7,6 +7,10 @@ type Product = {
   imagemUrl: string;
   marca: string;
   categoria: string;
+  width: number;
+  height: number;
+  length: number;
+  weight: number;
 };
 
 type ProductState = {
@@ -25,7 +29,7 @@ const productSlice = createSlice({
   reducers: {
     setProducts(state, action: PayloadAction<Product[]>) {
       state.allProducts = action.payload;
-      state.filteredProducts = action.payload; // Inicialmente, todos os produtos estão filtrados.
+      state.filteredProducts = action.payload;
     },
     filterProducts(state, action: PayloadAction<string>) {
       if (action.payload === "Todos") {
@@ -38,6 +42,7 @@ const productSlice = createSlice({
     },
   },
 });
+
 
 export const { setProducts, filterProducts } = productSlice.actions;
 export default productSlice.reducer;

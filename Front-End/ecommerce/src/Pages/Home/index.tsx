@@ -13,7 +13,11 @@ type Product = {
     imagemUrl: string;
     marca: string;
     categoria: string;
-}
+    width: number;
+    height: number;
+    length: number;
+    weight: number;
+};
 
 export default function Home() {
 

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
+import { setCep } from "../../Redux/enderecoSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
@@ -37,7 +38,8 @@ const Compra: React.FC = () => {
     setFormData({ ...formData, [name]: formattedCep });
 
     if (formattedCep.length === 9) {
-      validarCep(formattedCep);
+      validarCep(formattedCep)
+      dispatch(setCep(formattedCep))
     } else {
       setCepError("Digite um CEP válido.");
     }

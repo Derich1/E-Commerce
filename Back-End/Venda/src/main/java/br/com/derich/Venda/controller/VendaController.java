@@ -4,16 +4,11 @@ import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
 import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
+import br.com.derich.Venda.DTO.melhorenvio.*;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
 import br.com.derich.Venda.service.VendaService;
-import com.mercadopago.MercadoPagoConfig;
-import com.mercadopago.client.common.IdentificationRequest;
-import com.mercadopago.client.payment.PaymentClient;
-import com.mercadopago.client.payment.PaymentCreateRequest;
-import com.mercadopago.client.payment.PaymentPayerRequest;
 import com.mercadopago.client.preference.*;
-import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
@@ -28,9 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 
 @RestController
@@ -180,6 +174,26 @@ public class VendaController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "Erro interno: " + ex.getMessage()));
             }
-        }
+    }
+
+    // Melhor envio
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/calcularFrete")
+    public ResponseEntity<?> calcularFrete(@RequestBody FreteRequest request) throws IOException, InterruptedException {
+        String resposta = vendaService.calcularFrete(request);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+//    Inserir Fretes no carrinho
+//
+//    Compra de fretes
+//
+//    Geração de etiquetas
+//
+//    Impressão de etiquetas
+
+//    Rastreio de envios
 
 }

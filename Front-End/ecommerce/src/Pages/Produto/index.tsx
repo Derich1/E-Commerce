@@ -15,8 +15,13 @@ type Product = {
   precoEmCentavos: number;
   imagemUrl: string;
   marca: string;
-  descricao: string;
+  categoria: string;
+  width: number;
+  height: number;
+  length: number;
+  weight: number;
   isFavorited?: boolean;
+  descricao: string;
 };
 
 type ProdutoComprado = {
@@ -25,6 +30,9 @@ type ProdutoComprado = {
   precoEmCentavos: number;
   quantidade: number;
   imagemUrl: string;
+  width: number;
+  height: number;
+  length: number;
 }
 
 export default function Produto() {
@@ -70,7 +78,10 @@ export default function Produto() {
       quantidade: 1, // Compra imediata assume quantidade 1
       nome: product.nome, 
       precoEmCentavos: product.precoEmCentavos, 
-      imagemUrl: product.imagemUrl
+      imagemUrl: product.imagemUrl,
+      width: product.width,
+      height: product.height,
+      length: product.length
     };
   
     // Armazena temporariamente o produto para compra imediata
