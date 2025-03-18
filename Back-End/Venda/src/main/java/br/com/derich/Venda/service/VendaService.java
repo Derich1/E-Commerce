@@ -16,6 +16,7 @@ import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,8 @@ public class VendaService {
     private String emailParaContato;
 
     private String nomeAplicacao = "Ecommerce";
+
+    Dotenv dotenv = Dotenv.load();
 
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
@@ -290,7 +293,7 @@ public class VendaService {
                 "own_hand": %b,
                 "reverse": %b,
                 "non_commercial": %b,
-                "insurance_value": %d
+                "insurance_value": %.2f
               },
               "service": %d,
               "products": [
@@ -305,45 +308,22 @@ public class VendaService {
                   "height": %d,
                   "width": %d,
                   "length": %d,
-                  "weight": %d
+                  "weight": %.2f
                 }
               ]
             }
             """,
                 // "from" - remetente
-                entregaRequest.getFromPostalCode(),    // Ex: "13210750"
-                entregaRequest.getFromName(),          // Ex: "Derich"
-                entregaRequest.getFromAddress(),       // Ex: "Rua hércules Malatesta"
-                entregaRequest.getFromCity(),          // Ex: "Jundiaí"
-                entregaRequest.getFromDocument(),      // Ex: "46716086854"
+                dotenv.get("POSTAL_CODE"),
+                dotenv.get("NAME"),
+                dotenv.get("ADDRESS"),
+                dotenv.get("CITY"),
+                dotenv.get("DOCUMENT"),
 
-                // "to" - destinatário
-                toPostalCode,      // Ex: "04691-030"
-                toName,            // Ex: "Iasmin"
-                toAddress,         // Ex: "Rua Álvaro Afonso"
-                toCity,            // Ex: "São Paulo"
-                toDocument,        // Ex: "41407451855"
-
-                // "options"
-                receipt,           // Ex: false
-                ownHand,           // Ex: false
-                reverse,           // Ex: false
-                nonCommercial,     // Ex: false
-                insuranceValue,    // Ex: 42
-
-                // "service"
-                service,           // Ex: 2
-
-                // "products"
-                productName,       // Ex: "Teste"
-                productQuantity,   // Ex: "1" (ou use %d se for número)
-                productUnitaryValue, // Ex: "10000" (ou %d, conforme o tipo)
-
-                // "volumes"
-                volumeHeight,      // Ex: 10
-                volumeWidth,       // Ex: 5
-                volumeLength,      // Ex: 9
-                volumeWeight       // Ex: 2
+                entregaRequest.getToPostalCode(), entregaRequest.getToName(), entregaRequest.getToAddress(), entregaRequest.getToCity(), entregaRequest.getToDocument(),
+                entregaRequest.isReceipt(), entregaRequest.isOwnHand(), entregaRequest.isReverse(), entregaRequest.isNonCommercial(), entregaRequest.getInsuranceValue(),
+                entregaRequest.getService(), entregaRequest.getProductName(), entregaRequest.getProductQuantity(), entregaRequest.getProductUnitaryValue(),
+                entregaRequest.getVolumeHeight(), entregaRequest.getVolumeWidth(), entregaRequest.getVolumeLength(), entregaRequest.getVolumeWeight()
         );
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -357,6 +337,100 @@ public class VendaService {
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println(response.body());
 
+        return response.body();
+    }
+
+    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
+    public String comprarFretesNoCarrinhoMelhorEnvio(String id) throws IOException, InterruptedException {
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/checkout";
+
+        String jsonBody = String.format("""
+            {
+                "orders": "%s"
+            }
+        """, id);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+        return response.body();
+    }
+
+    // Após comprar as etiquetas, é necessário gerar as etiquetas antes de imprimir e realizar a postagem das mesmas.
+    // Para isto, basta realizar a requisição informando o id da etiqueta de envio.
+    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
+    public String geracaoDeEtiquetas(String id) throws IOException, InterruptedException {
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/generate";
+
+        String jsonBody = String.format("""
+            {
+                "orders": "%s"
+            }
+        """, id);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+        return response.body();
+    }
+
+    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
+    public String imprimirEtiquetas(String id) throws IOException, InterruptedException {
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/print";
+
+        String jsonBody = String.format("""
+            {
+                "orders": "%s"
+            }
+        """, id);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+        return response.body();
+    }
+
+    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
+    public String rastrearEnvio(String id) throws IOException, InterruptedException {
+        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/tracking";
+
+        String jsonBody = String.format("""
+            {
+                "orders": "%s"
+            }
+        """, id);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlRequisicao))
+                .header("Accept", "application/json")
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + (emailParaContato))
+                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
         return response.body();
     }
 

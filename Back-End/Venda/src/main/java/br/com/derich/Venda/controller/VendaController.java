@@ -186,14 +186,43 @@ public class VendaController {
         return ResponseEntity.ok(resposta);
     }
 
-//    Inserir Fretes no carrinho
-//
-//    Compra de fretes
-//
-//    Geração de etiquetas
-//
-//    Impressão de etiquetas
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/inserirFrete")
+    public ResponseEntity<?> inserirFrete(@RequestBody EntregaRequest request) throws IOException, InterruptedException {
+        String resposta = vendaService.inserirFretesNoCarrinhoMelhorEnvio(request);
 
-//    Rastreio de envios
+        return ResponseEntity.ok(resposta);
+    }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/comprarFrete")
+    public ResponseEntity<?> comprarFrete(@RequestBody String id) throws IOException, InterruptedException {
+        String resposta = vendaService.comprarFretesNoCarrinhoMelhorEnvio(id);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/gerarEtiqueta")
+    public ResponseEntity<?> gerarEtiqueta(@RequestBody String id) throws IOException, InterruptedException {
+        String resposta = vendaService.geracaoDeEtiquetas(id);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/gerarEtiqueta")
+    public ResponseEntity<?> imprimirEtiquetas(@RequestBody String id) throws IOException, InterruptedException {
+        String resposta = vendaService.imprimirEtiquetas(id);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/gerarEtiqueta")
+    public ResponseEntity<?> rastrearEnvio(@RequestBody String id) throws IOException, InterruptedException {
+        String resposta = vendaService.rastrearEnvio(id);
+
+        return ResponseEntity.ok(resposta);
+    }
 }
