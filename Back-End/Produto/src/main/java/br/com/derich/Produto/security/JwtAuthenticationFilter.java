@@ -1,5 +1,6 @@
 package br.com.derich.Produto.security;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -16,7 +17,10 @@ import java.nio.charset.StandardCharsets;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String secretKey = "${secretKey}";
+    Dotenv dotenv = Dotenv.load();
+
+    private final String secretKey = dotenv.get("secretKey");
+    private String usuario = dotenv.get("usuarioAdmin");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .getBody();
 
                 String username = claims.getSubject();
-                if ("${usuarioAdmin}".equals(username)) {
+                if (usuario.equals(username)) {
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(username, null, null));
                 }

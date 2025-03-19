@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
 import { setCep } from "../../Redux/enderecoSlice";
+import { setFretes } from "../../Redux/freteSlice";
 
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
@@ -15,6 +16,7 @@ const Compra: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch()
+  const produtos = useSelector((state: RootState) => state.venda.produtos)
   
 
   const [formData, setFormData] = useState({
@@ -59,22 +61,22 @@ const Compra: React.FC = () => {
   };
 
   const finalizarCompra = async () => {
-    if (cepError || formData.address.length < 9) {
-      return;
+    // Validações iniciais
+    if (cepError || formData.address.length < 9) return;
+  
+    if (!user.user) {
+      alert("Conect-se a uma conta para poder prosseguir com a compra");
+      return navigate("/login");
     }
-
-    if (!user.user){
-      alert("Conect-se a uma conta para poder prosseguir com a compra")
-      navigate("/login")
-    }
-
+  
+    // Montagem dos dados
     const vendaDTO = {
       clienteId: user.user?.id,
       produtos: itemsToCheckout.map(item => ({
-        produtoId: item.id || item.id,
+        produtoId: item.id,
         quantidade: item.quantidade,
-        nome: item.nome, // Nome do produto
-        precoUnitario: item.precoEmCentavos / 100, // Preço do produto
+        nome: item.nome,
+        precoUnitario: item.precoEmCentavos / 100,
         imagemUrl: item.imagemUrl
       })),
       total: totalPrice / 100,
@@ -83,27 +85,55 @@ const Compra: React.FC = () => {
       statusPagamento: "Pendente",
       enderecoEntrega: formData.address,
       dataVenda: new Date().toISOString(),
-      emailCliente: user.user?.email
+      emailCliente: user.user?.email,
+      statusEtiqueta: "Pendente"
     };
+  
+    const freteRequest = {
+      toPostalCode: formData.address,
+      products: produtos.map(p => ({
+        id: p.id,
+        width: p.width,
+        height: p.height,
+        length: p.length,
+        weight: p.weight,
+        precoEmCentavos: p.precoEmCentavos,
+        quantidade: p.quantidade
+      }))
+    };
+    
 
+    console.log("Payload enviado para calcularFrete:", JSON.stringify(freteRequest, null, 2));
+  
     try {
-      const response = await axios.post("http://localhost:8083/venda/criar", vendaDTO, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const vendaId = response.data.id;
-      localStorage.setItem("vendaId", vendaId);
-      dispatch(setVendaId(response.data.id))
-      dispatch(setPreferenceId(response.data.preferenceId))
-
+      // Chamada para criar a venda
+      const { data: vendaResponse } = await axios.post(
+        "http://localhost:8083/venda/criar",
+        vendaDTO,
+        { headers: { "Content-Type": "application/json" } }
+      );
+  
+      // Armazenamento e dispatch dos dados da venda
+      localStorage.setItem("vendaId", vendaResponse.id);
+      dispatch(setVendaId(vendaResponse.id));
+      dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
-      // dispatch(clearImmediatePurchase());
+  
+      // Chamada para calcular o frete (se necessário, pode ser feita de forma independente)
+      const response = await axios.post(
+        "http://localhost:8083/venda/calcularFrete",
+        freteRequest,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      console.log("Resposta do backend:", response.data);
+      // Navega para a página de pagamento após a conclusão de tudo
+      dispatch(setFretes(response.data))
       navigate("/pagamento");
-    } catch (error) {
+    } catch (error: any) {
       setCepError("Erro ao processar a compra. Tente novamente.");
-      console.error(error);
+      console.error("Erro ao calcular frete:", error.response?.data || error.message);
     }
-  };
+  };  
 
   return (
     <div className="mt-10 max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">

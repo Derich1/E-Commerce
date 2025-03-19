@@ -33,6 +33,7 @@ type ProdutoComprado = {
   width: number;
   height: number;
   length: number;
+  weight: number;
 }
 
 export default function Produto() {
@@ -81,7 +82,8 @@ export default function Produto() {
       imagemUrl: product.imagemUrl,
       width: product.width,
       height: product.height,
-      length: product.length
+      length: product.length,
+      weight: product.weight
     };
   
     // Armazena temporariamente o produto para compra imediata

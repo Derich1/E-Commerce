@@ -1,6 +1,7 @@
 package br.com.derich.Produto.security;
 
 import br.com.derich.Produto.security.LoginRequest;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -14,8 +15,14 @@ import java.util.Date;
 @RequestMapping("/auth")
 public class AuthController {
 
+    Dotenv dotenv = Dotenv.load();
+
     // Garantir que apenas o servidor que gerou o JWT possa validá-lo
-    private final String secretKey = "${secretKey}";
+    private final String secretKey = dotenv.get("secretKey");
+
+    private String usuario = dotenv.get("usuarioAdmin");
+
+    private String senha = dotenv.get("senhaAdmin");
 
     /**
      * Entre no endpoint /auth/login
@@ -29,7 +36,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-        if ("${usuarioAdmin}".equals(request.getUsername()) && "${senhaAdmin}".equals(request.getPassword())) {
+        if (usuario.equals(request.getUsername()) && senha.equals(request.getPassword())) {
             String token = Jwts.builder()
                     .setSubject(request.getUsername())
                     .setIssuedAt(new Date())

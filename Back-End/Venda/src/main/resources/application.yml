@@ -26,6 +26,6 @@ mercadopago:
     token: ${tokenMP}
 
 melhorenvio:
-  token: ${tokenMelhorEnvio}
+  token: ${tokenME}
   email:
     contato: ${emailContato}

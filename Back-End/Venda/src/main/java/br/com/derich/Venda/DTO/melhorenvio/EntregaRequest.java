@@ -7,6 +7,8 @@ public class EntregaRequest {
     private String toAddress;
     private String toCity;
     private String toDocument;
+    private Integer toNumber;
+    private String toDistrict;
 
     // Opções
     private boolean receipt;
@@ -67,6 +69,22 @@ public class EntregaRequest {
 
     public void setToDocument(String toDocument) {
         this.toDocument = toDocument;
+    }
+
+    public Integer getToNumber() {
+        return toNumber;
+    }
+
+    public void setToNumber(Integer toNumber) {
+        this.toNumber = toNumber;
+    }
+
+    public String getToDistrict() {
+        return toDistrict;
+    }
+
+    public void setToDistrict(String toDistrict) {
+        this.toDistrict = toDistrict;
     }
 
     public boolean isReceipt() {

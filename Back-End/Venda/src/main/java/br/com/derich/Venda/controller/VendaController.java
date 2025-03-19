@@ -211,7 +211,7 @@ public class VendaController {
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping("/gerarEtiqueta")
+    @PostMapping("/imprimirEtiqueta")
     public ResponseEntity<?> imprimirEtiquetas(@RequestBody String id) throws IOException, InterruptedException {
         String resposta = vendaService.imprimirEtiquetas(id);
 
@@ -219,7 +219,7 @@ public class VendaController {
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping("/gerarEtiqueta")
+    @PostMapping("/rastrearEnvio")
     public ResponseEntity<?> rastrearEnvio(@RequestBody String id) throws IOException, InterruptedException {
         String resposta = vendaService.rastrearEnvio(id);
 

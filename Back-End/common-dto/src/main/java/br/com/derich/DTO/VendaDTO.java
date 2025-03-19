@@ -18,6 +18,7 @@ public class VendaDTO implements Serializable {
     private String enderecoEntrega;
     private String dataVenda;
     private String emailCliente;
+    private String statusEtiqueta;
 
     // Construtores vazios para que o RabbitMQ consiga desserializar a mensagem
 
@@ -150,5 +151,13 @@ public class VendaDTO implements Serializable {
 
     public void setEmailCliente(String emailCliente) {
         this.emailCliente = emailCliente;
+    }
+
+    public String getStatusEtiqueta() {
+        return statusEtiqueta;
+    }
+
+    public void setStatusEtiqueta(String statusEtiqueta) {
+        this.statusEtiqueta = statusEtiqueta;
     }
 }

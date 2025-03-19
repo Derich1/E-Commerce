@@ -6,8 +6,10 @@ import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.DTO.melhorenvio.EntregaRequest;
 import br.com.derich.Venda.DTO.melhorenvio.FreteRequest;
+import br.com.derich.Venda.DTO.melhorenvio.ProdutoFrete;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.PaymentClient;
@@ -19,6 +21,7 @@ import com.mercadopago.resources.payment.Payment;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.mercadopago.client.payment.PaymentPayerRequest;
 
@@ -51,6 +54,8 @@ public class VendaService {
 
     Dotenv dotenv = Dotenv.load();
 
+    private String fromPostalCode = dotenv.get("POSTAL_CODE");
+
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
 
@@ -69,6 +74,7 @@ public class VendaService {
         venda.setEnderecoEntrega(vendaDTO.getEnderecoEntrega());
         venda.setDataVenda(vendaDTO.getDataVenda());
         venda.setEmailCliente(vendaDTO.getEmailCliente());
+        venda.setStatusEtiqueta(vendaDTO.getStatusEtiqueta());
 
         // Converter ProdutoCompradoDTO para ProdutoComprado
         List<Venda.ProdutoComprado> produtos = vendaDTO.getProdutos().stream()
@@ -231,42 +237,47 @@ public class VendaService {
 
     // API Melhor envio
     public String calcularFrete(FreteRequest freteRequest) throws IOException, InterruptedException {
-
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate";
 
-        // Aqui você pode criar o JSON e fazer a requisição para Melhor Envio
-        String jsonBody = String.format("""
-            {
-                "from": {"postal_code": "%s"},
-                "to": {"postal_code": "%s"},
-                "products": [
-                    {
-                        "id": "%s",
-                        "width": %d,
-                        "height": %d,
-                        "length": %d,
-                        "weight": %d,
-                        "insurance_value": %d,
-                        "quantity": %d
-                    }
-                ]
-            }
-        """, freteRequest.getFromPostalCode(), freteRequest.getToPostalCode(), freteRequest.getProdutoId(), freteRequest.getWidth(), freteRequest.getHeight(), freteRequest.getLength(),
-                freteRequest.getWeight(), freteRequest.getPrecoEmCentavos() / 100, freteRequest.getQuantidade());
+        // Cria o mapa para a estrutura do JSON
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("from", Collections.singletonMap("postal_code", fromPostalCode));
+        jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.getToPostalCode()));
 
-        // Aqui você chamaria a API do Melhor Envio com esse JSON
+        // Constrói a lista de produtos
+        List<Map<String, Object>> productsList = new ArrayList<>();
+        for (ProdutoFrete produto : freteRequest.getProducts()) {
+            Map<String, Object> produtoMap = new HashMap<>();
+            produtoMap.put("id", produto.getId());
+            produtoMap.put("width", produto.getWidth());
+            produtoMap.put("height", produto.getHeight());
+            produtoMap.put("length", produto.getLength());
+            produtoMap.put("weight", produto.getWeight());
+            // Divide o valor do seguro por 100, conforme a API do Melhor Envio
+            produtoMap.put("insurance_value", produto.getPrecoEmCentavos() / 100);
+            produtoMap.put("quantity", produto.getQuantidade());
+            productsList.add(produtoMap);
+        }
+        jsonMap.put("products", productsList);
+
+        // Serializa o objeto para JSON
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonBody = mapper.writeValueAsString(jsonMap);
+
+        // Cria e envia a requisição HTTP
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .header("Authorization", "Bearer " + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + emailParaContato)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
+
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println(response.body());
 
-        return jsonBody; // Retornando o JSON só para teste
+        return response.body();
     }
 
     public String inserirFretesNoCarrinhoMelhorEnvio(EntregaRequest entregaRequest) throws IOException, InterruptedException {
@@ -278,6 +289,8 @@ public class VendaService {
                 "postal_code": "%s",
                 "name": "%s",
                 "address": "%s",
+                "number": "%s",
+                "district": "%s",
                 "city": "%s",
                 "document": "%s"
               },
@@ -285,6 +298,8 @@ public class VendaService {
                 "postal_code": "%s",
                 "name": "%s",
                 "address": "%s",
+                "number": "%s",
+                "district": "%s",
                 "city": "%s",
                 "document": "%s"
               },
@@ -317,10 +332,12 @@ public class VendaService {
                 dotenv.get("POSTAL_CODE"),
                 dotenv.get("NAME"),
                 dotenv.get("ADDRESS"),
+                dotenv.get("NUMBER"),
+                dotenv.get("DISTRICT"),
                 dotenv.get("CITY"),
                 dotenv.get("DOCUMENT"),
 
-                entregaRequest.getToPostalCode(), entregaRequest.getToName(), entregaRequest.getToAddress(), entregaRequest.getToCity(), entregaRequest.getToDocument(),
+                entregaRequest.getToPostalCode(), entregaRequest.getToName(), entregaRequest.getToAddress(), entregaRequest.getToNumber(), entregaRequest.getToDistrict(), entregaRequest.getToCity(), entregaRequest.getToDocument(),
                 entregaRequest.isReceipt(), entregaRequest.isOwnHand(), entregaRequest.isReverse(), entregaRequest.isNonCommercial(), entregaRequest.getInsuranceValue(),
                 entregaRequest.getService(), entregaRequest.getProductName(), entregaRequest.getProductQuantity(), entregaRequest.getProductUnitaryValue(),
                 entregaRequest.getVolumeHeight(), entregaRequest.getVolumeWidth(), entregaRequest.getVolumeLength(), entregaRequest.getVolumeWeight()
@@ -434,4 +451,25 @@ public class VendaService {
         return response.body();
     }
 
+    @Scheduled(fixedRate = 5000) // A cada 5 segundos
+    public void verificarStatusPagamento() {
+        List<Venda> vendasPendentes = vendaRepository.findByStatusPagamento("approved");
+
+        for (Venda venda : vendasPendentes) {
+            if ("Pendente".equals(venda.getStatusEtiqueta()) && "approved".equals(venda.getStatusPagamento())) {
+//                inserirFretesNoCarrinhoMelhorEnvio();
+//                comprarFretesNoCarrinhoMelhorEnvio();
+//                geracaoDeEtiquetas();
+//                imprimirEtiquetas();
+
+                // Atualiza o status da venda
+                venda.setStatusEtiqueta("Aprovado");
+                vendaRepository.save(venda);
+            } else {
+                // Se o pagamento não foi aprovado, marca a venda como erro
+                venda.setStatusEtiqueta("Erro");
+                vendaRepository.save(venda);
+            }
+        }
+    }
 }

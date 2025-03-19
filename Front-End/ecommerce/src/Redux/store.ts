@@ -4,6 +4,7 @@ import cartReducer from "./cartSlice"
 import vendaReducer from "./vendaSlice"
 import userReducer from "./userSlice"
 import enderecoReducer from "./enderecoSlice"
+import freteReducer from "./freteSlice"
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +12,8 @@ export const store = configureStore({
     cart: cartReducer,
     venda: vendaReducer,
     user: userReducer,
-    endereco: enderecoReducer
+    endereco: enderecoReducer,
+    frete: freteReducer
   },
 });
 

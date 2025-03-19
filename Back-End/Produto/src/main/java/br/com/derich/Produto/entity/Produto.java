@@ -36,17 +36,17 @@ public class Produto {
     @NotBlank(message = "Este é um campo obrigatório")
     private String categoria;
 
-    @NotBlank(message = "Este é um campo obrigatório")
-    private String width;
+    @NotNull(message = "Este é um campo obrigatório")
+    private Double width;
 
-    @NotBlank(message = "Este é um campo obrigatório")
-    private String height;
+    @NotNull(message = "Este é um campo obrigatório")
+    private Double height;
 
-    @NotBlank(message = "Este é um campo obrigatório")
-    private String length;
+    @NotNull(message = "Este é um campo obrigatório")
+    private Double length;
 
-    @NotBlank(message = "Este é um campo obrigatório")
-    private String weight;
+    @NotNull(message = "Este é um campo obrigatório")
+    private Double weight;
 
     public String getId() {
         return id;
@@ -116,35 +116,35 @@ public class Produto {
         this.categoria = categoria;
     }
 
-    public String getWidth() {
+    public Double getWidth() {
         return width;
     }
 
-    public void setWidth(String width) {
+    public void setWidth(Double width) {
         this.width = width;
     }
 
-    public String getHeight() {
+    public Double getHeight() {
         return height;
     }
 
-    public void setHeight(String height) {
+    public void setHeight(Double height) {
         this.height = height;
     }
 
-    public String getLength() {
+    public Double getLength() {
         return length;
     }
 
-    public void setLength(String length) {
+    public void setLength(Double length) {
         this.length = length;
     }
 
-    public String getWeight() {
+    public Double getWeight() {
         return weight;
     }
 
-    public void setWeight(String weight) {
+    public void setWeight(Double weight) {
         this.weight = weight;
     }
 }

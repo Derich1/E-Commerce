@@ -1,11 +1,12 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { postCredit } from "./postCredit"; // Função para processar cartão
 import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
 import { useNavigate } from "react-router-dom";
 import PixPaymentForm from "./pix"; // Componente para PIX
 import { loadMercadoPago } from "@mercadopago/sdk-js";
-import axios from "axios";
+import { setFreteSelecionado } from "../../Redux/freteSlice";
+import { useDispatch } from "react-redux";
 
 declare global {
   interface Window {
@@ -22,11 +23,17 @@ const Pagamento: React.FC = () => {
   const [selectedPaymentType, setSelectedPaymentType] = useState<"credit_card" | "debit_card" | "pix" | null>(null);
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
-  const fromPostalCode = import.meta.env.VITE_POSTALCODE
-  const toPostalCode = useSelector((state: RootState) => state.endereco.cep)
-  const produtoId = useSelector((state: RootState) => state.venda.produtos.map(produto => produto.id))
-  const [freteResult, setFreteResult] = useState(null);
+  const fretes = useSelector((state: RootState) => state.frete.fretes).filter(frete => !frete.error);
+  const freteSelecionado = useSelector((state: RootState) => state.frete.freteSelecionado);
+  const dispatch = useDispatch()  
+  const cep = useSelector((state: RootState) => state.endereco.cep)
+  const usuario = useSelector((state: RootState) => state.user.user)
+  const totalVenda = useSelector((state: RootState) => state.venda.total)
   const produtos = useSelector((state: RootState) => state.venda.produtos)
+
+  const selecionarFrete = (frete: any) => {
+    dispatch(setFreteSelecionado(frete));
+  };
 
   // Inicializa o cardForm apenas para crédito ou débito
   useLayoutEffect(() => {
@@ -125,38 +132,55 @@ const Pagamento: React.FC = () => {
     initCardForm();
   }, [selectedPaymentType, transactionAmount, vendaId, mercadoPagoTeste, navigate]);
 
-
-  useEffect(() => {
-    const frete = async () => {
-
-      const freteRequest = {
-        produtoId,
-        fromPostalCode,
-        toPostalCode,
-        produtos
-      }
-  
-      try {
-        const response = await axios.post(
-          "http://localhost:8083/venda/calcularFrete",
-          freteRequest
-        );
-        setFreteResult(response.data);
-  
-      } catch (error) {
-        console.error("Erro ao calcular o frete:", error);
-      }
-    }
-
-    frete()
-  }, [])
-
-  
+  const entregaRequest = {
+    toPostalCode: cep,
+    toName: usuario?.nome,
+    toAddress: "",
+    toCity: "",
+    toDocument: "",
+    receipt: true,
+    ownHand: false,
+    reverse: false,
+    nonCommercial: false,
+    insuranceValue: totalVenda,
+    service: "",
+    productName: produtos.map(p => p.nome),
+    productQuantity: produtos.map(p => p.quantidade),
+    productUnitaryValue: produtos.map(p => p.precoEmCentavos),
+    volumeHeight: 10,
+    volumeWidth: 15,
+    volumeLength: 20,
+    volumeWeight: 2.5
+  };
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
       {/* Seletor de métodos de pagamento */}
       <div className="mb-4 text-center">
+      <h2>Opções de Frete</h2>
+      <ul>
+          {fretes.map((frete) => (
+            <li key={frete.id} onClick={() => selecionarFrete(frete)}
+            className={`
+              p-4 mb-2 cursor-pointer rounded-lg 
+              ${freteSelecionado?.id === frete.id ? 'bg-green-100 border-2 border-green-500' : 'bg-white border border-gray-300'}
+              hover:bg-gray-100 transition-colors
+            `}>
+              <div className="flex items-center">
+                <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4" />
+                <div>
+                  <p className="font-bold text-lg">{frete.name}</p>
+                  <p className="text-gray-500">R$ {frete.price}</p>
+                  {frete.delivery_range && frete.delivery_range.min && frete.delivery_range.max && (
+                    <p className="text-sm text-gray-700 mt-2">
+                      Estimativa de entrega: {frete.delivery_range.min} - {frete.delivery_range.max} dias
+                    </p>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+      </ul>
         <h2 className="text-xl font-semibold mb-4 mt-5">Selecione o tipo de pagamento:</h2>
         <div className="flex space-x-4">
           <button
@@ -188,10 +212,7 @@ const Pagamento: React.FC = () => {
 
       {/* Renderiza o formulário de pagamento de acordo com o método selecionado */}
       {selectedPaymentType === "pix" ? (
-        <>
           <PixPaymentForm />
-          <p>{freteResult}</p>
-        </>
       ) : (
         <>
           <form
@@ -226,7 +247,6 @@ const Pagamento: React.FC = () => {
             </button>
             <progress value="0" className="w-full">Loading...</progress>
           </form>
-          <p>{freteResult}</p>
         </>
       )}
     </div>
