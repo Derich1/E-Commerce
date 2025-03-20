@@ -31,7 +31,7 @@ const Pagamento: React.FC = () => {
       const dateOfExpiration = new Date();
       dateOfExpiration.setMinutes(dateOfExpiration.getMinutes() + 30); // Expira em 30 minutos
 
-      const response = await axios.post(`http://localhost:8083/venda/pix`, {
+      const payload = {
         transactionAmount,
         paymentMethodId: "pix",
         vendaId,
@@ -44,57 +44,26 @@ const Pagamento: React.FC = () => {
           },
         },
         dateOfExpiration: dateOfExpiration.toISOString(),
-      });
-  
+      };
+      console.log("Payload enviado:", payload);
+      const response = await axios.post(`http://localhost:8083/venda/pix`, payload);
   
       setPixData({
         qrCode: response.data.pix_data.qr_code,
         code: response.data.pix_data.qr_code_base64,
       });
-  
-    } catch (error: any) {
-      setError(error.response?.data?.error || "Erro ao gerar Pix");
-    }
-  }
 
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      if (!vendaId) throw new Error("Venda não encontrada");
-
-      let requestData: any = {
-        nome,
-        sobrenome,
-        tipoDocumento,
-        numeroDocumento,
-        metodoPagamento: "pix",
-        email: user?.email,
-      };
-
-      const response = await axios.post(
-        `http://localhost:8083/venda/pix`,
-        requestData
-      );
-
-      console.log(response.data)
-      setPixData({
-        qrCode: response.data.pix_data.qr_code,
-        code: response.data.pix_data.qr_code_base64
-      });
       if (response.data.status === "approved") {
         dispatch(clearCart());
         navigate("/sucesso");
       }
-
+  
     } catch (error: any) {
-      setError(error.response?.data?.message || "Erro no pagamento");
+      setError(error.response?.data?.error || "Erro ao gerar Pix");
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDocumentInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ""); // Remove não numéricos
@@ -114,11 +83,11 @@ const Pagamento: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="h-full bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mx-auto">
         {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
         <h2 className="text-2xl font-bold mb-6 text-center">Pagamento</h2>
-        <form onSubmit={handlePayment} className="space-y-4">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
 
           {/* Informações do Cliente */}
           <div className="flex flex-col">
@@ -164,7 +133,7 @@ const Pagamento: React.FC = () => {
                   type="button"
                   onClick={gerarPix}
                   disabled={loading}
-                  className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                  className="w-full cursor-pointer bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
                 >
                   {loading ? "Gerando QR Code..." : "Gerar Pix"}
                 </button>

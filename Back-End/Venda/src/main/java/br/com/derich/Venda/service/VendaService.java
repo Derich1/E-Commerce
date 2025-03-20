@@ -9,6 +9,7 @@ import br.com.derich.Venda.DTO.melhorenvio.FreteRequest;
 import br.com.derich.Venda.DTO.melhorenvio.ProdutoFrete;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.repository.IVendaRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.common.IdentificationRequest;
@@ -19,6 +20,7 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -55,6 +57,8 @@ public class VendaService {
     Dotenv dotenv = Dotenv.load();
 
     private String fromPostalCode = dotenv.get("POSTAL_CODE");
+
+    private String etiquetaId;
 
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
@@ -185,7 +189,7 @@ public class VendaService {
                 PaymentCreateRequest.builder()
                         .transactionAmount(request.getTransactionAmount())
                         .description(request.getDescription())
-                        .paymentMethodId("Pix")
+                        .paymentMethodId("pix")
                         .dateOfExpiration(OffsetDateTime.of(request.getDateOfExpiration(), ZoneOffset.UTC))
                         .payer(
                                 PaymentPayerRequest.builder()
@@ -283,79 +287,103 @@ public class VendaService {
     public String inserirFretesNoCarrinhoMelhorEnvio(EntregaRequest entregaRequest) throws IOException, InterruptedException {
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/cart";
 
-        String jsonBody = String.format("""
-            {
-              "from": {
-                "postal_code": "%s",
-                "name": "%s",
-                "address": "%s",
-                "number": "%s",
-                "district": "%s",
-                "city": "%s",
-                "document": "%s"
-              },
-              "to": {
-                "postal_code": "%s",
-                "name": "%s",
-                "address": "%s",
-                "number": "%s",
-                "district": "%s",
-                "city": "%s",
-                "document": "%s"
-              },
-              "options": {
-                "receipt": %b,
-                "own_hand": %b,
-                "reverse": %b,
-                "non_commercial": %b,
-                "insurance_value": %.2f
-              },
-              "service": %d,
-              "products": [
-                {
-                  "name": "%s",
-                  "quantity": "%s",
-                  "unitary_value": "%s"
-                }
-              ],
-              "volumes": [
-                {
-                  "height": %d,
-                  "width": %d,
-                  "length": %d,
-                  "weight": %.2f
-                }
-              ]
-            }
-            """,
-                // "from" - remetente
-                dotenv.get("POSTAL_CODE"),
-                dotenv.get("NAME"),
-                dotenv.get("ADDRESS"),
-                dotenv.get("NUMBER"),
-                dotenv.get("DISTRICT"),
-                dotenv.get("CITY"),
-                dotenv.get("DOCUMENT"),
+        // Cria um mapa para representar a estrutura do JSON
+        Map<String, Object> jsonMap = new HashMap<>();
 
-                entregaRequest.getToPostalCode(), entregaRequest.getToName(), entregaRequest.getToAddress(), entregaRequest.getToNumber(), entregaRequest.getToDistrict(), entregaRequest.getToCity(), entregaRequest.getToDocument(),
-                entregaRequest.isReceipt(), entregaRequest.isOwnHand(), entregaRequest.isReverse(), entregaRequest.isNonCommercial(), entregaRequest.getInsuranceValue(),
-                entregaRequest.getService(), entregaRequest.getProductName(), entregaRequest.getProductQuantity(), entregaRequest.getProductUnitaryValue(),
-                entregaRequest.getVolumeHeight(), entregaRequest.getVolumeWidth(), entregaRequest.getVolumeLength(), entregaRequest.getVolumeWeight()
-        );
+        // Dados do remetente ("from") – usando variáveis de ambiente
+        Map<String, Object> fromMap = new HashMap<>();
+        fromMap.put("postal_code", dotenv.get("POSTAL_CODE"));
+        fromMap.put("name", dotenv.get("NAME"));
+        fromMap.put("address", dotenv.get("ADDRESS"));
+        fromMap.put("number", dotenv.get("NUMBER"));
+        fromMap.put("district", dotenv.get("DISTRICT"));
+        fromMap.put("city", dotenv.get("CITY"));
+        fromMap.put("document", dotenv.get("DOCUMENT"));
+
+        System.out.println("Document enviado: " + dotenv.get("DOCUMENT"));
+
+        // Dados do destinatário ("to")
+        Map<String, Object> toMap = new HashMap<>();
+        toMap.put("postal_code", entregaRequest.getToPostalCode());
+        toMap.put("name", entregaRequest.getToName());
+        toMap.put("address", entregaRequest.getToAddress());
+        toMap.put("number", entregaRequest.getToNumber());
+        toMap.put("district", entregaRequest.getToDistrict());
+        toMap.put("city", entregaRequest.getToCity());
+        toMap.put("document", entregaRequest.getToDocument());
+
+        // Opções ("options")
+        Map<String, Object> optionsMap = new HashMap<>();
+        optionsMap.put("receipt", entregaRequest.isReceipt());
+        optionsMap.put("own_hand", entregaRequest.isOwnHand());
+        optionsMap.put("reverse", entregaRequest.isReverse());
+        optionsMap.put("non_commercial", entregaRequest.isNonCommercial());
+        optionsMap.put("insurance_value", entregaRequest.getInsuranceValue());
+
+        jsonMap.put("from", fromMap);
+        jsonMap.put("to", toMap);
+        jsonMap.put("options", optionsMap);
+
+        // Serviço (pode ser um id ou outro tipo, conforme sua API)
+        jsonMap.put("service", entregaRequest.getService());
+
+        // Monta o array de produtos
+        List<Map<String, Object>> productsList = new ArrayList<>();
+        // Supondo que entregaRequest possua listas para cada propriedade de produto
+        // Ex.: List<String> productName, List<Integer> productQuantity, List<String> productUnitaryValue
+        int productCount = entregaRequest.getProductName().size();
+        for (int i = 0; i < productCount; i++) {
+            Map<String, Object> product = new HashMap<>();
+            product.put("name", entregaRequest.getProductName().get(i));
+            product.put("quantity", entregaRequest.getProductQuantity().get(i));
+            product.put("unitary_value", entregaRequest.getProductUnitaryValue().get(i));
+            productsList.add(product);
+        }
+        jsonMap.put("products", productsList);
+
+        // Monta o array de volumes – geralmente pode ser apenas um volume, mas a API espera um array
+        List<Map<String, Object>> volumesList = new ArrayList<>();
+        Map<String, Object> volume = new HashMap<>();
+        volume.put("height", entregaRequest.getVolumeHeight());
+        volume.put("width", entregaRequest.getVolumeWidth());
+        volume.put("length", entregaRequest.getVolumeLength());
+        volume.put("weight", entregaRequest.getVolumeWeight());
+        volumesList.add(volume);
+        jsonMap.put("volumes", volumesList);
+
+        // Converte o mapa em uma string JSON
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonBody = mapper.writeValueAsString(jsonMap);
+        System.out.println("JSON Enviado: " + jsonBody);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .header("Authorization", "Bearer " + tokenMelhorEnvio)
+                .header("User-Agent", nomeAplicacao + emailParaContato)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
+        System.out.println("Resposta da API: " + response.body());
+
+        JSONObject jsonResponse = new JSONObject(response.body());
+        String idEtiqueta = jsonResponse.getString("id");
+
+        // Busca a venda existente no banco de dados
+        Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.getVendaId());
+        if (vendaOptional.isPresent()) {
+            Venda venda = vendaOptional.get();
+            venda.setIdEtiqueta(idEtiqueta); // Atualiza a venda com o ID do frete
+            vendaRepository.save(venda); // Salva no banco
+            System.out.println("Venda atualizada com ID da etiqueta: " + idEtiqueta);
+        } else {
+            System.out.println("Venda não encontrada com o ID: " + entregaRequest.getVendaId());
+        }
 
         return response.body();
     }
+
 
     // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
     public String comprarFretesNoCarrinhoMelhorEnvio(String id) throws IOException, InterruptedException {
@@ -363,7 +391,7 @@ public class VendaService {
 
         String jsonBody = String.format("""
             {
-                "orders": "%s"
+                "orders": ["%s"]
             }
         """, id);
 
@@ -371,7 +399,7 @@ public class VendaService {
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("Authorization", "Bearer " + tokenMelhorEnvio)
                 .header("User-Agent", nomeAplicacao + (emailParaContato))
                 .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
@@ -388,7 +416,7 @@ public class VendaService {
 
         String jsonBody = String.format("""
             {
-                "orders": "%s"
+                "orders": ["%s"]
             }
         """, id);
 
@@ -396,7 +424,7 @@ public class VendaService {
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("Authorization", "Bearer " + tokenMelhorEnvio)
                 .header("User-Agent", nomeAplicacao + (emailParaContato))
                 .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
@@ -411,7 +439,7 @@ public class VendaService {
 
         String jsonBody = String.format("""
             {
-                "orders": "%s"
+                "orders": ["%s"]
             }
         """, id);
 
@@ -419,7 +447,7 @@ public class VendaService {
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
+                .header("Authorization", "Bearer " + tokenMelhorEnvio)
                 .header("User-Agent", nomeAplicacao + (emailParaContato))
                 .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
@@ -451,24 +479,55 @@ public class VendaService {
         return response.body();
     }
 
-    @Scheduled(fixedRate = 5000) // A cada 5 segundos
-    public void verificarStatusPagamento() {
+    private boolean temErroNaResposta(String resposta) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(resposta);
+
+            // Verifica se há um campo "errors" no JSON (API retorna erros nesse campo)
+            return jsonNode.has("errors") || jsonNode.has("message");
+        } catch (Exception e) {
+            System.err.println("Erro ao analisar resposta da API: " + e.getMessage());
+            return true; // Se não conseguir processar o JSON, assume erro
+        }
+    }
+
+    @Scheduled(fixedRate = 5000) // A cada 10 minutos = 600000
+    public void verificarStatusPagamento() throws IOException, InterruptedException {
         List<Venda> vendasPendentes = vendaRepository.findByStatusPagamento("approved");
 
         for (Venda venda : vendasPendentes) {
             if ("Pendente".equals(venda.getStatusEtiqueta()) && "approved".equals(venda.getStatusPagamento())) {
-//                inserirFretesNoCarrinhoMelhorEnvio();
-//                comprarFretesNoCarrinhoMelhorEnvio();
-//                geracaoDeEtiquetas();
-//                imprimirEtiquetas();
+                try {
+                    // 1️⃣ Comprar frete
+                    String respostaCompra = comprarFretesNoCarrinhoMelhorEnvio(venda.getIdEtiqueta());
+                    if (temErroNaResposta(respostaCompra)) {
+                        System.err.println("Falha ao comprar frete para a venda: " + venda.getId());
+                        continue; // Pula para a próxima venda
+                    }
 
-                // Atualiza o status da venda
-                venda.setStatusEtiqueta("Aprovado");
-                vendaRepository.save(venda);
-            } else {
-                // Se o pagamento não foi aprovado, marca a venda como erro
-                venda.setStatusEtiqueta("Erro");
-                vendaRepository.save(venda);
+                    // 2️⃣ Gerar etiqueta
+                    String respostaGeracao = geracaoDeEtiquetas(venda.getIdEtiqueta());
+                    if (temErroNaResposta(respostaGeracao)) {
+                        System.err.println("Falha ao gerar etiqueta para a venda: " + venda.getId());
+                        continue;
+                    }
+
+                    // 3️⃣ Imprimir etiqueta
+                    String respostaImpressao = imprimirEtiquetas(venda.getIdEtiqueta());
+                    if (temErroNaResposta(respostaImpressao)) {
+                        System.err.println("Falha ao imprimir etiqueta para a venda: " + venda.getId());
+                        continue;
+                    }
+
+                    // 4️⃣ Atualizar status no banco de dados
+                    venda.setStatusEtiqueta("Aprovado");
+                    vendaRepository.save(venda);
+                    System.out.println("Status da etiqueta atualizado para 'Aprovado' para a venda: " + venda.getId());
+
+                } catch (Exception e) {
+                    System.err.println("Erro ao processar venda " + venda.getId() + ": " + e.getMessage());
+                }
             }
         }
     }

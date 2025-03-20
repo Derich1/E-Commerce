@@ -7,6 +7,7 @@ import PixPaymentForm from "./pix"; // Componente para PIX
 import { loadMercadoPago } from "@mercadopago/sdk-js";
 import { setFreteSelecionado } from "../../Redux/freteSlice";
 import { useDispatch } from "react-redux";
+import axios from "axios";
 
 declare global {
   interface Window {
@@ -14,7 +15,21 @@ declare global {
   }
 }
 
+interface Box {
+  id: number;
+  name: string;
+  height: number; // em cm
+  width: number;  // em cm
+  length: number; // em cm
+}
+
 const Pagamento: React.FC = () => {
+
+  const boxes: Box[] = [
+    { id: 1, name: "Pequena", height: 10, width: 15, length: 20 },
+    { id: 2, name: "Média", height: 20, width: 30, length: 40 },
+    { id: 3, name: "Grande", height: 30, width: 40, length: 50 },
+  ];
 
   const transactionAmount = useSelector((state: RootState) => state.venda.total);
   const navigate = useNavigate();
@@ -33,6 +48,21 @@ const Pagamento: React.FC = () => {
 
   const selecionarFrete = (frete: any) => {
     dispatch(setFreteSelecionado(frete));
+  };
+
+  const [formData, setFormData] = useState({
+    toAddress: "",
+    toCity: "",
+    toDocument: "",
+    toNumber: "",
+    toDistrict: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   // Inicializa o cardForm apenas para crédito ou débito
@@ -112,6 +142,33 @@ const Pagamento: React.FC = () => {
               console.log("Resposta recebida:", response.data);
               const status = response.data.status;
               console.log("Status recebido:", status);
+
+              const entregaRequest = {
+                toPostalCode: cep,
+                toName: usuario?.nome,
+                toAddress: formData.toAddress,
+                toCity: formData.toCity,
+                toDocument: usuario?.numeroDocumento,
+                toNumber: formData.toNumber,
+                toDistrict: formData.toDistrict,
+                receipt: true,
+                ownHand: false,
+                reverse: false,
+                nonCommercial: false,
+                insuranceValue: totalVenda,
+                service: freteSelecionado?.id,
+                productName: produtos.map(p => p.nome),
+                productQuantity: produtos.map(p => p.quantidade),
+                productUnitaryValue: produtos.map(p => p.precoEmCentavos),
+                volumeHeight: boxes.find(b => b.id == 1)?.height,
+                volumeWidth: boxes.find(b => b.id == 1)?.width,
+                volumeLength: boxes.find(b => b.id == 1)?.length,
+                volumeWeight: 2,
+                vendaId: vendaId
+              };
+          
+              await axios.post("http://localhost:8083/venda/inserirFrete", entregaRequest)
+
               navigate(`/status/${status}`);
             } catch (error) {
               console.error("Erro no pagamento:", error);
@@ -132,43 +189,22 @@ const Pagamento: React.FC = () => {
     initCardForm();
   }, [selectedPaymentType, transactionAmount, vendaId, mercadoPagoTeste, navigate]);
 
-  const entregaRequest = {
-    toPostalCode: cep,
-    toName: usuario?.nome,
-    toAddress: "",
-    toCity: "",
-    toDocument: "",
-    receipt: true,
-    ownHand: false,
-    reverse: false,
-    nonCommercial: false,
-    insuranceValue: totalVenda,
-    service: "",
-    productName: produtos.map(p => p.nome),
-    productQuantity: produtos.map(p => p.quantidade),
-    productUnitaryValue: produtos.map(p => p.precoEmCentavos),
-    volumeHeight: 10,
-    volumeWidth: 15,
-    volumeLength: 20,
-    volumeWeight: 2.5
-  };
-
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
       {/* Seletor de métodos de pagamento */}
       <div className="mb-4 text-center">
-      <h2>Opções de Frete</h2>
+      <h2 className="text-xl mt-10">Opções de Frete</h2>
       <ul>
           {fretes.map((frete) => (
             <li key={frete.id} onClick={() => selecionarFrete(frete)}
             className={`
-              p-4 mb-2 cursor-pointer rounded-lg 
+              p-4 mb-2 cursor-pointer rounded-lg w-60
               ${freteSelecionado?.id === frete.id ? 'bg-green-100 border-2 border-green-500' : 'bg-white border border-gray-300'}
               hover:bg-gray-100 transition-colors
             `}>
               <div className="flex items-center">
-                <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4" />
-                <div>
+                <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4 object-contain" />
+                <div> 
                   <p className="font-bold text-lg">{frete.name}</p>
                   <p className="text-gray-500">R$ {frete.price}</p>
                   {frete.delivery_range && frete.delivery_range.min && frete.delivery_range.max && (
@@ -181,8 +217,44 @@ const Pagamento: React.FC = () => {
             </li>
           ))}
       </ul>
+
+      <form className="space-y-4">
+        <input
+          type="text"
+          name="toAddress"
+          placeholder="Endereço"
+          value={formData.toAddress}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          name="toNumber"
+          placeholder="Número"
+          value={formData.toNumber}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          name="toDistrict"
+          placeholder="Bairro"
+          value={formData.toDistrict}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          name="toCity"
+          placeholder="Cidade"
+          value={formData.toCity}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+      </form>
+
         <h2 className="text-xl font-semibold mb-4 mt-5">Selecione o tipo de pagamento:</h2>
-        <div className="flex space-x-4">
+        <div className="flex justify-center space-x-4">
           <button
             className={`px-4 py-2 rounded ${
               selectedPaymentType === "credit_card" ? "bg-blue-600 text-white" : "bg-gray-200"
@@ -243,9 +315,9 @@ const Pagamento: React.FC = () => {
               id="form-checkout__submit"
               className="w-full cursor-pointer bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
             >
-              Pay
+              Pagar
             </button>
-            <progress value="0" className="w-full">Loading...</progress>
+            <progress value="0" className="w-full">Carregando...</progress>
           </form>
         </>
       )}

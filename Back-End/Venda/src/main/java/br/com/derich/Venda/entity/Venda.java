@@ -22,6 +22,7 @@ public class Venda {
     private Long pagamentoId;
     private String emailCliente;
     private String statusEtiqueta;
+    private String idEtiqueta;
 
     public static class ProdutoComprado {
         private String produtoId;
@@ -170,5 +171,13 @@ public class Venda {
 
     public void setStatusEtiqueta(String statusEtiqueta) {
         this.statusEtiqueta = statusEtiqueta;
+    }
+
+    public String getIdEtiqueta() {
+        return idEtiqueta;
+    }
+
+    public void setIdEtiqueta(String idEtiqueta) {
+        this.idEtiqueta = idEtiqueta;
     }
 }

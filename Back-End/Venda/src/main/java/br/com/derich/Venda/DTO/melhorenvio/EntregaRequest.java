@@ -1,5 +1,7 @@
 package br.com.derich.Venda.DTO.melhorenvio;
 
+import java.util.List;
+
 public class EntregaRequest {
 
     private String toPostalCode;
@@ -21,15 +23,17 @@ public class EntregaRequest {
     private int service;
 
     // Produtos
-    private String productName;
-    private int productQuantity;
-    private double productUnitaryValue;
+    private List<String> productName;
+    private List<Integer> productQuantity;
+    private List<Double> productUnitaryValue;
 
     // Volumes
     private int volumeHeight;
     private int volumeWidth;
     private int volumeLength;
     private double volumeWeight;
+
+    private String vendaId;
 
     public String getToPostalCode() {
         return toPostalCode;
@@ -135,27 +139,27 @@ public class EntregaRequest {
         this.service = service;
     }
 
-    public String getProductName() {
+    public List<String> getProductName() {
         return productName;
     }
 
-    public void setProductName(String productName) {
+    public void setProductName(List<String> productName) {
         this.productName = productName;
     }
 
-    public int getProductQuantity() {
+    public List<Integer> getProductQuantity() {
         return productQuantity;
     }
 
-    public void setProductQuantity(int productQuantity) {
+    public void setProductQuantity(List<Integer> productQuantity) {
         this.productQuantity = productQuantity;
     }
 
-    public double getProductUnitaryValue() {
+    public List<Double> getProductUnitaryValue() {
         return productUnitaryValue;
     }
 
-    public void setProductUnitaryValue(double productUnitaryValue) {
+    public void setProductUnitaryValue(List<Double> productUnitaryValue) {
         this.productUnitaryValue = productUnitaryValue;
     }
 
@@ -189,5 +193,13 @@ public class EntregaRequest {
 
     public void setVolumeWeight(double volumeWeight) {
         this.volumeWeight = volumeWeight;
+    }
+
+    public String getVendaId() {
+        return vendaId;
+    }
+
+    public void setVendaId(String vendaId) {
+        this.vendaId = vendaId;
     }
 }

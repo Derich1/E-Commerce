@@ -1,5 +1,6 @@
 package br.com.derich.Cliente.service;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -17,12 +18,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-    private final String secretKey;
+    Dotenv dotenv = Dotenv.load();
+    private final String secretKey = dotenv.get("SECRET_KEY");
     private Key key;  // Não é final agora, pois será inicializado no construtor
     private static final long EXPIRATION_TIME = 86400000; // 1 dia em milissegundos
 
-    public JwtService(@Value("${secret.key}") String secretKey) {
-        this.secretKey = secretKey;
+    public JwtService() {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 

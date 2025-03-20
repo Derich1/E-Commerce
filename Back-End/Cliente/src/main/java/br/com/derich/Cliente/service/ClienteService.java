@@ -69,7 +69,9 @@ public class ClienteService {
 
         String token = jwtService.generateToken(cliente.getEmail());
 
-        return new LoginResponseDTO(cliente.getId(), cliente.getName(), cliente.getEmail(), token);
+        System.out.println("Enviando o numeroDocumento do backend: " + cliente.getNumeroDocumento());
+
+        return new LoginResponseDTO(cliente.getId(), cliente.getName(), cliente.getEmail(), cliente.getNumeroDocumento(), token);
     }
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){

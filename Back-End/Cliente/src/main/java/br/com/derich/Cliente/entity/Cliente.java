@@ -14,7 +14,7 @@ public class Cliente {
     @Id
     private String id;
     private String name;
-    private String cpf;
+    private String numeroDocumento;
     private String datanascimento;
     private String telefone;
     private String email;
@@ -50,12 +50,12 @@ public class Cliente {
         this.name = name;
     }
 
-    public String getCpf() {
-        return cpf;
+    public String getNumeroDocumento() {
+        return numeroDocumento;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
+    public void setNumeroDocumento(String numeroDocumento) {
+        this.numeroDocumento = numeroDocumento;
     }
 
     public String getDatanascimento() {
@@ -97,7 +97,7 @@ public class Cliente {
     public Cliente(ClienteRequestDTO data){
         this.id = UUID.randomUUID().toString();
         this.name = data.name();
-        this.cpf = data.cpf();
+        this.numeroDocumento = data.numeroDocumento();
         this.datanascimento = data.datanascimento();
         this.telefone = data.telefone();
         this.email = data.email();

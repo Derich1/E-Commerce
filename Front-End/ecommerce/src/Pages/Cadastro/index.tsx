@@ -10,7 +10,7 @@ import { updateUser } from "../../Redux/userSlice";
 
 interface FormData {
   name: string;
-  cpf: string;
+  numeroDocumento: string;
   datanascimento: string;
   telefone: string;
   email: string;
@@ -35,14 +35,18 @@ export default function Cadastro() {
         },
       });
   
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-      }
-
-      const { token, id, nome, email } = response.data;
-      dispatch(updateUser({ token, user: { id, nome, email } }));
+      if (response.status === 200) {
+        const { token, id, nome, email, numeroDocumento } = response.data;
   
-      navigate("/");
+        // Armazena no Redux
+        dispatch(updateUser({ token, user: { id, nome, email, numeroDocumento } }));
+  
+        // Salva no localStorage para manter login persistente
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify({ id, nome, email, numeroDocumento }));
+  
+        navigate("/");
+      }
     } catch (error: any) {
       console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
   
@@ -59,12 +63,12 @@ export default function Cadastro() {
   const schema = z
     .object({
       name: z.string().nonempty("O nome é obrigatório"),
-      cpf: z
+      numeroDocumento: z
         .string()
-        .nonempty("O CPF é obrigatório")
+        .nonempty("O CPF/CNPJ é obrigatório")
         .transform((value) => value.replace(/\D/g, "")) // Remove pontos e traço antes da validação
-        .refine((value) => /^\d{11}$/.test(value), {
-          message: "O CPF deve conter 11 dígitos numéricos",
+        .refine((value) => value.length === 11 || value.length === 14, {
+          message: "O CPF deve conter 11 dígitos ou o CNPJ deve conter 14 dígitos numéricos",
         }),
       datanascimento: z
         .string()
@@ -116,8 +120,9 @@ export default function Cadastro() {
     e.target.value = value.slice(0, 15); // Limita o tamanho a 15 caracteres
   }
 
-  const handleCPFInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove tudo que não for número
+  const handleNumeroDocumentoInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove tudo que não for número
+    let value = e.target.value.replace(/\D/g, "");
   
     // Captura o evento nativo como InputEvent
     const inputEvent = e.nativeEvent as InputEvent;
@@ -128,13 +133,27 @@ export default function Cadastro() {
       return;
     }
   
-    // Formata o CPF conforme o usuário digita
-    if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3);
-    if (value.length > 6) value = value.slice(0, 7) + "." + value.slice(7);
-    if (value.length > 9) value = value.slice(0, 11) + "-" + value.slice(11);
-  
-    e.target.value = value.slice(0, 14); // Limita a 14 caracteres (xxx.xxx.xxx-xx)
-  };  
+    // Se o valor tiver 11 dígitos ou menos, formata como CPF
+    if (value.length <= 11) {
+      if (value.length > 3) value = value.slice(0, 3) + "." + value.slice(3);
+      if (value.length > 6) value = value.slice(0, 7) + "." + value.slice(7);
+      if (value.length > 9) value = value.slice(0, 11) + "-" + value.slice(11);
+      // Limita o tamanho a 14 caracteres (xxx.xxx.xxx-xx)
+      e.target.value = value.slice(0, 14);
+    } else {
+      // Para CNPJ: formata como XX.XXX.XXX/XXXX-XX (total de 18 caracteres)
+      // Primeiro, limita a no máximo 14 dígitos
+      value = value.slice(0, 14);
+      let formatted = value;
+      if (formatted.length > 2) formatted = formatted.slice(0, 2) + "." + formatted.slice(2);
+      if (formatted.length > 6) formatted = formatted.slice(0, 6) + "." + formatted.slice(6);
+      if (formatted.length > 10) formatted = formatted.slice(0, 10) + "/" + formatted.slice(10);
+      if (formatted.length > 15) formatted = formatted.slice(0, 15) + "-" + formatted.slice(15);
+      // Limita o resultado a 18 caracteres: 14 dígitos + 4 caracteres de formatação
+      e.target.value = formatted.slice(0, 18);
+    }
+  };
+   
   
 
   return (
@@ -156,13 +175,13 @@ export default function Cadastro() {
               <div className="mb-4">
                   <input
                       type="text"
-                      placeholder="CPF"
+                      placeholder="CPF/CNPJ"
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      {...register("cpf")}
-                      id="cpf"
-                      onInput={handleCPFInput}
+                      {...register("numeroDocumento")}
+                      id="numeroDocumento"
+                      onInput={handleNumeroDocumentoInput}
                   />
-                  {errors.cpf && <p className="text-red-500 text-sm mt-1">{String(errors.cpf.message)}</p>}
+                  {errors.numeroDocumento && <p className="text-red-500 text-sm mt-1">{String(errors.numeroDocumento.message)}</p>}
               </div>
 
               <div className="mb-4">

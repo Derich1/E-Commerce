@@ -33,14 +33,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http
+                .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/cliente/login", "/cliente/registrar", "/cliente/perfil", "/cliente/favoritos").permitAll() // Permite login sem autenticação
+                        .requestMatchers("/cliente/login", "/cliente/cadastrar", "/cliente/perfil", "/cliente/favoritos").permitAll() // Permite login sem autenticação
                         .anyRequest().authenticated() // Todas as outras rotas precisam de autenticação
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro apenas em rotas protegidas
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
+    }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*")); // 🔹 Permite qualquer origem
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
