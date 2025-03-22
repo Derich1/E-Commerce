@@ -4,30 +4,32 @@ import br.com.derich.DTO.VendaDTO;
 import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
 import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
-import br.com.derich.Venda.DTO.melhorenvio.EntregaRequest;
-import br.com.derich.Venda.DTO.melhorenvio.FreteRequest;
-import br.com.derich.Venda.DTO.melhorenvio.ProdutoFrete;
+import br.com.derich.Venda.DTO.melhorenvio.*;
 import br.com.derich.Venda.entity.Venda;
+import br.com.derich.Venda.exception.ApiException;
+import br.com.derich.Venda.handler.CompraFreteHandler;
+import br.com.derich.Venda.processamento.IEtapaProcessamento;
 import br.com.derich.Venda.repository.IVendaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.common.IdentificationRequest;
-import com.mercadopago.client.payment.PaymentClient;
-import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.client.payment.*;
 import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import com.mercadopago.client.payment.PaymentPayerRequest;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -59,6 +61,20 @@ public class VendaService {
     private String fromPostalCode = dotenv.get("POSTAL_CODE");
 
     private String etiquetaId;
+
+    private static final Logger logger = LoggerFactory.getLogger(CompraFreteHandler.class);
+
+    private final List<IEtapaProcessamento> etapas;
+
+
+    @Autowired
+    public VendaService(
+            IVendaRepository vendaRepository,
+            List<IEtapaProcessamento> etapas) {
+
+        this.vendaRepository = vendaRepository;
+        this.etapas = etapas; // Já virá ordenada pelo @Order
+    }
 
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate; // Usando RabbitMQ
@@ -122,28 +138,26 @@ public class VendaService {
 
     public PaymentResponseDTO processarPagamento(PagamentoCartaoRequestDTO pagamentoCartaoRequestDTO) throws Exception {
 
+        System.out.println("Transaction Amount backend: " + pagamentoCartaoRequestDTO.getTransactionAmount());
         try {
             MercadoPagoConfig.setAccessToken(mercadoPagoAccessToken);
 
             PaymentClient paymentClient = new PaymentClient();
 
-            PaymentCreateRequest paymentCreateRequest =
-                    PaymentCreateRequest.builder()
+            PaymentCreateRequest paymentCreateRequest = PaymentCreateRequest.builder()
                             .transactionAmount(pagamentoCartaoRequestDTO.getTransactionAmount())
                             .token(pagamentoCartaoRequestDTO.getToken())
                             .description(pagamentoCartaoRequestDTO.getProductDescription())
                             .installments(pagamentoCartaoRequestDTO.getInstallments())
                             .paymentMethodId(pagamentoCartaoRequestDTO.getPaymentMethodId())
-                            .payer(
-                                    PaymentPayerRequest.builder()
-                                            .email(pagamentoCartaoRequestDTO.getPayer().getEmail())
-                                            .identification(
-                                                    IdentificationRequest.builder()
-                                                            .type(pagamentoCartaoRequestDTO.getPayer().getIdentification().getType())
-                                                            .number(pagamentoCartaoRequestDTO.getPayer().getIdentification().getNumber())
-                                                            .build())
+                            .payer(PaymentPayerRequest.builder()
+                                    .email(pagamentoCartaoRequestDTO.getPayer().getEmail())
+                                    .identification(IdentificationRequest.builder()
+                                            .type(pagamentoCartaoRequestDTO.getPayer().getIdentification().getType())
+                                            .number(pagamentoCartaoRequestDTO.getPayer().getIdentification().getNumber())
                                             .build())
-                            .build();
+                                    .build())
+                    .build();
 
             Payment createdPayment = paymentClient.create(paymentCreateRequest);
 
@@ -221,24 +235,6 @@ public class VendaService {
         return createdPayment;
     }
 
-    private void atualizarStatusVenda(Venda venda, String statusPagamento) {
-        switch (statusPagamento.toLowerCase()) {
-            case "approved":
-                venda.setStatus("APROVADO");
-                venda.setStatusPagamento("Pago");
-                break;
-            case "pending":
-                venda.setStatus("PENDENTE");
-                venda.setStatusPagamento("Aguardando pagamento");
-                break;
-            default:
-                venda.setStatus("RECUSADO");
-                venda.setStatusPagamento("Pagamento recusado");
-                break;
-        }
-        vendaRepository.save(venda);
-    }
-
     // API Melhor envio
     public String calcularFrete(FreteRequest freteRequest) throws IOException, InterruptedException {
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate";
@@ -311,6 +307,8 @@ public class VendaService {
         toMap.put("district", entregaRequest.getToDistrict());
         toMap.put("city", entregaRequest.getToCity());
         toMap.put("document", entregaRequest.getToDocument());
+
+        System.out.println("Dados do backend: " + entregaRequest.getToAddress() + entregaRequest.getToNumber() + entregaRequest.getToDistrict() + entregaRequest.getToCity());
 
         // Opções ("options")
         Map<String, Object> optionsMap = new HashMap<>();
@@ -385,78 +383,6 @@ public class VendaService {
     }
 
 
-    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
-    public String comprarFretesNoCarrinhoMelhorEnvio(String id) throws IOException, InterruptedException {
-        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/checkout";
-
-        String jsonBody = String.format("""
-            {
-                "orders": ["%s"]
-            }
-        """, id);
-
-                HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(urlRequisicao))
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-        return response.body();
-    }
-
-    // Após comprar as etiquetas, é necessário gerar as etiquetas antes de imprimir e realizar a postagem das mesmas.
-    // Para isto, basta realizar a requisição informando o id da etiqueta de envio.
-    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
-    public String geracaoDeEtiquetas(String id) throws IOException, InterruptedException {
-        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/generate";
-
-        String jsonBody = String.format("""
-            {
-                "orders": ["%s"]
-            }
-        """, id);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(urlRequisicao))
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-        return response.body();
-    }
-
-    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
-    public String imprimirEtiquetas(String id) throws IOException, InterruptedException {
-        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/print";
-
-        String jsonBody = String.format("""
-            {
-                "orders": ["%s"]
-            }
-        """, id);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(urlRequisicao))
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-        return response.body();
-    }
-
-    // tem que pegar o id retornado após adicionar a etiqueta no carrinho (inserirFretesNoCarrinhoMelhorEnvio)
     public String rastrearEnvio(String id) throws IOException, InterruptedException {
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/tracking";
 
@@ -479,56 +405,30 @@ public class VendaService {
         return response.body();
     }
 
-    private boolean temErroNaResposta(String resposta) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(resposta);
+    @Scheduled(fixedRate = 600000)
+    public void verificarStatusPagamento() {
+        List<Venda> vendas = vendaRepository.findByStatusPagamentoAndStatusEtiqueta("approved", "Pendente");
 
-            // Verifica se há um campo "errors" no JSON (API retorna erros nesse campo)
-            return jsonNode.has("errors") || jsonNode.has("message");
-        } catch (Exception e) {
-            System.err.println("Erro ao analisar resposta da API: " + e.getMessage());
-            return true; // Se não conseguir processar o JSON, assume erro
+        vendas.forEach(venda -> {
+            try {
+                processarVenda(venda);
+                atualizarStatus(venda, "Aprovado");
+            } catch (ApiException e) {
+                logger.error("Falha crítica no processamento da venda {}: {}", venda.getId(), e.getMessage());
+                atualizarStatus(venda, "Falha - " + e.getErrorCode());
+            }
+        });
+    }
+
+    private void processarVenda(Venda venda) throws ApiException {
+        for (IEtapaProcessamento etapa : etapas) {
+            etapa.executar(venda);
         }
     }
 
-    @Scheduled(fixedRate = 5000) // A cada 10 minutos = 600000
-    public void verificarStatusPagamento() throws IOException, InterruptedException {
-        List<Venda> vendasPendentes = vendaRepository.findByStatusPagamento("approved");
-
-        for (Venda venda : vendasPendentes) {
-            if ("Pendente".equals(venda.getStatusEtiqueta()) && "approved".equals(venda.getStatusPagamento())) {
-                try {
-                    // 1️⃣ Comprar frete
-                    String respostaCompra = comprarFretesNoCarrinhoMelhorEnvio(venda.getIdEtiqueta());
-                    if (temErroNaResposta(respostaCompra)) {
-                        System.err.println("Falha ao comprar frete para a venda: " + venda.getId());
-                        continue; // Pula para a próxima venda
-                    }
-
-                    // 2️⃣ Gerar etiqueta
-                    String respostaGeracao = geracaoDeEtiquetas(venda.getIdEtiqueta());
-                    if (temErroNaResposta(respostaGeracao)) {
-                        System.err.println("Falha ao gerar etiqueta para a venda: " + venda.getId());
-                        continue;
-                    }
-
-                    // 3️⃣ Imprimir etiqueta
-                    String respostaImpressao = imprimirEtiquetas(venda.getIdEtiqueta());
-                    if (temErroNaResposta(respostaImpressao)) {
-                        System.err.println("Falha ao imprimir etiqueta para a venda: " + venda.getId());
-                        continue;
-                    }
-
-                    // 4️⃣ Atualizar status no banco de dados
-                    venda.setStatusEtiqueta("Aprovado");
-                    vendaRepository.save(venda);
-                    System.out.println("Status da etiqueta atualizado para 'Aprovado' para a venda: " + venda.getId());
-
-                } catch (Exception e) {
-                    System.err.println("Erro ao processar venda " + venda.getId() + ": " + e.getMessage());
-                }
-            }
-        }
+    private void atualizarStatus(Venda venda, String status) {
+        venda.setStatusEtiqueta(status);
+        vendaRepository.save(venda);
+        logger.info("Status atualizado para {} na venda {}", status, venda.getId());
     }
 }

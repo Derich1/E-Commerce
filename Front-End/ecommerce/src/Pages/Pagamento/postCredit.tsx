@@ -4,19 +4,19 @@ export async function postCredit(
     token: string,
     issuer_id: string,
     payment_method_id: string,
-    transactionAmount: number,
+    totalComFrete: number,
     installments: number,
     email: string,
     identificationType: string,
     identificationNumber: string,
     selectedPaymentType: string,
-    vendaId: string
+    vendaId: string,
 ) {
     const body = {
         token,
         issuer_id,
         payment_method_id,
-        transactionAmount: transactionAmount,
+        transactionAmount: Number(totalComFrete).toFixed(2),
         installments: Number(installments),
         description: "blablabla",
         payer: {
@@ -27,7 +27,7 @@ export async function postCredit(
             }
         },
         payment_type_id: selectedPaymentType,
-        vendaId
+        vendaId,
     }
 
     console.log("Payload enviado:", JSON.stringify(body));

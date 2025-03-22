@@ -22,8 +22,6 @@ export default function Cadastro() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  // Mensagem de erro vinda do backend
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const dispatch = useDispatch()
 
 
@@ -47,15 +45,8 @@ export default function Cadastro() {
   
         navigate("/");
       }
-    } catch (error: any) {
-      console.error("Erro ao cadastrar cliente:", error.response?.data || error.message);
-  
-      // Verifica se o backend retornou uma mensagem de erro e armazena no estado
-      if (error.response?.data?.message) {
-        setErrorMessage(error.response.data.message);
-      } else {
-        setErrorMessage("Ocorreu um erro ao cadastrar. Tente novamente.");
-      }
+    } catch (error) {
+      console.log(error)
     }
   };
   
@@ -87,10 +78,18 @@ export default function Cadastro() {
         .string()
         .nonempty("O e-mail é obrigatório")
         .email("Digite um e-mail válido"),
-      password: z
-        .string()
+      password: z.string()
         .nonempty("A senha é obrigatória")
-        .min(6, "A senha deve conter pelo menos 6 caracteres"),
+        .min(8, "Mínimo de 8 caracteres")
+        .refine((password) => /[A-Z]/.test(password), {
+          message: "Deve conter pelo menos 1 letra maiúscula",
+        })
+        .refine((password) => /[a-z]/.test(password), {
+          message: "Deve conter pelo menos 1 letra minúscula",
+        })
+        .refine((password) => /\d/.test(password), {
+          message: "Deve conter pelo menos 1 número",
+        }),
       passwordConfirm: z.string().nonempty("A confirmação de senha é obrigatória"),
     })
     .refine((data) => data.password === data.passwordConfirm, {
@@ -160,7 +159,6 @@ export default function Cadastro() {
       <div className="my-10 max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
           <form onSubmit={handleSubmit(onSubmit)} className="mb-10">
               <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Cadastrar</h1>
-
               <div className="mb-4">
                   <input
                       type="text"
@@ -219,22 +217,23 @@ export default function Cadastro() {
                   {errors.email && <p className="text-red-500 text-sm mt-1">{String(errors.email.message)}</p>}
               </div>
 
-              <div className="mb-6 relative">
+              <div className="mb-6">
+                <div className="relative">
                   <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Senha"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      {...register("password")}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Senha"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    {...register("password")}
                   />
-                  {errors.password && <p className="text-red-500 text-sm mt-1">{String(errors.password.message)}</p>}
-                  {errorMessage && ( <p className="text-red-500 text-sm mt-2 text-center">{errorMessage}</p>)}
                   <button
                     type="button"
-                    className="absolute right-3 top-3 text-gray-500"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-10 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <BiSolidShow /> : <BiSolidHide />}
                   </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-sm mt-1">{String(errors.password.message)}</p>}
               </div>
 
               <div className="mb-6 relative">
@@ -247,7 +246,7 @@ export default function Cadastro() {
                   {errors.passwordConfirm && <p className="text-red-500 text-sm mt-1">{String(errors.passwordConfirm.message)}</p>}
                   <button
                     type="button"
-                    className="absolute right-3 top-3 text-gray-500"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-10 flex items-center"
                     onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
                   >
                     {showPasswordConfirm ? <BiSolidShow /> : <BiSolidHide />}

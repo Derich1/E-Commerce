@@ -45,27 +45,44 @@ public class ClienteController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/cadastrar")
-    public ResponseEntity<Map<String, String>> cadastrarCliente(@RequestBody ClienteRequestDTO data) {
+    public ResponseEntity<?> cadastrarCliente(@RequestBody ClienteRequestDTO data) {
 
-        Cliente cliente = clienteService.cadastrarCliente(data);
+        try {
+            Cliente cliente = clienteService.cadastrarCliente(data);
 
-        // Adicionando a variável o email recebido no cadastro do cliente
-        String email = data.email();
+            // Adicionando a variável o email recebido no cadastro do cliente
+            String email = data.email();
 
-        // Gerando código aleatório para enviar para o email do cliente para verificação
-        String codigo = gerarCodigoAleatorio();
+            // Gerando código aleatório para enviar para o email do cliente para verificação
+            String codigo = gerarCodigoAleatorio();
 
-        emailSender.sendVerificationEmail(email, codigo);
+            emailSender.sendVerificationEmail(email, codigo);
 
-        // Gerar token JWT após o cadastro
-        String token = jwtService.generateToken(cliente.getEmail());
+            // Gerar token JWT após o cadastro
+            String token = jwtService.generateToken(cliente.getEmail());
 
-        // Retornar o token no JSON de resposta
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Cliente cadastrado com sucesso!");
-        response.put("token", token);
+            // Retornar o token no JSON de resposta
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Cliente cadastrado com sucesso!");
+            response.put("token", token);
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+            errorResponse.put("error", "Erro de validação");
+
+            // Separa as mensagens de erro em um array
+            String[] errorMessages = e.getMessage().split(", ");
+            errorResponse.put("messages", errorMessages);
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("error", "Erro interno do servidor");
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")

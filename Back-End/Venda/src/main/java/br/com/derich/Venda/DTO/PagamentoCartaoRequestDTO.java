@@ -107,4 +107,5 @@ public class PagamentoCartaoRequestDTO {
     public void setVendaId(String vendaId) {
         this.vendaId = vendaId;
     }
+
 }

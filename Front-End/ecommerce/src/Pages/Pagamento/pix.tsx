@@ -23,6 +23,7 @@ const Pagamento: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const transactionAmount = useSelector((state: RootState) => state.venda.total);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
+  const [copied, setCopied] = useState(false);
 
   initMercadoPago(mercadoPagoTeste)
 
@@ -82,9 +83,19 @@ const Pagamento: React.FC = () => {
     }
   };
 
+  const copyPixCode = async () => {
+    try {
+      await navigator.clipboard.writeText(pixData?.qrCode || '');
+      setCopied(true);
+    } catch (err) {
+      setError('Não foi possível copiar o código');
+    }
+  };
+  
+
   return (
     <div className="h-full bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mx-auto">
+      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mx-auto mb-5">
         {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
         <h2 className="text-2xl font-bold mb-6 text-center">Pagamento</h2>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
@@ -145,12 +156,26 @@ const Pagamento: React.FC = () => {
                     alt="QR Code"
                     className="mb-2 w-48 h-48 mx-auto"
                   />
-                  <input
-                    type="text"
-                    value={pixData.qrCode}
-                    readOnly
-                    className="p-2 border rounded w-full text-center mb-2"
-                  />
+                   <div className="w-full flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={pixData.qrCode}
+                      readOnly
+                      className="p-2 border rounded flex-1 text-center"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyPixCode}
+                      className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                    >
+                      {copied ? '✓ Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
+                  {copied && (
+                    <span className="text-green-600 text-sm block text-center">
+                      Código copiado para a área de transferência!
+                    </span>
+                  )}
                 </>
               )}
             </div>

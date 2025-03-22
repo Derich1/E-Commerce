@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { postCredit } from "./postCredit"; // Função para processar cartão
 import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
@@ -31,7 +31,6 @@ const Pagamento: React.FC = () => {
     { id: 3, name: "Grande", height: 30, width: 40, length: 50 },
   ];
 
-  const transactionAmount = useSelector((state: RootState) => state.venda.total);
   const navigate = useNavigate();
   const cardFormRef = useRef<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -43,9 +42,18 @@ const Pagamento: React.FC = () => {
   const dispatch = useDispatch()  
   const cep = useSelector((state: RootState) => state.endereco.cep)
   const usuario = useSelector((state: RootState) => state.user.user)
-  const totalVenda = useSelector((state: RootState) => state.venda.total)
+  const totalVenda = Number(useSelector((state: RootState) => state.venda.total) || 0)
   const produtos = useSelector((state: RootState) => state.venda.produtos)
-
+  const valorFrete = Number(freteSelecionado?.price) || 0
+  const totalComFrete = Math.round((totalVenda + valorFrete) * 100) / 100; 
+  // .map(p => p.weight * p.quantidade) Cria um array com o peso total de cada item (quantidade × peso unitário)
+  // .reduce((acc, peso) => acc + peso, 0) Soma todos os valores do array gerado pelo map
+  const pesoTotal = useSelector((state: RootState) => 
+    state.venda.produtos
+      .map(p => p.weight * p.quantidade)
+      .reduce((acc, peso) => acc + peso, 0)
+  );
+  
   const selecionarFrete = (frete: any) => {
     dispatch(setFreteSelecionado(frete));
   };
@@ -53,7 +61,6 @@ const Pagamento: React.FC = () => {
   const [formData, setFormData] = useState({
     toAddress: "",
     toCity: "",
-    toDocument: "",
     toNumber: "",
     toDistrict: ""
   });
@@ -65,12 +72,18 @@ const Pagamento: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    console.log("Estado atualizado:", formData);
+  }, [formData]);
+
   // Inicializa o cardForm apenas para crédito ou débito
   useLayoutEffect(() => {
+
+    let isMounted = true;
+
     if (!selectedPaymentType || selectedPaymentType === "pix") return;
+
     const initCardForm = async () => {
-      await loadMercadoPago();
-      const mp = new window.MercadoPago(mercadoPagoTeste, { locale: "pt-BR" });
 
       if (cardFormRef.current) {
         console.log("Destruindo instância antiga...");
@@ -78,10 +91,18 @@ const Pagamento: React.FC = () => {
         cardFormRef.current = null;
       }
 
-      if (!formRef.current) return;
+      if (!window.MercadoPago) {
+        await loadMercadoPago();
+      }
+
+      const mp = new window.MercadoPago(mercadoPagoTeste, { locale: "pt-BR" });
+
+      if (!isMounted || !formRef.current) return;
+
+      console.log(totalComFrete)
 
       cardFormRef.current = mp.cardForm({
-        amount: transactionAmount.toString(),
+        amount: totalComFrete.toString(),
         iframe: true,
         form: {
           id: formRef.current.id,
@@ -100,7 +121,7 @@ const Pagamento: React.FC = () => {
             if (error) return console.warn("Erro ao montar o formulário:", error);
             console.log("Formulário montado");
           },
-          onSubmit: async (event: any) => {
+          onSubmit: async (event: React.FormEvent) => {
             event.preventDefault();
 
             if (!selectedPaymentType) {
@@ -116,14 +137,16 @@ const Pagamento: React.FC = () => {
               return;
             }
 
+            console.log("Total Calculado:", totalComFrete.toFixed(2)); // Deve mostrar 2 casas
+
             const {
               paymentMethodId: payment_method_id,
               issuerId: issuer_id,
               cardholderEmail: email,
               token,
               installments,
-              identificationNumber,
               identificationType,
+              identificationNumber, // valor do cardForm
             } = cardFormData;
 
             try {
@@ -131,13 +154,13 @@ const Pagamento: React.FC = () => {
                 token,
                 issuer_id,
                 payment_method_id,
-                transactionAmount,
+                totalComFrete,
                 Number(installments),
                 email,
                 identificationType,
                 identificationNumber,
                 selectedPaymentType,
-                vendaId
+                vendaId,
               );
               console.log("Resposta recebida:", response.data);
               const status = response.data.status;
@@ -154,7 +177,7 @@ const Pagamento: React.FC = () => {
                 receipt: true,
                 ownHand: false,
                 reverse: false,
-                nonCommercial: false,
+                nonCommercial: false,     
                 insuranceValue: totalVenda,
                 service: freteSelecionado?.id,
                 productName: produtos.map(p => p.nome),
@@ -163,9 +186,10 @@ const Pagamento: React.FC = () => {
                 volumeHeight: boxes.find(b => b.id == 1)?.height,
                 volumeWidth: boxes.find(b => b.id == 1)?.width,
                 volumeLength: boxes.find(b => b.id == 1)?.length,
-                volumeWeight: 2,
+                volumeWeight: pesoTotal,
                 vendaId: vendaId
               };
+              console.log("Enviando para o backend: " + entregaRequest)
           
               await axios.post("http://localhost:8083/venda/inserirFrete", entregaRequest)
 
@@ -187,72 +211,90 @@ const Pagamento: React.FC = () => {
     };
 
     initCardForm();
-  }, [selectedPaymentType, transactionAmount, vendaId, mercadoPagoTeste, navigate]);
+
+    return () => {
+      isMounted = false;
+      
+      // 7. Destruir instâncias ao desmontar
+      if (cardFormRef.current) {
+        console.log("Limpando instância...");
+        cardFormRef.current.unmount();
+        cardFormRef.current = null;
+      }
+    }
+  }, [selectedPaymentType, totalComFrete, vendaId, mercadoPagoTeste, navigate]);
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
       {/* Seletor de métodos de pagamento */}
-      <div className="mb-4 text-center">
-      <h2 className="text-xl mt-10">Opções de Frete</h2>
-      <ul>
-          {fretes.map((frete) => (
-            <li key={frete.id} onClick={() => selecionarFrete(frete)}
-            className={`
-              p-4 mb-2 cursor-pointer rounded-lg w-60
-              ${freteSelecionado?.id === frete.id ? 'bg-green-100 border-2 border-green-500' : 'bg-white border border-gray-300'}
-              hover:bg-gray-100 transition-colors
-            `}>
-              <div className="flex items-center">
-                <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4 object-contain" />
-                <div> 
-                  <p className="font-bold text-lg">{frete.name}</p>
-                  <p className="text-gray-500">R$ {frete.price}</p>
-                  {frete.delivery_range && frete.delivery_range.min && frete.delivery_range.max && (
-                    <p className="text-sm text-gray-700 mt-2">
-                      Estimativa de entrega: {frete.delivery_range.min} - {frete.delivery_range.max} dias
-                    </p>
-                  )}
+      <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl px-4 mt-10 items-start">
+        <div className="flex-1">
+          <h2 className="text-xl text-center mb-2">Endereço de entrega</h2>
+          <form className="space-y-4 bg-white p-6 rounded-lg shadow-lg">
+            <input
+              type="text"
+              name="toAddress"
+              placeholder="Endereço"
+              value={formData.toAddress}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="toNumber"
+              placeholder="Número"
+              value={formData.toNumber}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="toDistrict"
+              placeholder="Bairro"
+              value={formData.toDistrict}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="toCity"
+              placeholder="Cidade"
+              value={formData.toCity}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+          </form>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center">
+          <h2 className="text-xl text-center mb-2">Opções de Frete</h2>
+          <ul className="space-y-2 max-w-60">
+            {fretes.map((frete) => (
+              <li key={frete.id} onClick={() => selecionarFrete(frete)}
+                className={`
+                  p-4 mb-2 cursor-pointer rounded-lg w-full
+                  ${freteSelecionado?.id === frete.id ? 'bg-green-100 border-2 border-green-500' : 'bg-white border border-gray-300'}
+                  hover:bg-gray-100 transition-colors
+                `}>
+                  <div className="flex items-center">
+                    <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4 object-contain" />
+                    <div> 
+                      <p className="font-bold text-lg">{frete.name}</p>
+                      <p className="text-gray-500">R$ {frete.price}</p>
+                      {frete.delivery_range && frete.delivery_range.min && frete.delivery_range.max && (
+                        <p className="text-sm text-gray-700 mt-2">
+                          Estimativa de entrega: {frete.delivery_range.min} - {frete.delivery_range.max} dias
+                        </p>
+                      )}
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
-      </ul>
+              </li>
+            ))}
+          </ul>
+      </div>
+      </div>
 
-      <form className="space-y-4">
-        <input
-          type="text"
-          name="toAddress"
-          placeholder="Endereço"
-          value={formData.toAddress}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="text"
-          name="toNumber"
-          placeholder="Número"
-          value={formData.toNumber}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="text"
-          name="toDistrict"
-          placeholder="Bairro"
-          value={formData.toDistrict}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="text"
-          name="toCity"
-          placeholder="Cidade"
-          value={formData.toCity}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-      </form>
-
+      <div className="text-center mt-8">
         <h2 className="text-xl font-semibold mb-4 mt-5">Selecione o tipo de pagamento:</h2>
         <div className="flex justify-center space-x-4">
           <button

@@ -6,6 +6,10 @@ import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.DTO.melhorenvio.*;
 import br.com.derich.Venda.entity.Venda;
+import br.com.derich.Venda.exception.ApiException;
+import br.com.derich.Venda.handler.CompraFreteHandler;
+import br.com.derich.Venda.handler.GeracaoEtiquetaHandler;
+import br.com.derich.Venda.handler.ImprimirEtiquetaHandler;
 import br.com.derich.Venda.repository.IVendaRepository;
 import br.com.derich.Venda.service.VendaService;
 import com.mercadopago.client.preference.*;
@@ -34,13 +38,28 @@ public class VendaController {
     @Autowired
     private VendaService vendaService;
 
-    @Autowired
-    private IVendaRepository vendaRepository;
-
 //    @Autowired
 //    private RabbitTemplate rabbitTemplate;
 
 //    private static final String QUEUE_NAME = "venda.finalizada";
+
+    private final CompraFreteHandler compraFreteHandler;
+    private final GeracaoEtiquetaHandler geracaoEtiquetaHandler;
+    private final ImprimirEtiquetaHandler impressaoEtiquetaHandler;
+    private final IVendaRepository vendaRepository;
+
+    @Autowired
+    public VendaController(
+            CompraFreteHandler compraFreteHandler,
+            GeracaoEtiquetaHandler geracaoEtiquetaHandler,
+            ImprimirEtiquetaHandler impressaoEtiquetaHandler,
+            IVendaRepository vendaRepository) {
+
+        this.compraFreteHandler = compraFreteHandler;
+        this.geracaoEtiquetaHandler = geracaoEtiquetaHandler;
+        this.impressaoEtiquetaHandler = impressaoEtiquetaHandler;
+        this.vendaRepository = vendaRepository;
+    }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/criar")
@@ -196,26 +215,59 @@ public class VendaController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/comprarFrete")
-    public ResponseEntity<?> comprarFrete(@RequestBody String id) throws IOException, InterruptedException {
-        String resposta = vendaService.comprarFretesNoCarrinhoMelhorEnvio(id);
+    public ResponseEntity<?> comprarFrete(@RequestBody String idVenda) {
+        try {
+            Venda venda = vendaRepository.findById(idVenda)
+                    .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
-        return ResponseEntity.ok(resposta);
+            compraFreteHandler.executar(venda);
+            return ResponseEntity.ok("Frete comprado com sucesso");
+
+        } catch (ApiException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "erro", e.getErrorCode(),
+                            "mensagem", e.getMessage()
+                    ));
+        }
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/gerarEtiqueta")
-    public ResponseEntity<?> gerarEtiqueta(@RequestBody String id) throws IOException, InterruptedException {
-        String resposta = vendaService.geracaoDeEtiquetas(id);
+    public ResponseEntity<?> gerarEtiqueta(@RequestBody String idVenda) {
+        try {
+            Venda venda = vendaRepository.findById(idVenda)
+                    .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
-        return ResponseEntity.ok(resposta);
+            geracaoEtiquetaHandler.executar(venda);
+            return ResponseEntity.ok("Etiqueta gerada com sucesso");
+
+        } catch (ApiException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "erro", e.getErrorCode(),
+                            "mensagem", e.getMessage()
+                    ));
+        }
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/imprimirEtiqueta")
-    public ResponseEntity<?> imprimirEtiquetas(@RequestBody String id) throws IOException, InterruptedException {
-        String resposta = vendaService.imprimirEtiquetas(id);
+    public ResponseEntity<?> imprimirEtiqueta(@RequestBody String idVenda) {
+        try {
+            Venda venda = vendaRepository.findById(idVenda)
+                    .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
-        return ResponseEntity.ok(resposta);
+            impressaoEtiquetaHandler.executar(venda);
+            return ResponseEntity.ok("Etiqueta impressa com sucesso");
+
+        } catch (ApiException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "erro", e.getErrorCode(),
+                            "mensagem", e.getMessage()
+                    ));
+        }
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")

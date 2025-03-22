@@ -14,6 +14,6 @@ public interface IVendaRepository extends MongoRepository<Venda, String> {
 
     Venda findByPagamentoId(Long pagamentoId);
     Page<Venda> findByEmailClienteOrderByDataVendaDesc(String emailCliente, Pageable pageable);
-    List<Venda> findByStatusPagamento(String statusPagamento);
     Optional<Venda> findById(String id);
+    List<Venda> findByStatusPagamentoAndStatusEtiqueta(String statusPagamento, String statusEtiqueta);
 }
