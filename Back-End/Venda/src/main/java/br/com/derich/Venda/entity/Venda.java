@@ -30,6 +30,7 @@ public class Venda {
         private int quantidade;
         private double precoUnitario;
         private String imagemUrl;
+        private double weight;
 
         public String getProdutoId() {
             return produtoId;
@@ -69,6 +70,14 @@ public class Venda {
 
         public void setImagemUrl(String imagemUrl) {
             this.imagemUrl = imagemUrl;
+        }
+
+        public double getWeight() {
+            return weight;
+        }
+
+        public void setWeight(double weight) {
+            this.weight = weight;
         }
     }
 

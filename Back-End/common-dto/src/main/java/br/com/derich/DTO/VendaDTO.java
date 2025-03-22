@@ -102,6 +102,7 @@ public class VendaDTO implements Serializable {
         private String nome;
         private double precoUnitario;
         private String imagemUrl;
+        private double weight;
 
 
         public String getProdutoId() {
@@ -142,6 +143,14 @@ public class VendaDTO implements Serializable {
 
         public void setImagemUrl(String imagemUrl) {
             this.imagemUrl = imagemUrl;
+        }
+
+        public double getWeight() {
+            return weight;
+        }
+
+        public void setWeight(double weight) {
+            this.weight = weight;
         }
     }
 

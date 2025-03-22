@@ -17,6 +17,7 @@ interface VendaState {
   clienteId: string;
   produtos: ProdutoComprado[];
   total: number;
+  totalPeso: number;
   status: string;
   metodoPagamento: string;
   statusPagamento: string;
@@ -31,6 +32,7 @@ const initialState: VendaState = {
   clienteId: "",
   produtos: [],
   total: 0,
+  totalPeso: 0,
   status: "",
   metodoPagamento: "",
   statusPagamento: "",
@@ -46,6 +48,9 @@ const vendaSlice = createSlice({
   reducers: {
     setVenda: (state, action: PayloadAction<VendaState>) => {
       return { ...state, ...action.payload };
+    },
+    setPesoTotal: (state, action) => {
+      state.totalPeso = action.payload;
     },
     setVendaId: (state, action: PayloadAction<string>) => {
       state.vendaId = action.payload;
@@ -66,5 +71,5 @@ const vendaSlice = createSlice({
   },
 });
 
-export const { setVenda, setVendaId, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
+export const { setVenda, setPesoTotal, setVendaId, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
 export default vendaSlice.reducer;

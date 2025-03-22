@@ -42,17 +42,11 @@ const Pagamento: React.FC = () => {
   const dispatch = useDispatch()  
   const cep = useSelector((state: RootState) => state.endereco.cep)
   const usuario = useSelector((state: RootState) => state.user.user)
-  const totalVenda = Number(useSelector((state: RootState) => state.venda.total) || 0)
   const produtos = useSelector((state: RootState) => state.venda.produtos)
+  const totalVenda = Number(useSelector((state: RootState) => state.venda.total) || 0)
   const valorFrete = Number(freteSelecionado?.price) || 0
   const totalComFrete = Math.round((totalVenda + valorFrete) * 100) / 100; 
-  // .map(p => p.weight * p.quantidade) Cria um array com o peso total de cada item (quantidade × peso unitário)
-  // .reduce((acc, peso) => acc + peso, 0) Soma todos os valores do array gerado pelo map
-  const pesoTotal = useSelector((state: RootState) => 
-    state.venda.produtos
-      .map(p => p.weight * p.quantidade)
-      .reduce((acc, peso) => acc + peso, 0)
-  );
+  const pesoTotal = useSelector((state: RootState) => state.venda.totalPeso);
   
   const selecionarFrete = (frete: any) => {
     dispatch(setFreteSelecionado(frete));
@@ -74,7 +68,8 @@ const Pagamento: React.FC = () => {
 
   useEffect(() => {
     console.log("Estado atualizado:", formData);
-  }, [formData]);
+    console.log("Peso dos produtos: " + Number(pesoTotal).toFixed(2))
+  }, [formData, pesoTotal]);
 
   // Inicializa o cardForm apenas para crédito ou débito
   useLayoutEffect(() => {
@@ -98,8 +93,6 @@ const Pagamento: React.FC = () => {
       const mp = new window.MercadoPago(mercadoPagoTeste, { locale: "pt-BR" });
 
       if (!isMounted || !formRef.current) return;
-
-      console.log(totalComFrete)
 
       cardFormRef.current = mp.cardForm({
         amount: totalComFrete.toString(),

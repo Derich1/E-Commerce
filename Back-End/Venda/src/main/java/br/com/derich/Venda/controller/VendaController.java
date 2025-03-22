@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/venda")
@@ -108,9 +109,16 @@ public class VendaController {
                     .build();
 
             Preference response = client.create(preferenceRequest);
+
+            double pesoTotal = venda.getProdutos().stream()
+                    .mapToDouble(p -> p.getWeight() * p.getQuantidade())
+                    .sum();
+
+            System.out.println("Peso total no controller: " + pesoTotal);
             return ResponseEntity.ok(Map.of(
                     "id", venda.getId(),
-                    "preferenceId", response.getId()
+                    "preferenceId", response.getId(),
+                    "vendaPeso", pesoTotal
             ));
 
         } catch (MPApiException ex) {

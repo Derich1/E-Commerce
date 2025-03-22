@@ -6,6 +6,7 @@ type CartItem = {
   precoEmCentavos: number;
   quantidade: number;
   imagemUrl: string;
+  weight: number;
 };
 
 type CartState = {

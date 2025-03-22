@@ -105,6 +105,8 @@ public class VendaService {
                     produto.setNome(dto.getNome());
                     produto.setPrecoUnitario(dto.getPrecoUnitario());
                     produto.setImagemUrl(dto.getImagemUrl());
+                    produto.setWeight(dto.getWeight());
+                    System.out.println("Peso no backend: " + dto.getWeight());
                     return produto;
                 })
                 .collect(Collectors.toList());

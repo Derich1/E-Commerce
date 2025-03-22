@@ -171,7 +171,8 @@ export default function Produto() {
           nome: product.nome,
           precoEmCentavos: product.precoEmCentavos,
           quantidade: 1,
-          imagemUrl: product.imagemUrl
+          imagemUrl: product.imagemUrl,
+          weight: product.weight
         })
       );
     }

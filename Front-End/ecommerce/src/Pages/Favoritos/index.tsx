@@ -11,6 +11,7 @@ interface Product {
   precoEmCentavos: number;
   imagemUrl: string;
   isFavorited?: boolean;
+  weight: number;
 }
 
 const Favoritos = () => {
@@ -120,7 +121,8 @@ const Favoritos = () => {
         nome: product.nome,
         precoEmCentavos: product.precoEmCentavos,
         quantidade: 1,
-        imagemUrl: product.imagemUrl
+        imagemUrl: product.imagemUrl,
+        weight: product.weight
       })
     );
   };

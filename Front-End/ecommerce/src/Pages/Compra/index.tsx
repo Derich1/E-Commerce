@@ -4,7 +4,7 @@ import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
+import { setPesoTotal, setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
 import { setCep } from "../../Redux/enderecoSlice";
 import { setFretes } from "../../Redux/freteSlice";
 
@@ -77,7 +77,8 @@ const Compra: React.FC = () => {
         quantidade: item.quantidade,
         nome: item.nome,
         precoUnitario: item.precoEmCentavos / 100,
-        imagemUrl: item.imagemUrl
+        imagemUrl: item.imagemUrl,
+        weight: item.weight
       })),
       total: totalPrice / 100,
       status: "Pendente",
@@ -115,11 +116,12 @@ const Compra: React.FC = () => {
   
       // Armazenamento e dispatch dos dados da venda
       localStorage.setItem("vendaId", vendaResponse.id);
+      const peso = vendaResponse.vendaPeso
       dispatch(setVendaId(vendaResponse.id));
       dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
+      dispatch(setPesoTotal(peso))
   
-      // Chamada para calcular o frete (se necessário, pode ser feita de forma independente)
       const response = await axios.post(
         "http://localhost:8083/venda/calcularFrete",
         freteRequest,
