@@ -55,7 +55,13 @@ public class ClienteService {
 
         System.out.println("Enviando o numeroDocumento do backend: " + cliente.getNumeroDocumento());
 
-        return new LoginResponseDTO(cliente.getId(), cliente.getName(), cliente.getEmail(), cliente.getNumeroDocumento(), token);
+        return new LoginResponseDTO(cliente.getId(),
+                cliente.getName(),
+                cliente.getEmail(),
+                token,                          // Token na posição correta
+                cliente.getNumeroDocumento(),
+                cliente.getTelefone(),
+                cliente.getDatanascimento());
     }
 
     public Cliente cadastrarCliente(ClienteRequestDTO data){

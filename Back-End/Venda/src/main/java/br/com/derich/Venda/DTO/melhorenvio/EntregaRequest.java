@@ -11,6 +11,7 @@ public class EntregaRequest {
     private String toDocument;
     private Integer toNumber;
     private String toDistrict;
+    private String toComplemento;
 
     // Opções
     private boolean receipt;
@@ -89,6 +90,14 @@ public class EntregaRequest {
 
     public void setToDistrict(String toDistrict) {
         this.toDistrict = toDistrict;
+    }
+
+    public String getToComplemento() {
+        return toComplemento;
+    }
+
+    public void setToComplemento(String toComplemento) {
+        this.toComplemento = toComplemento;
     }
 
     public boolean isReceipt() {

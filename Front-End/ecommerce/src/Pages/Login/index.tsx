@@ -36,10 +36,10 @@ export default function Login(){
           const response = await axios.post("http://localhost:8081/cliente/login", data);
 
           if (response.status === 200) {
-            const { token, id, nome, email, numeroDocumento } = response.data;
+            const { token, id, nome, email, numeroDocumento, telefone, datanascimento } = response.data;
       
             // Armazena no Redux
-            dispatch(loginSuccess({ token, user: { id, nome, email, numeroDocumento } }));
+            dispatch(loginSuccess({ token, user: { id, nome, email, numeroDocumento, telefone, datanascimento } }));
       
             // Salva no localStorage para manter login persistente
             localStorage.setItem("token", token);

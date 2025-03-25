@@ -1,18 +1,28 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addItemToCart } from "../../Redux/cartSlice";
 import { useNavigate } from "react-router-dom";
+import { canAddToCart } from "../../Hooks/addToCart";
+import { RootState } from "../../Redux/store";
+import { useAuth } from "../../Hooks/useAuth";
 
-interface Product {
+type Product = {
   id: string;
   nome: string;
   precoEmCentavos: number;
   imagemUrl: string;
-  isFavorited?: boolean;
+  marca: string;
+  categoria: string;
+  width: number;
+  height: number;
+  length: number;
   weight: number;
-}
+  isFavorited?: boolean;
+  descricao: string;
+  estoque: number;
+};
 
 const Favoritos = () => {
   const [favoritos, setFavoritos] = useState<Product[]>(() => {
@@ -24,8 +34,9 @@ const Favoritos = () => {
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const cartItems = useSelector((state: RootState) => state.cart.items);
 
-  const token = localStorage.getItem("token");
+  const { token } = useAuth()
   let email = "";
 
   const handleBuyNow = (product: Product) => {
@@ -67,8 +78,8 @@ const Favoritos = () => {
   };
 
   useEffect(() => {
-    console.log("Token: ", token)
-  }, [])
+    console.log("Token Favoritos: ", token)
+  }, [token])
 
   useEffect(() => {
     fetchFavoritos();
@@ -115,16 +126,23 @@ const Favoritos = () => {
   };
 
   const handleAddToCart = (product: Product) => {
-    dispatch(
-      addItemToCart({
-        id: product.id,
-        nome: product.nome,
-        precoEmCentavos: product.precoEmCentavos,
-        quantidade: 1,
-        imagemUrl: product.imagemUrl,
-        weight: product.weight
-      })
-    );
+    const currentQuantity = cartItems.find(p => p.id === product.id)?.quantidade || 0;
+      
+        if (canAddToCart(product, currentQuantity)) {
+          dispatch(
+            addItemToCart({
+              id: product.id,
+              nome: product.nome,
+              precoEmCentavos: product.precoEmCentavos,
+              quantidade: 1,
+              imagemUrl: product.imagemUrl,
+              weight: product.weight,
+              estoque: product.estoque,
+            })
+          );
+        } else {
+          alert("Estoque insuficiente para adicionar este item.");
+        }
   };
 
   return (

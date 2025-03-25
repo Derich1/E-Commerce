@@ -52,6 +52,9 @@ const vendaSlice = createSlice({
     setPesoTotal: (state, action) => {
       state.totalPeso = action.payload;
     },
+    setProdutos: (state, action) => {
+      state.produtos = action.payload;
+    },
     setVendaId: (state, action: PayloadAction<string>) => {
       state.vendaId = action.payload;
     },
@@ -71,5 +74,5 @@ const vendaSlice = createSlice({
   },
 });
 
-export const { setVenda, setPesoTotal, setVendaId, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
+export const { setVenda, setProdutos, setPesoTotal, setVendaId, setPreferenceId, setTotal, resetVenda, setImmediatePurchase, clearImmediatePurchase } = vendaSlice.actions;
 export default vendaSlice.reducer;

@@ -2,7 +2,14 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface UserState {
   token: string | null;
-  user: { id: string; nome: string; email: string; numeroDocumento: string; } | null;
+  user: { 
+    id: string; 
+    nome: string; 
+    email: string; 
+    numeroDocumento: string;
+    telefone: string;
+    datanascimento: string;
+   } | null;
 }
 
 const initialState: UserState = {

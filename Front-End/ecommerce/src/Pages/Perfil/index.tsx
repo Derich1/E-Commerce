@@ -2,27 +2,17 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginSuccess, logout } from "../../Redux/userSlice";
+import { logout } from "../../Redux/userSlice";
 import { toast } from "react-toastify";
-import { jwtDecode } from 'jwt-decode';
 import { format } from "date-fns";
-
-interface UserProfile {
-  name: string;
-  email: string;
-  telefone: string;
-  datanascimento: string;
-}
+import { useAuth } from "../../AuthContext";
+import { useSelector } from "react-redux";
+import { RootState } from "../../Redux/store";
 
 interface ChangePasswordFormData {
   currentPassword: string;
   newPassword: string;
   confirmNewPassword: string;
-}
-
-interface DecodedToken {
-  exp: number;  // Propriedade de expiração
-  [key: string]: any;  // Outras propriedades que o token pode ter
 }
 
 interface Produto {
@@ -34,7 +24,7 @@ interface Produto {
 
 interface Venda {
   id: string;
-  dataVenda: Date; // ou Date, dependendo de como você trabalha com a data
+  dataVenda: Date;
   produtos: Produto[];
   total: number;
   enderecoEntrega: string;
@@ -44,7 +34,7 @@ interface Venda {
 
 
 const Perfil: React.FC = () => {
-    const [user, setUser] = useState<UserProfile | null>(null);
+
     const [activeTab, setActiveTab] = useState("perfil");
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -54,8 +44,12 @@ const Perfil: React.FC = () => {
     const [hasMore, setHasMore] = useState(true);
     const navigate = useNavigate()
     const dispatch = useDispatch()
-
-    const token = localStorage.getItem("token")
+    const email = useSelector((state: RootState) => state.user.user?.email)
+    const nome = useSelector((state: RootState) => state.user.user?.nome)
+    const dataNascimento = useSelector((state: RootState) => state.user.user?.datanascimento)
+    const telefone = useSelector((state: RootState) => state.user.user?.telefone)
+    const { token } = useAuth()
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const paymentMethods: any = {
       credit_card: "Cartão de Crédito",
@@ -67,71 +61,19 @@ const Perfil: React.FC = () => {
     const capitalizeFirstLetter = (string: string) => {
       return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
     };
-    
-
-    const isTokenExpired = (token: string | null): boolean => {
-      if (!token) {
-        return true; // Se o token for null ou undefined, consideramos como expirado
-      }
-      try {
-        const decoded = jwtDecode<DecodedToken>(token); // Fornecendo o tipo correto para o retorno
-        const expirationTime = decoded.exp * 1000; // A expiração vem em segundos, por isso multiplicamos por 1000
-        return Date.now() > expirationTime;
-      } catch (e) {
-        console.error('Erro ao decodificar token:', e);
-        return true; // Considera expirado se não conseguir decodificar
-      }
-    };
 
     const formatId = (id: any) => {
       return parseInt(id.split("-")[0], 16);
     }
 
-    const formatPhoneNumber = (phone: any) => {
-    
-      // Remove todos os caracteres não numéricos
+    const formatPhoneNumber = (phone: string | undefined): string => {
+      if (!phone) return "";
       const phoneNumber = phone.replace(/\D/g, '');
-    
       return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7, 11)}`;
     };
     
 
-    useEffect(() => {
-      const fetchUserData = async () => {
-        try {
-          const response = await axios.get("http://localhost:8081/cliente/perfil", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setUser(response.data);
-        } catch (error: any) {
-          console.error("Erro ao buscar dados do perfil:", error);
-
-          if (error.response?.status === 401) {
-            handleDisconnect()
-          }
-        }
-      };
-  
-      if (!user && token) {
-        fetchUserData();
-      }
-    }, [user, token]);
-  
-    useEffect(() => {
-      const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
-
-      if (storedToken && storedUser) {
-        dispatch(loginSuccess({ token: storedToken, user: JSON.parse(storedUser) }));
-        console.log(user)
-      }
-
-      if (isTokenExpired(token)) {
-        handleDisconnect()
-      }
-    }, []);
+    const { user } = useAuth()
 
     useEffect(() => {
       if (activeTab === "pedidos") {
@@ -157,16 +99,12 @@ const Perfil: React.FC = () => {
     });
 
     const handleDisconnect = () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
       dispatch(logout());
-      setUser(null)
       navigate("/login");
     };
 
     const handlePedidos = async () => {
       setLoading(true);
-      const email = user?.email
 
       try {
         const response = await axios.get("http://localhost:8083/venda/pedidos", {
@@ -254,64 +192,98 @@ const Perfil: React.FC = () => {
       }
     };
     
-  
-    // Se os dados do usuário ainda estão carregando, exibir um loading
     if (!user) {
-      return <p className="text-center mt-10 text-gray-600">Carregando...</p>;
+      handleDisconnect()
     }
   
     return (
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
+        <div className="sticky top-4 md:hidden h-0 z-40">
+          <button 
+            className="absolute left-4 top-4 md:hidden z-40 p-3 text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-500 transition-all"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            ☰
+          </button>
+        </div>
+        {isMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 md:hidden z-40"
+            onClick={() => setIsMenuOpen(false)}
+          />
+        )}
       {/* Sidebar */}
-      <aside className="w-64 bg-blue-600 text-white p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-6 text-center">Menu</h2>
+      <aside className={
+        `fixed md:relative left-0 top-0 h-full w-64 md:mt-10 md:ml-5 md:max-w-60 rounded-lg transform transition-transform duration-200 ease-in-out bg-rose-200 shadow-lg text-black p-6 flex-1 z-50 ${
+        isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Menu</h2>
         <button
-          className={`text-left w-full py-3 px-4 rounded-lg transition cursor-pointer ${
-            activeTab === "perfil" ? "bg-blue-500" : "hover:bg-blue-500"
+          className="md:hidden p-2 hover:bg-blue-500 rounded-lg"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          ✕
+        </button>
+      </div>
+      <div className="space-y-2">
+        <button
+          className={`w-full text-left py-3 px-4 rounded-lg transition ${
+            activeTab === "perfil" ? "bg-rose-300" : "bg-rose-200"
           }`}
-          onClick={() => setActiveTab("perfil")}
+          onClick={() => {
+            setActiveTab("perfil");
+            setIsMenuOpen(false);
+          }}
         >
           Perfil
         </button>
         <button
-          className={`text-left w-full py-3 px-4 rounded-lg transition cursor-pointer ${
-            activeTab === "pedidos" ? "bg-blue-500" : "hover:bg-blue-500"
+          className={`w-full text-left py-3 px-4 rounded-lg transition ${
+            activeTab === "pedidos" ? "bg-rose-300" : "bg-rose-200"
           }`}
-          onClick={() => setActiveTab("pedidos")}
+          onClick={() => {
+            setActiveTab("pedidos") 
+            setIsMenuOpen(false)
+          }}
         >
           Meus Pedidos
         </button>
         <button
-          className={`text-left w-full py-3 px-4 rounded-lg transition cursor-pointer ${
-            activeTab === "senha" ? "bg-blue-500" : "hover:bg-blue-500"
+          className={`w-full text-left py-3 px-4 rounded-lg transition ${
+            activeTab === "senha" ? "bg-rose-300" : "bg-rose-200"
           }`}
-          onClick={() => setActiveTab("senha")}
+          onClick={() => {
+            setActiveTab("senha") 
+            setIsMenuOpen(false)
+          }}
         >
           Alterar Senha
         </button>
+        </div>
       </aside>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 p-10">
+      <main className="flex-1 p-4 md:p-10">
         {activeTab === "perfil" && (
-          <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Dados do Perfil</h1>
+          <div className="max-w-3xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6">Dados do Perfil</h1>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-600">Nome</label>
-                <p className="mt-1 text-gray-800">{user.name}</p>
+                <p className="mt-1 text-gray-800">{nome}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-600">E-mail</label>
-                <p className="mt-1 text-gray-800">{user.email}</p>
+                <p className="mt-1 text-gray-800">{email}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-600">Telefone</label>
-                <p className="mt-1 text-gray-800">{formatPhoneNumber(user.telefone)}</p>
+                <p className="mt-1 text-gray-800">{formatPhoneNumber(telefone)}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-600">Data de Nascimento</label>
-                <p className="mt-1 text-gray-800">{user.datanascimento}</p>
+                <p className="mt-1 text-gray-800">{dataNascimento}</p>
               </div>
               <button onClick={handleDisconnect} className="cursor-pointer mt-4 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Sair da conta</button>
             </div>
@@ -319,17 +291,17 @@ const Perfil: React.FC = () => {
         )}
 
         {activeTab === "pedidos" && (
-          <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Meus Pedidos</h1>
+          <div className="max-w-3xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6">Meus Pedidos</h1>
             {vendas.length > 0 ? (
               <ul className="space-y-4">
                 {vendas.map((venda) => (
-                  <li key={venda.id} className="border p-4 rounded-lg shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-xl font-semibold text-gray-700">
+                  <li key={venda.id} className="border p-3 md:p-4 rounded-lg shadow-sm">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2">
+                      <h2 className="text-lg md:text-xl font-semibold text-gray-700">
                         Pedido: {formatId(venda.id)}
                       </h2>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 mt-1 md:mt-0">
                         Data: {format(venda.dataVenda, "dd/MM/yyyy")}
                       </p>
                     </div>
@@ -337,12 +309,12 @@ const Perfil: React.FC = () => {
                       {venda.produtos.map((produto, idx) => (
                         <li
                           key={idx}
-                          className="flex items-center gap-4 p-2 border-b last:border-b-0"
+                          className="flex flex-col  md:flex-row items-start gap-4 p-2 border-b last:border-b-0"
                         >
                           <img
                             src={produto.imagemUrl}
                             alt={produto.nome}
-                            className="w-16 h-16 object-cover rounded"
+                            className="w-12 h-12 md:w-16 md:h-16 object-cover rounded"
                           />
                           <div className="flex-1">
                             <p className="text-lg font-medium text-gray-800">
@@ -385,7 +357,7 @@ const Perfil: React.FC = () => {
                       <div className="text-center mt-4">
                         <button
                           onClick={showMore}
-                          className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
+                          className="w-full md:w-auto cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
                         >
                           Mostrar mais
                         </button>
@@ -402,8 +374,8 @@ const Perfil: React.FC = () => {
 
 
         {activeTab === "senha" && (
-          <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="cursor-pointer text-3xl font-bold text-center text-gray-800 mb-6">Alterar Senha</h1>
+          <div className="max-w-3xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6">Alterar Senha</h1>
             <form onSubmit={handlePasswordChange} className="max-w-md mx-auto p-4">
               <h2 className="text-2xl font-bold mb-4">Alterar Senha</h2>
               

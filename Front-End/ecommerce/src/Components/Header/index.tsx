@@ -9,6 +9,7 @@ import {useDispatch, useSelector} from "react-redux"
 import { useState } from "react";
 import { updateCartItemAction } from "../../Redux/cartSlice";
 import { useAuth } from "../../Hooks/useAuth";
+import { applyFilters, updateSearchQuery } from "../../Redux/productSlice";
 
 type HeaderProps = {
   categories: string[];
@@ -20,10 +21,16 @@ const Header: React.FC<HeaderProps> = () => {
   const dispatch = useDispatch()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const isAuthenticated = useAuth()
+  const searchQuery = useSelector((state: RootState) => state.products.searchQuery);
 
   const updateCartItem = (id: string, newQuantity: number) => {
     dispatch(updateCartItemAction({ id, newQuantity }));
   }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(updateSearchQuery(e.target.value));
+    dispatch(applyFilters()); // Aplica os filtros imediatamente
+  };
 
   return (
     <header className="bg-white shadow-md py-4">
@@ -32,34 +39,30 @@ const Header: React.FC<HeaderProps> = () => {
           <img src={Brand} alt="logo da loja" className="w-24 h-auto" />
         </Link>
 
-        <div className="relative flex items-center w-dvw mx-10">
+        <div className="relative flex items-center w-dvw ">
           <input 
             type="text" 
             id="modern-input" 
-            placeholder=" " 
-            className="w-full border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 pl-4 pr-12 py-3 text-lg rounded-md"
+            placeholder="Pesquisar..." 
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 ml-4 pr-12 py-2 text-lg rounded-md"
           />
-          <label 
-            htmlFor="modern-input" 
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg"
-          >
-            Pesquisar...
-          </label>
-          <button className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600">
-            <FaSearch size={24} />
+          <button className="absolute cursor-pointer right-4 top-1/2 transform -translate-y-1/2 text-gray-600">
+            <FaSearch size={18} />
           </button>
         </div>
 
 
-        <div className="flex items-center space-x-6">
+        <div className="ml-2 flex items-center space-x-2">
           <Link to={isAuthenticated ? "/perfil" : "/login"} className="icon text-gray-700 hover:text-blue-500">
-            <CgProfile size={30}/>
+            <CgProfile className="text-[1.5rem] md:text-[2rem]" />
           </Link>
           <Link to="/favoritos" className="icon text-gray-700 hover:text-blue-500">
-            <MdOutlineFavoriteBorder size={30}/>
+            <MdOutlineFavoriteBorder className="text-[1.5rem] md:text-[2rem]"/>
           </Link>
           <Link to="#" className="icon text-gray-700 hover:text-blue-500">
-            <MdOutlineShoppingBag size={30} onClick={() => (setIsCartOpen(true))} />
+            <MdOutlineShoppingBag className="text-[1.5rem] md:text-[2rem]" onClick={() => (setIsCartOpen(true))} />
           </Link>
         </div>
       </div>

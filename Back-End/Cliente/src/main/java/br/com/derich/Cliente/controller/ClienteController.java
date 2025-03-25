@@ -5,6 +5,8 @@ import br.com.derich.Cliente.dto.*;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
 import br.com.derich.Cliente.service.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,8 @@ public class ClienteController {
 
     @Autowired
     private JwtService jwtService;
+
+    private static final Logger logger = LoggerFactory.getLogger(ClienteController.class);
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/login")
@@ -129,7 +133,7 @@ public class ClienteController {
     public ResponseEntity<List<ProdutoDTO>> listarFavoritos(@RequestHeader("Authorization") String token) {
         // Removendo "Bearer " do token
         String jwt = token.substring(7);
-
+        logger.info("Token recebido: {}", token);
         // Extrai o e-mail do usuário autenticado
         String email = jwtService.extractEmail(jwt);
 

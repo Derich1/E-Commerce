@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     System.out.println("Usuário autenticado via JWT: " + auth.getName());
 
                 } else {
-                    System.out.println("Token inválido.");
+                    System.out.println("Token inválido." + header);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Retorna 401
                     return;
                 }

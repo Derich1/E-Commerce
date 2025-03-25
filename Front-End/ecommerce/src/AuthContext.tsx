@@ -1,12 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-interface User {
-  token: string;
-}
+import { createContext, useContext, ReactNode } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "./Redux/store"; // Ajuste o caminho conforme necessário
 
 interface AuthContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: any; // Substitua por seu tipo de usuário
+  token: string | null;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,17 +15,17 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setUser({ token });
-    }
-  }, []);
+  // Busca os dados diretamente do Redux Persist
+  const { user, token } = useSelector((state: RootState) => state.user);
+  
+  const value = {
+    user,
+    token,
+    isAuthenticated: !!token // Verificação simples de autenticação
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

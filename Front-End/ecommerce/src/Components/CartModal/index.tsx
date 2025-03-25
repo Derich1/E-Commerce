@@ -1,12 +1,17 @@
-import React, { useState } from "react"
+// 1. Importações adicionando Framer Motion
+import React, { useEffect } from "react";
 import { MdOutlineClose } from "react-icons/md";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion"; // Importação do Framer Motion
+import ReactDOM from "react-dom";
+import { toast } from "react-toastify";
 
 type CartItem = {
     id: string;
     nome: string;
     precoEmCentavos: number;
     quantidade: number;
+    estoque: number;
 };
 
 type CartModalProps = {
@@ -17,81 +22,147 @@ type CartModalProps = {
 };
 
 const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, updateCartItem }) => {
-  const [isClosing, setIsClosing] = useState(false);
-
-  // Função para iniciar animação de saída
-  const handleClose = () => {
-    if (isClosing) return
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 300); // Duração da animação de saída
-  };
-
-  // Fecha o modal somente se o clique for fora do modal-content
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement
-    if (target.classList.contains('modal-overlay')) {
-      handleClose();
-    }
-  }
+  const handleClose = () => onClose();
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => {
-      return total + item.precoEmCentavos * item.quantidade / 100;
-    }, 0);
+      return cartItems.reduce((total, item) => {
+          return total + (item.precoEmCentavos * item.quantidade) / 100;
+      }, 0);
   };
+
+  const handleIncreaseQuantity = (item: CartItem) => {
+    if (item.quantidade < item.estoque) {
+        updateCartItem(item.id, item.quantidade + 1);
+    } else {
+        // Opcional: exibir uma mensagem para o usuário informando que não há mais estoque.
+        toast.error(`O estoque atual do item é ${item.estoque}`)
+    }
+  };
+
+
+  // Bloquear scroll da página quando o modal estiver aberto
+  useEffect(() => {
+      if (isCartOpen) {
+          document.body.style.overflow = "hidden";
+      } else {
+          document.body.style.overflow = "auto";
+      }
+      
+      return () => {
+          document.body.style.overflow = "auto";
+      };
+  }, [isCartOpen]);
 
   const totalPrice = calculateTotal();
 
-  if (!isCartOpen && !isClosing) return null;
+  // Usar ReactDOM.createPortal para renderizar fora da hierarquia normal
+  return ReactDOM.createPortal(
+      <AnimatePresence>
+          {isCartOpen && (
+              <motion.div
+                  className="fixed inset-0 z-[9999] flex" // Z-index extremamente alto
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={handleClose}
+                  role="dialog"
+                  aria-modal="true"
+              >
+                  {/* Overlay escuro */}
+                  <motion.div
+                      className="absolute inset-0 bg-black bg-opacity-50"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                  />
+                  
+                  {/* Conteúdo do Modal */}
+                  <motion.div
+                      className="ml-auto bg-white w-full md:w-[70vw] lg:w-[50vw] xl:w-[35vw] h-full p-4 shadow-lg relative z-[10000] flex flex-col"
+                      initial={{ x: "100%" }}
+                      animate={{ x: 0 }}
+                      exit={{ x: "100%" }}
+                      transition={{ type: "tween", duration: 0.3 }}
+                      onClick={(e) => e.stopPropagation()}
+                  >
+                      <div className="flex-shrink-0">
+                          <button
+                              className="cursor-pointer absolute top-4 right-4 md:left-4 md:right-auto"
+                              onClick={handleClose}
+                              aria-label="Fechar carrinho"
+                          >
+                              <MdOutlineClose size={24} />
+                          </button>
+                          <h2 className="text-center text-xl md:text-2xl font-semibold mb-4 md:mb-6">
+                              Seu Carrinho
+                          </h2>
+                      </div>
 
-  return (
-    <div className={`modal-overlay fixed inset-0 bg-black bg-opacity-50 z-50 ${isClosing ? "fade-out" : ""}`} onClick={handleOverlayClick}>
-      <div className={`fixed right-0 top-0 bg-white w-[20vw] h-full p-4 shadow-lg transition-transform duration-300 ${isClosing ? "translate-x-full" : ""}`}>
-        <button className="cursor-pointer absolute top-4 left-4" onClick={handleClose}>
-          <MdOutlineClose size={24}/>
-        </button>
-        <h2 className="text-center text-lg font-semibold mb-4">Seu Carrinho</h2>
-        {cartItems.length === 0 ? (
-          <p>O carrinho está vazio.</p>
-        ) : (
-            <ul className="space-y-4">
-            {cartItems.map((item) => (
-              <li key={item.id} className="flex justify-between items-center">
-                <div>
-                  <span className="block">{item.nome}</span>
-                  <span>R${item.precoEmCentavos / 100}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => updateCartItem(item.id, item.quantidade - 1)}
-                    disabled={item.quantidade === 1}
-                    className="px-2 py-1 bg-gray-200 rounded"
-                  >
-                    -
-                  </button>
-                  <span>{item.quantidade}</span>
-                  <button 
-                    onClick={() => updateCartItem(item.id, item.quantidade + 1)} 
-                    className="px-2 py-1 bg-gray-200 rounded"
-                  >
-                    +
-                  </button>
-                </div>
-              </li>
-              ))}
-            </ul>
-        )}
-        <div className="relative h-full mt-6">
-          <p className="font-semibold">Valor total: R${totalPrice}</p>
-          <Link to="/compra" onClick={handleClose} className="cursor-pointer absolute bottom-40 sm:bottom-35 lg:bottom-25 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg z-50 text-sm sm:text-base lg:text-lg">
-            Finalizar Compra
-          </Link>
-        </div>
-      </div>
-    </div>
+                      <div className="flex-1 overflow-y-auto pb-20">
+                          {cartItems.length === 0 ? (
+                              <p>O carrinho está vazio.</p>
+                          ) : (
+                              <ul className="space-y-4 mb-8">
+                                  {cartItems.map((item) => (
+                                      <li
+                                          key={item.id}
+                                          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                                      >
+                                          <div className="flex-1">
+                                              <span className="block font-medium text-base md:text-lg">
+                                                  {item.nome}
+                                              </span>
+                                              <span className="block text-sm md:text-base text-gray-600">
+                                                  {new Intl.NumberFormat("pt-BR", {
+                                                      style: "currency",
+                                                      currency: "BRL",
+                                                  }).format(item.precoEmCentavos / 100)}
+                                              </span>
+                                          </div>
+                                          <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm w-full md:w-auto">
+                                              <button
+                                                  onClick={() => updateCartItem(item.id, item.quantidade - 1)}
+                                                  disabled={item.quantidade === 1}
+                                                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                                              >
+                                                  -
+                                              </button>
+                                              <span className="min-w-[30px] text-center">{item.quantidade}</span>
+                                              <button
+                                                onClick={() => handleIncreaseQuantity(item)}
+                                                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                              >
+                                                  +
+                                              </button>
+                                          </div>
+                                      </li>
+                                  ))}
+                              </ul>
+                          )}
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-200 mt-auto bg-white sticky bottom-0">
+                          <p className="text-lg md:text-xl font-bold mb-4 text-center">
+                              Total:{" "}
+                              {new Intl.NumberFormat("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                              }).format(totalPrice)}
+                          </p>
+                          <Link
+                              to="/compra"
+                              onClick={handleClose}
+                              className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-3 px-6 rounded-lg transition-colors text-sm md:text-base"
+                          >
+                              Finalizar Compra
+                          </Link>
+                      </div>
+                  </motion.div>
+              </motion.div>
+          )}
+      </AnimatePresence>,
+      document.body // Renderizar diretamente no body para evitar problemas de z-index
   );
 };
 

@@ -8,6 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
 import { setImmediatePurchase } from "../../Redux/vendaSlice";
+import { canAddToCart } from "../../Hooks/addToCart";
 
 type Product = {
   id: string;
@@ -22,6 +23,7 @@ type Product = {
   weight: number;
   isFavorited?: boolean;
   descricao: string;
+  estoque: number;
 };
 
 type ProdutoComprado = {
@@ -41,6 +43,7 @@ export default function Produto() {
   const dispatch = useDispatch();
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.user)
+  const currentQuantity = useSelector((state: RootState) => state.cart.items.find(p => p.id === id)?.quantidade)
 
   const [favoritos, setFavoritos] = useState<Product[]>(() => {
     const storedFavoritos = localStorage.getItem("favoritos");
@@ -59,12 +62,6 @@ export default function Produto() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    console.log("Logando o usuário assim que carrega:")
-    console.log(user.token)
-    console.log(user.user)
-  }, [])
 
   const handleBuyNow = (product: Product) => {
     if (!user.user) {
@@ -159,12 +156,15 @@ export default function Produto() {
   if (!product) return <p>Produto não encontrado.</p>;
 
   const handleAddToCart = (product: Product) => {
-    if (!user.user){
-      alert("Conect-se a uma conta para adicionar item ao carrinho")
-      navigate("/login")
+    if (!user.user) {
+      alert("Conecte-se a uma conta para adicionar item ao carrinho");
+      navigate("/login");
+      return;
     }
 
-    if (product) {
+    const quantity = currentQuantity || 0;
+  
+    if (canAddToCart(product, quantity)) {
       dispatch(
         addItemToCart({
           id: product.id,
@@ -172,9 +172,12 @@ export default function Produto() {
           precoEmCentavos: product.precoEmCentavos,
           quantidade: 1,
           imagemUrl: product.imagemUrl,
-          weight: product.weight
+          weight: product.weight,
+          estoque: product.estoque,
         })
       );
+    } else {
+      alert("Estoque insuficiente para adicionar este item.");
     }
   };
 

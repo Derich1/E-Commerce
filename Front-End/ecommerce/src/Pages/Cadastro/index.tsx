@@ -34,10 +34,10 @@ export default function Cadastro() {
       });
   
       if (response.status === 200) {
-        const { token, id, nome, email, numeroDocumento } = response.data;
+        const { token, id, nome, email, numeroDocumento, telefone, datanascimento } = response.data;
   
         // Armazena no Redux
-        dispatch(updateUser({ token, user: { id, nome, email, numeroDocumento } }));
+        dispatch(updateUser({ token, user: { id, nome, email, numeroDocumento, telefone, datanascimento } }));
   
         // Salva no localStorage para manter login persistente
         localStorage.setItem("token", token);

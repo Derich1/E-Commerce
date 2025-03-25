@@ -7,6 +7,7 @@ type CartItem = {
   quantidade: number;
   imagemUrl: string;
   weight: number;
+  estoque: number;
 };
 
 type CartState = {

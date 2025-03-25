@@ -21,7 +21,18 @@ export default function AppRoutes() {
         <BrowserRouter>
         <div className="flex flex-col min-h-screen">
             <Header categories={categorias} />
-            <ToastContainer />
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                style={{ zIndex: 100000 }} // Valor maior que o do modal
+            />
                 <main className="flex-grow">
                 <Routes>
                     <Route path="/" element={<Home />} />

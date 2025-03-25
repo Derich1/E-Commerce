@@ -309,8 +309,9 @@ public class VendaService {
         toMap.put("district", entregaRequest.getToDistrict());
         toMap.put("city", entregaRequest.getToCity());
         toMap.put("document", entregaRequest.getToDocument());
+        toMap.put("complemento", entregaRequest.getToComplemento());
 
-        System.out.println("Dados do backend: " + entregaRequest.getToAddress() + entregaRequest.getToNumber() + entregaRequest.getToDistrict() + entregaRequest.getToCity());
+        System.out.println("Dados do backend: " + entregaRequest.getToAddress() + entregaRequest.getToNumber() + entregaRequest.getToDistrict() + entregaRequest.getToCity() + entregaRequest.getToComplemento());
 
         // Opções ("options")
         Map<String, Object> optionsMap = new HashMap<>();

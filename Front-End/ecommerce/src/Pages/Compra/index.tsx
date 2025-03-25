@@ -4,7 +4,7 @@ import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setPesoTotal, setPreferenceId, setTotal, setVendaId } from "../../Redux/vendaSlice";
+import { setPesoTotal, setPreferenceId, setProdutos, setTotal, setVendaId } from "../../Redux/vendaSlice";
 import { setCep } from "../../Redux/enderecoSlice";
 import { setFretes } from "../../Redux/freteSlice";
 
@@ -63,7 +63,7 @@ const Compra: React.FC = () => {
   const finalizarCompra = async () => {
     // Validações iniciais
     if (cepError || formData.address.length < 9) return;
-  
+    
     if (!user.user) {
       alert("Conect-se a uma conta para poder prosseguir com a compra");
       return navigate("/login");
@@ -98,10 +98,12 @@ const Compra: React.FC = () => {
         height: p.height,
         length: p.length,
         weight: p.weight,
-        precoEmCentavos: p.precoEmCentavos,
+        precoEmCentavos: p.precoEmCentavos / 100,
         quantidade: p.quantidade
       }))
     };
+
+    console.log("Requisição enviada pra calcular o frete:", JSON.stringify(freteRequest, null, 2));
     
 
     console.log("Payload enviado para calcularFrete:", JSON.stringify(freteRequest, null, 2));
@@ -114,10 +116,15 @@ const Compra: React.FC = () => {
         { headers: { "Content-Type": "application/json" } }
       );
   
-      // Armazenamento e dispatch dos dados da venda
-      localStorage.setItem("vendaId", vendaResponse.id);
       const peso = vendaResponse.vendaPeso
       dispatch(setVendaId(vendaResponse.id));
+      dispatch(setProdutos(itemsToCheckout.map(item => ({
+        produtoId: item.id,
+        quantidade: item.quantidade,
+        nome: item.nome,
+        precoEmCentavos: item.precoEmCentavos,
+        imagemUrl: item.imagemUrl,
+        weight: item.weight}))))
       dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
       dispatch(setPesoTotal(peso))
