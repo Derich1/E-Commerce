@@ -145,47 +145,100 @@ const Compra: React.FC = () => {
   };  
 
   return (
-    <div className="mt-10 max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Finalizar Compra</h2>
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold">Resumo do Pedido</h3>
+    <div className="mt-10 max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-xl shadow-lg">
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Finalizar Compra</h2>
+      
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold text-gray-700 mb-4">Resumo do Pedido</h3>
+        
         {itemsToCheckout.length === 0 ? (
-          <p>Seu carrinho está vazio.</p>
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-500">Seu carrinho está vazio</p>
+          </div>
         ) : (
-          <ul>
+          <div className="space-y-4">
             {itemsToCheckout.map((item) => (
-              <li key={item.id || item.id} className="flex items-center gap-4 border-b pb-4">
-                <img src={item.imagemUrl} alt={item.nome} className="w-20 h-20 object-cover rounded-lg shadow" />
-                <div className="flex flex-col">
-                  <p className="font-medium">{item.nome}</p>
-                  <p className="text-gray-600">Quantidade: {item.quantidade}</p>
-                  <p className="text-gray-800 font-semibold">
-                    R$ {(item.precoEmCentavos / 100).toFixed(2)}
-                  </p>
+              <div 
+                key={item.id} 
+                className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
+              >
+                <img 
+                  src={item.imagemUrl} 
+                  alt={item.nome} 
+                  className="w-full sm:w-24 h-24 object-cover rounded-lg shadow-sm" 
+                />
+                <div className="flex-1 w-full">
+                  <p className="font-medium text-gray-800 mb-1">{item.nome}</p>
+                  <div className="flex flex-wrap gap-4 justify-between">
+                    <p className="text-sm text-gray-600">
+                      Quantidade: <span className="font-medium">{item.quantidade}</span>
+                    </p>
+                    <p className="text-base font-semibold text-blue-600">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(item.precoEmCentavos / 100)}
+                    </p>
+                  </div>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-700">Total:</span>
+                <span className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(totalPrice / 100)}
+                </span>
+              </div>
+            </div>
+          </div>
         )}
-        <p className="text-lg font-bold mt-4">Total: R$ {(totalPrice / 100).toFixed(2)}</p>
       </div>
 
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="text"
-          name="address"
-          placeholder="Digite seu CEP"
-          value={formData.address}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded ${cepError ? "border-red-500" : "border-gray-300"}`}
-          required
-        />
-        {cepError && <p className="text-sm text-red-500 mt-1">{cepError}</p>}
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+        <div>
+          <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-2">
+            CEP
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="cep"
+              name="address"
+              placeholder="Ex: 00000-000"
+              value={formData.address}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 border ${
+                cepError ? "border-red-500" : "border-gray-300"
+              } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all`}
+              required
+            />
+            {cepError && (
+              <div className="absolute inset-y-0 right-3 flex items-center pr-3 pointer-events-none">
+                <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+          {cepError && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {cepError}
+            </p>
+          )}
+        </div>
 
         <button
           type="button"
-          className={"cursor-pointer w-full p-2 rounded text-white bg-blue-500 hover:bg-blue-700"}
           onClick={finalizarCompra}
+          className="w-full md:w-auto px-8 py-3.5 text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
         >
           Continuar Compra
         </button>

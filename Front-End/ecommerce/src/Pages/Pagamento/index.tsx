@@ -53,10 +53,12 @@ const Pagamento: React.FC = () => {
     complemento: ""
   });
 
+  type PaymentMethod = 'credit_card' | 'debit_card' | 'pix';
+
   const navigate = useNavigate();
   const cardFormRef = useRef<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [selectedPaymentType, setSelectedPaymentType] = useState<"credit_card" | "debit_card" | "pix" | null>(null);
+  const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentMethod>();
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
   const fretes = useSelector((state: RootState) => state.frete.fretes).filter(frete => !frete.error);
@@ -328,159 +330,183 @@ const Pagamento: React.FC = () => {
   }, [produtos]);
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       {/* Seção de Endereço e Frete */}
-      <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl px-4 mt-10 items-start">
-        <div className="flex-1">
-          <h2 className="text-xl text-center mb-2">Endereço de entrega</h2>
-          <form className="space-y-4 bg-white p-6 rounded-lg shadow-lg">
-            <input
-              type="text"
-              name="cep"
-              placeholder="Endereço"
-              value={endereco.cep}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="estado"
-              placeholder="Estado"
-              value={endereco.estado}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="cidade"
-              placeholder="Cidade"
-              value={endereco.cidade}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="bairro"
-              placeholder="Bairro"
-              value={endereco.bairro}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="logradouro"
-              placeholder="Rua"
-              value={endereco.logradouro}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="numero"
-              placeholder="Número"
-              value={endereco.numero}
-              onChange={handleNumeroChange}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="complemento"
-              placeholder="Complemento"
-              value={endereco.complemento}
-              onChange={handleEnderecoChange}
-              className="w-full p-2 border rounded"
-            />
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="grid lg:grid-cols-2 gap-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Endereço de entrega</h2>
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700">CEP</label>
+              <input
+                type="text"
+                name="cep"
+                placeholder="00000-000"
+                value={endereco.cep}
+                onChange={handleEnderecoChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Estado</label>
+                <input
+                  type="text"
+                  name="estado"
+                  value={endereco.estado}
+                  onChange={handleEnderecoChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Cidade</label>
+                <input
+                  type="text"
+                  name="cidade"
+                  value={endereco.cidade}
+                  onChange={handleEnderecoChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Bairro</label>
+                <input
+                  type="text"
+                  name="bairro"
+                  value={endereco.bairro}
+                  onChange={handleEnderecoChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Rua</label>
+                <input
+                  type="text"
+                  name="logradouro"
+                  value={endereco.logradouro}
+                  onChange={handleEnderecoChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Número</label>
+                <input
+                  type="text"
+                  name="numero"
+                  value={endereco.numero}
+                  onChange={handleNumeroChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Complemento</label>
+                <input
+                  type="text"
+                  name="complemento"
+                  value={endereco.complemento}
+                  onChange={handleEnderecoChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                />
+              </div>
           </form>
         </div>
 
-        <div className="flex-1 flex flex-col items-center">
-          <h2 className="text-xl text-center mb-2">Opções de Frete</h2>
-          <ul className="space-y-2 max-w-60">
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Opções de Frete</h2>
+          <div className="space-y-4">
             {fretes.map((frete) => (
-              <li
+              <div
                 key={frete.id}
                 onClick={() => selecionarFrete(frete)}
                 className={`
-                  p-4 mb-2 cursor-pointer rounded-lg w-full
-                  ${freteSelecionado?.id === frete.id ? 'bg-green-100 border-2 border-green-500' : 'bg-white border border-gray-300'}
-                  hover:bg-gray-100 transition-colors
+                  p-4 cursor-pointer rounded-lg border-2 transition-all
+                  ${freteSelecionado?.id === frete.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}
                 `}
               >
-                <div className="flex items-center">
-                  <img src={frete.company.picture} alt={frete.company.name} className="w-12 h-12 mr-4 object-contain" />
-                  <div>
-                    <p className="font-bold text-lg">{frete.name}</p>
-                    <p className="text-gray-500">R$ {frete.price}</p>
+                <div className="flex items-center gap-4">
+                  <img src={frete.company.picture} alt={frete.company.name} className="w-14 h-14 object-contain rounded-lg" />
+                  <div className="flex-1">
+                    <div className="flex flex-col justify-between items-start">
+                      <h3 className="font-semibold text-gray-800">{frete.name}</h3>
+                      <p className="text-base font-bold text-blue-600">R$ {frete.price}</p>
+                    </div>
                     {frete.delivery_range && frete.delivery_range.min && frete.delivery_range.max && (
-                      <p className="text-sm text-gray-700 mt-2">
+                      <p className="text-sm text-gray-500">
                         Estimativa de entrega: {frete.delivery_range.min} - {frete.delivery_range.max} dias
                       </p>
                     )}
                   </div>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
 
       {/* Container para Produtos e Seleção de Pagamento lado a lado */}
-      <div className="flex flex-col md:flex-row w-full max-w-6xl px-4 mt-8 gap-8">
+      <div className="grid lg:grid-cols-2 gap-8">
         {/* Lista de Produtos */}
-        <div className="flex-1">
-        <h2 className="text-xl font-semibold text-center">Produtos na sacola</h2>
-          {loading ? (
-            <p>Carregando produtos...</p>
-          ) : (
-            produtos.map((p) => (
-              <ul key={p.id} className="bg-white p-4 rounded-lg shadow mb-4 text-center">
-                <li>
-                  <p>{p.nome}</p>
-                  <div className="flex justify-center my-5">
-                    <img src={p.imagemUrl} alt={p.nome} className="w-20 h-20 object-contain justify-center" />
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">Produtos na sacola</h2>
+          <div className="space-y-3 sm:space-y-4">
+            {loading ? (
+              <div className="text-center py-4 sm:py-8">Carregando...</div>
+            ) : (
+              produtos.map((p) => (
+                <div key={p.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
+                    <img src={p.imagemUrl} alt={p.nome} className="w-full h-full object-contain rounded-lg" />
                   </div>
-                  <p>Quantidade: {p.quantidade}</p>
-                  <p>
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(p.precoEmCentavos / 100)}
-                  </p>
-                </li>
-              </ul>
-            ))
-          )}
-          <h2 className="text-xl font-semibold mb-4">Total: {totalComFrete}</h2>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-800">{p.nome}</h3>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-sm text-gray-500">
+                        Quantidade: {p.quantidade}
+                      </span>
+                      <span className="font-medium text-gray-700">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(p.precoEmCentavos / 100)}
+                      </span>
+                </div>
+                </div>
+                </div>
+              ))
+            )}
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-xl font-bold text-gray-800">Total:</span>
+                <span className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(totalComFrete)}
+                </span>
+              </div>
+            </div>
         </div>
 
         {/* Seleção de Pagamento */}
-        <div className="flex-1 text-center">
-          <h2 className="text-xl font-semibold mb-4">Selecione o tipo de pagamento:</h2>
-          <div className="flex justify-center space-x-4 mb-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Pagamento</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-8">
+            {(['credit_card', 'debit_card', 'pix'] as const).map((type) => (
             <button
-              className={`px-4 py-2 rounded ${
-                selectedPaymentType === "credit_card" ? "bg-blue-600 text-white" : "bg-gray-200"
+              key={type}
+              onClick={() => setSelectedPaymentType(type)}
+              className={`p-3 rounded-lg text-sm font-medium transition-colors ${
+                selectedPaymentType === type
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              onClick={() => setSelectedPaymentType("credit_card")}
             >
-              Cartão de Crédito
+              {type === 'credit_card' && 'Cartão de Crédito'}
+              {type === 'debit_card' && 'Cartão de Débito'}
+              {type === 'pix' && 'PIX'}
             </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                selectedPaymentType === "debit_card" ? "bg-blue-600 text-white" : "bg-gray-200"
-              }`}
-              onClick={() => setSelectedPaymentType("debit_card")}
-            >
-              Cartão de Débito
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                selectedPaymentType === "pix" ? "bg-blue-600 text-white" : "bg-gray-200"
-              }`}
-              onClick={() => setSelectedPaymentType("pix")}
-            >
-              Pix
-            </button>
+             ))}
           </div>
 
           {/* Renderiza o formulário de pagamento de acordo com o método selecionado */}
@@ -544,7 +570,7 @@ const Pagamento: React.FC = () => {
         </div>
       </div>
     </div>
-
+  </div>
   );
 };
 

@@ -17,7 +17,7 @@ export default function Footer(){
                     <div className="md:col-span-1">
                         <h3 className="text-sm font-semibold mb-1 text-center">Contato</h3>
                         <p className="text-center text-sm">Email: contato@empresa.com</p>
-                        <p className="text-center text-sm">Telefone: (11) 99999-9999</p>
+                        <p className="text-center text-sm">Telefone: (11) 99637-2103</p>
                     </div>
                     </div>
                 </div>

@@ -50,6 +50,7 @@ const Perfil: React.FC = () => {
     const telefone = useSelector((state: RootState) => state.user.user?.telefone)
     const { token } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const tokennn = useSelector((state: RootState) => state.user.token)
 
     const paymentMethods: any = {
       credit_card: "Cartão de Crédito",
@@ -130,6 +131,11 @@ const Perfil: React.FC = () => {
     useEffect(() => {
       handlePedidos();
     }, [page]);
+
+    useEffect(() => {
+      console.log("Token perfil: " + token)
+      console.log("Tokennnnn perfil: " + tokennn)
+    }, [token]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
       e.preventDefault();

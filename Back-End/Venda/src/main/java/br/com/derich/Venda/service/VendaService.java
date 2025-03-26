@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -66,14 +68,16 @@ public class VendaService {
 
     private final List<IEtapaProcessamento> etapas;
 
+    private ProdutoServiceClient produtoServiceClient;
 
     @Autowired
     public VendaService(
             IVendaRepository vendaRepository,
-            List<IEtapaProcessamento> etapas) {
+            List<IEtapaProcessamento> etapas, ProdutoServiceClient produtoServiceClient) {
 
         this.vendaRepository = vendaRepository;
         this.etapas = etapas; // Já virá ordenada pelo @Order
+        this.produtoServiceClient = produtoServiceClient;
     }
 
 //    @Autowired
@@ -408,7 +412,7 @@ public class VendaService {
         return response.body();
     }
 
-    @Scheduled(fixedRate = 600000)
+    @Scheduled(fixedRate = 60000)
     public void verificarStatusPagamento() {
         List<Venda> vendas = vendaRepository.findByStatusPagamentoAndStatusEtiqueta("approved", "Pendente");
 
@@ -416,6 +420,13 @@ public class VendaService {
             try {
                 processarVenda(venda);
                 atualizarStatus(venda, "Aprovado");
+                for (Venda.ProdutoComprado produto : venda.getProdutos()) {
+                    String produtoId = produto.getProdutoId();
+                    int quantidade = produto.getQuantidade();
+
+                    // Chamar o microsserviço de produto para atualizar o estoque
+                    produtoServiceClient.atualizarEstoque(produtoId, quantidade);
+                }
             } catch (ApiException e) {
                 logger.error("Falha crítica no processamento da venda {}: {}", venda.getId(), e.getMessage());
                 atualizarStatus(venda, "Falha - " + e.getErrorCode());
@@ -434,4 +445,5 @@ public class VendaService {
         vendaRepository.save(venda);
         logger.info("Status atualizado para {} na venda {}", status, venda.getId());
     }
+
 }

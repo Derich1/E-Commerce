@@ -5,6 +5,8 @@ import br.com.derich.Produto.repository.IProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -27,16 +29,17 @@ public class ProdutoService {
         return produtoRepository.findById(id).orElse(null);
     }
 
-    public void atualizarEstoque(String id, int quantidade) {
-        Produto produto = produtoRepository.findById(id)
+    public void atualizarEstoque(String produtoId, int quantidade) {
+        // Lógica real de atualização de estoque
+        Produto produto = produtoRepository.findById(produtoId)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
         if (produto.getEstoque() < quantidade) {
-            throw new RuntimeException("Estoque insuficiente para o produto: " + produto.getNome());
+            throw new RuntimeException("Estoque insuficiente");
         }
 
         produto.setEstoque(produto.getEstoque() - quantidade);
-        produtoRepository.save(produto); // Atualiza o estoque no banco de dados
+        produtoRepository.save(produto);
     }
 
 }

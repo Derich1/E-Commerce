@@ -36,4 +36,18 @@ public class ProdutoController {
         return produto != null ? ResponseEntity.ok(produto) : ResponseEntity.notFound().build();
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/{id}/atualizarEstoque")
+    public ResponseEntity<Void> atualizarEstoque(
+            @PathVariable String id,
+            @RequestParam int quantidade) {
+
+        try {
+            produtoService.atualizarEstoque(id, quantidade);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build(); // Trate exceções específicas
+        }
+    }
+
 }

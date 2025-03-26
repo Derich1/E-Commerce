@@ -47,7 +47,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
-      logout();
+      dispatch(logout());
     }
   }, [token]);  
 
