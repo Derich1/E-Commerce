@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 import { useDispatch, useSelector } from "react-redux";
 import { addItemToCart } from "../../Redux/cartSlice";
-import { useNavigate } from "react-router-dom";
 import { canAddToCart } from "../../Hooks/addToCart";
 import { RootState } from "../../Redux/store";
 import { useAuth } from "../../Hooks/useAuth";
+import { useHandleBuyNow } from "../../Hooks/buyNow";
+import { jwtDecode } from "jwt-decode";
 
 type Product = {
   id: string;
@@ -33,16 +33,11 @@ const Favoritos = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch()
-  const navigate = useNavigate()
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const handleBuyNow = useHandleBuyNow();
 
   const { token } = useAuth()
   let email = "";
-
-  const handleBuyNow = (product: Product) => {
-    handleAddToCart(product);
-    navigate("/compra");
-  };
 
   if (token) {
     const decoded: any = jwtDecode(token);
@@ -146,56 +141,99 @@ const Favoritos = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-center text-3xl mt-10">Meus Favoritos</h2>
-      {loading ? <p>Carregando...</p> : null}
-      {error ? <p>{error}</p> : null}
+    <div className="min-h-screen p-4 md:p-8">
+      <h2 className="text-center text-3xl font-bold text-gray-800 mb-8 mt-4">
+        Meus Favoritos
+      </h2>
 
-      {!loading && !error && favoritos.length === 0 ? (
-      <p className="text-center text-2xl my-auto text-gray-600 mt-6">
-        Você ainda não tem nenhum produto favorito.
-      </p>
-       ) : (
-        <ul className="space-y-4">
-        {favoritos.map((product) => (
-          <li
-            key={product.id}
-            className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center space-x-4">
-              <img
-                src={product.imagemUrl}
-                alt={product.nome}
-                className="w-16 h-16 object-cover rounded-md"
-              />
-              <span className="text-lg font-medium text-gray-800">
-                {product.nome} -{" "}
-                <span className="text-green-500">
-                  R$ {(product.precoEmCentavos / 100).toFixed(2)}
-                </span>
-              </span>
-            </div>
-            <div className="flex space-x-2"> {/* Aqui, usei flex e o space-x-2 */}
-                <button
-                onClick={() => handleToggleFavorite(product)}
-                className="cursor-pointer bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
-                >
-                Remover Favorito
-                </button>
-                <button
-                className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
-                onClick={() => handleAddToCart(product)}
-                >
-                Adicionar ao carrinho
-                </button>
-                <button onClick={() => handleBuyNow(product)} className="cursor-pointer bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
-                Comprar agora
-                </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-       )} 
+      {/* Estados de loading e erro */}
+      {loading && (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando seus favoritos...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-2xl mx-auto text-center">
+          {error}
+        </div>
+      )}
+
+      {/* Lista vazia */}
+      {!loading && !error && favoritos.length === 0 && (
+        <div className="text-center max-w-2xl mx-auto py-12">
+          <div className="inline-block mb-4">
+            <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <p className="text-xl text-gray-600">Nenhum produto favorito encontrado</p>
+          <p className="text-gray-500 mt-2">Comece adicionando produtos aos seus favoritos!</p>
+        </div>
+      )}
+
+      {/* Lista de favoritos */}
+      {!loading && !error && favoritos.length > 0 && (
+        <ul className="max-w-4xl mx-auto space-y-4">
+          {favoritos.map((product) => (
+            <li
+              key={product.id}
+              className="group flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
+            >
+              {/* Conteúdo do produto */}
+              <div className="flex items-start w-full md:w-auto">
+                <img
+                  src={product.imagemUrl}
+                  alt={product.nome}
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                />
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-800">{product.nome}</h3>
+                  <p className="text-xl font-bold text-green-600 mt-1">
+                    R$ {(product.precoEmCentavos / 100).toFixed(2).replace('.', ',')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Botões de ação */}
+              <div className="w-full md:w-auto mt-4 md:mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <button
+                    onClick={() => handleToggleFavorite(product)}
+                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                    Remover
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Carrinho
+                  </button>
+
+                  <button
+                    onClick={() => handleBuyNow(product)}
+                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                    </svg>
+                    Comprar
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

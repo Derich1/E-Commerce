@@ -4,10 +4,15 @@ import br.com.derich.Venda.processamento.IEtapaProcessamento;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.exception.ApiException;
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -23,6 +28,9 @@ import java.net.http.HttpResponse;
 public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
 
     Dotenv dotenv = Dotenv.load();
+
+    @Autowired
+    private JavaMailSender emailSender;
 
     private static final Logger logger = LoggerFactory.getLogger(ImprimirEtiquetaHandler.class);
     private final ErrorHandler errorHandler;
@@ -72,7 +80,44 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
                 .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        String resposta = response.body();
+
+        // Extrai e formata a URL
+        String urlFormatada = formatarUrl(resposta);
+        enviarEmailComUrl(urlFormatada, "derich.rosario22@gmail.com");
         System.out.println(response.body());
-        return response.body();
+        return resposta;
+    }
+
+    private String formatarUrl(String respostaApi) {
+        // Converte a resposta para JSON e extrai a URL
+        JSONObject json = new JSONObject(respostaApi);
+        String url = json.getString("url");
+
+        // Remove as barras invertidas de escape (\/ → /)
+        return url.replace("\\/", "/");
+    }
+
+    public void enviarEmailComUrl(String etiqueta, String destinatario) {
+
+        try {
+            // Cria a mensagem
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom("Ecommerce");
+            helper.setTo(destinatario);
+            helper.setSubject("Url para imprimir etiqueta");
+            helper.setText(
+                    "<p>Clique no link para imprimir a etiqueta:</p>" +
+                            "<a href='" + etiqueta + "'>" + etiqueta + "</a>",
+                    true // "true" indica que o conteúdo é HTML
+            );
+
+            emailSender.send(message);
+            System.out.println("E-mail enviado com sucesso!");
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Erro ao enviar e-mail: " + e.getMessage());
+        }
     }
 }

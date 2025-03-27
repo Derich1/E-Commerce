@@ -8,6 +8,14 @@ import { setPesoTotal, setPreferenceId, setProdutos, setTotal, setVendaId } from
 import { setCep } from "../../Redux/enderecoSlice";
 import { setFretes } from "../../Redux/freteSlice";
 
+interface Box {
+  id: number;
+  name: string;
+  height: number; // em cm
+  width: number;  // em cm
+  length: number; // em cm
+}
+
 const Compra: React.FC = () => {
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const immediatePurchase = useSelector((state: RootState) => state.venda.immediatePurchase);
@@ -16,8 +24,12 @@ const Compra: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch()
-  const produtos = useSelector((state: RootState) => state.venda.produtos)
-  
+
+  const boxes: Box[] = [
+    { id: 1, name: "Pequena", height: 10, width: 15, length: 20 },
+    { id: 2, name: "Média", height: 20, width: 30, length: 40 },
+    { id: 3, name: "Grande", height: 30, width: 40, length: 50 },
+  ];
 
   const [formData, setFormData] = useState({
     address: "",
@@ -90,24 +102,6 @@ const Compra: React.FC = () => {
       statusEtiqueta: "Pendente"
     };
   
-    const freteRequest = {
-      toPostalCode: formData.address,
-      products: produtos.map(p => ({
-        id: p.id,
-        width: p.width,
-        height: p.height,
-        length: p.length,
-        weight: p.weight,
-        precoEmCentavos: p.precoEmCentavos / 100,
-        quantidade: p.quantidade
-      }))
-    };
-
-    console.log("Requisição enviada pra calcular o frete:", JSON.stringify(freteRequest, null, 2));
-    
-
-    console.log("Payload enviado para calcularFrete:", JSON.stringify(freteRequest, null, 2));
-  
     try {
       // Chamada para criar a venda
       const { data: vendaResponse } = await axios.post(
@@ -128,6 +122,14 @@ const Compra: React.FC = () => {
       dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
       dispatch(setPesoTotal(peso))
+
+      const freteRequest = {
+        toPostalCode: formData.address,
+        height: boxes.find(b => b.id == 1)?.height,
+        width: boxes.find(b => b.id == 1)?.width,
+        length: boxes.find(b => b.id == 1)?.length,
+        weight: peso
+      };
   
       const response = await axios.post(
         "http://localhost:8083/venda/calcularFrete",
@@ -158,6 +160,7 @@ const Compra: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {itemsToCheckout.map((item) => (
+              item.quantidade > 0 &&
               <div 
                 key={item.id} 
                 className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
@@ -238,7 +241,7 @@ const Compra: React.FC = () => {
         <button
           type="button"
           onClick={finalizarCompra}
-          className="w-full md:w-auto px-8 py-3.5 text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
+          className="w-full cursor-pointer md:w-auto px-8 py-3.5 text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
         >
           Continuar Compra
         </button>

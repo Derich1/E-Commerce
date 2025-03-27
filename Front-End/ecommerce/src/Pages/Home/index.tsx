@@ -52,7 +52,12 @@ export default function Home() {
     }, []);
     
     // Exibição do componente
-    if (loading) return <p className="text-center text-3xl mt-20">Carregando produtos...</p>;
+    if (loading) {
+        return( 
+            <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            </div>)
+    }
     if (error) return <p>Erro: {error}</p>;
 
     return(

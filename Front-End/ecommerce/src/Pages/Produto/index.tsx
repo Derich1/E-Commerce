@@ -7,8 +7,8 @@ import { MdOutlineFavoriteBorder, MdFavorite } from "react-icons/md";
 import { jwtDecode } from "jwt-decode";
 import { useSelector } from "react-redux";
 import { RootState } from "../../Redux/store";
-import { setImmediatePurchase } from "../../Redux/vendaSlice";
 import { canAddToCart } from "../../Hooks/addToCart";
+import { useHandleBuyNow } from "../../Hooks/buyNow";
 
 type Product = {
   id: string;
@@ -26,25 +26,13 @@ type Product = {
   estoque: number;
 };
 
-type ProdutoComprado = {
-  id: string;
-  nome: string;
-  precoEmCentavos: number;
-  quantidade: number;
-  imagemUrl: string;
-  width: number;
-  height: number;
-  length: number;
-  weight: number;
-}
-
 export default function Produto() {
   const { id } = useParams(); // Obtém o id do produto a partir da URL
   const dispatch = useDispatch();
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.user)
   const currentQuantity = useSelector((state: RootState) => state.cart.items.find(p => p.id === id)?.quantidade)
-
+  const handleBuyNow = useHandleBuyNow();
   const [favoritos, setFavoritos] = useState<Product[]>(() => {
     const storedFavoritos = localStorage.getItem("favoritos");
     return storedFavoritos ? JSON.parse(storedFavoritos) : [];
@@ -62,33 +50,6 @@ export default function Produto() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const handleBuyNow = (product: Product) => {
-    if (!user.user) {
-      alert("Conecte-se a uma conta para prosseguir com a compra");
-      navigate("/login");
-      return;
-    }
-
-    // Converte Product para ProdutoComprado
-    const produtoComprado: ProdutoComprado = {
-      id: product.id, // Garante que ID está correto
-      quantidade: 1, // Compra imediata assume quantidade 1
-      nome: product.nome, 
-      precoEmCentavos: product.precoEmCentavos, 
-      imagemUrl: product.imagemUrl,
-      width: product.width,
-      height: product.height,
-      length: product.length,
-      weight: product.weight
-    };
-  
-    // Armazena temporariamente o produto para compra imediata
-    dispatch(setImmediatePurchase(produtoComprado));
-  
-    // Redireciona para a página de checkout
-    navigate("/compra");
-  };
 
   const fetchProduct = async () => {
     try {
@@ -150,7 +111,13 @@ export default function Produto() {
   }, [id]);
 
   // Exibição do componente
-  if (loading) return <p>Carregando produto...</p>;
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+      </div>
+    )
+  }
   if (error) return <p>Erro: {error}</p>;
 
   if (!product) return <p>Produto não encontrado.</p>;

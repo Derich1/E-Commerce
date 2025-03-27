@@ -357,7 +357,9 @@ const Perfil: React.FC = () => {
             )}
 
             {loading ? (
-                    <p className="text-center text-gray-600">Carregando...</p>
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                    </div>
                   ) : (
                     hasMore && (
                       <div className="text-center mt-4">

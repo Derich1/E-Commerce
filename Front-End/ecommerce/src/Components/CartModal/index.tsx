@@ -1,10 +1,12 @@
 // 1. Importações adicionando Framer Motion
 import React, { useEffect } from "react";
 import { MdOutlineClose } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion"; // Importação do Framer Motion
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";
+import { clearImmediatePurchase } from "../../Redux/vendaSlice";
+import { useDispatch } from "react-redux";
 
 type CartItem = {
     id: string;
@@ -23,6 +25,14 @@ type CartModalProps = {
 
 const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, updateCartItem }) => {
   const handleClose = () => onClose();
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  const handleComprarCarrinho = () => {
+    handleClose()
+    dispatch(clearImmediatePurchase())
+    navigate("/compra")
+  }
 
   const calculateTotal = () => {
       return cartItems.reduce((total, item) => {
@@ -39,7 +49,10 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
     }
   };
 
-
+  const handleDecreaseQuantity = (item: CartItem) => {
+    updateCartItem(item.id, item.quantidade - 1)
+  }
+ 
   // Bloquear scroll da página quando o modal estiver aberto
   useEffect(() => {
       if (isCartOpen) {
@@ -105,6 +118,7 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
                           ) : (
                               <ul className="space-y-4 mb-8">
                                   {cartItems.map((item) => (
+                                    item.quantidade > 0 &&
                                       <li
                                           key={item.id}
                                           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 p-3 bg-gray-50 rounded-lg"
@@ -122,8 +136,7 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
                                           </div>
                                           <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm w-full md:w-auto">
                                               <button
-                                                  onClick={() => updateCartItem(item.id, item.quantidade - 1)}
-                                                  disabled={item.quantidade === 1}
+                                                  onClick={() => handleDecreaseQuantity(item)}
                                                   className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
                                               >
                                                   -
@@ -150,13 +163,12 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
                                   currency: "BRL",
                               }).format(totalPrice)}
                           </p>
-                          <Link
-                              to="/compra"
-                              onClick={handleClose}
-                              className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-3 px-6 rounded-lg transition-colors text-sm md:text-base"
+                          <button
+                              onClick={handleComprarCarrinho}
+                              className="block cursor-pointer w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-3 px-6 rounded-lg transition-colors text-sm md:text-base"
                           >
                               Finalizar Compra
-                          </Link>
+                          </button>
                       </div>
                   </motion.div>
               </motion.div>

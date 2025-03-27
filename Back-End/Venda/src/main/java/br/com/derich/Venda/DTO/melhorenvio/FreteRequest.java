@@ -1,11 +1,12 @@
 package br.com.derich.Venda.DTO.melhorenvio;
 
-import java.util.List;
-
 public class FreteRequest {
 
     private String toPostalCode;
-    private List<ProdutoFrete> products;
+    private double height;          // Altura (cm)
+    private double width;           // Largura (cm)
+    private double length;          // Comprimento (cm)
+    private double weight;
 
     public String getToPostalCode() {
         return toPostalCode;
@@ -15,12 +16,36 @@ public class FreteRequest {
         this.toPostalCode = toPostalCode;
     }
 
-    public List<ProdutoFrete> getProducts() {
-        return products;
+    public double getHeight() {
+        return height;
     }
 
-    public void setProducts(List<ProdutoFrete> products) {
-        this.products = products;
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public double getWidth() {
+        return width;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
+    public double getLength() {
+        return length;
+    }
+
+    public void setLength(double length) {
+        this.length = length;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 }
 

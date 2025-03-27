@@ -6,6 +6,7 @@ export async function postCredit(
     payment_method_id: string,
     totalComFrete: number,
     installments: number,
+    description: string,
     email: string,
     identificationType: string,
     identificationNumber: string,
@@ -18,7 +19,7 @@ export async function postCredit(
         payment_method_id,
         transactionAmount: Number(totalComFrete).toFixed(2),
         installments: Number(installments),
-        description: "blablabla",
+        description,
         payer: {
             email,
             identification: {

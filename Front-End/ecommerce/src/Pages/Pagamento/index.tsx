@@ -9,6 +9,7 @@ import { setFreteSelecionado } from "../../Redux/freteSlice";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 import InputMask from "react-input-mask";
+import { toast } from "react-toastify";
 
 declare global {
   interface Window {
@@ -76,6 +77,9 @@ const Pagamento: React.FC = () => {
   const [cleanValue, setCleanValue] = useState("");
   const [mask, setMask] = useState("999.999.999-99"); // Começa com a máscara de CPF
   const [cleanValueType, setCleanValueType] = useState("")
+
+  // "Produto A (Quantidade: 2), Produto B (Quantidade: 1), Produto C (Quantidade: 5)"
+  const description = produtos.map(produto => `${produto.nome} (Quantidade: ${produto.quantidade})`).join(', ');
 
   // O mercadopago pega o valor diretamente da DOM, para enviar sem formatacao 
   // e com o usuario visualizando ele formatado eu escolhi criar um input invisivel para o mercadopago 
@@ -201,8 +205,8 @@ const Pagamento: React.FC = () => {
           onSubmit: async (event: React.FormEvent) => {
             event.preventDefault();
 
-            if (!selectedPaymentType) {
-              alert("Por favor, selecione o tipo de pagamento: Crédito ou Débito.");
+            if (!freteSelecionado) {
+              toast.error("Por favor, selecione uma opção de frete");
               return;
             }
 
@@ -233,6 +237,7 @@ const Pagamento: React.FC = () => {
                 payment_method_id,
                 totalComFrete,
                 Number(installments),
+                description,
                 email,
                 identificationType,
                 identificationNumber,
@@ -342,10 +347,11 @@ const Pagamento: React.FC = () => {
               <input
                 type="text"
                 name="cep"
+                readOnly
                 placeholder="00000-000"
                 value={endereco.cep}
                 onChange={handleEnderecoChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border cursor-not-allowed border-gray-300 rounded-lg bg-gray-100 text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               </div>
               <div className="space-y-2">
@@ -353,19 +359,21 @@ const Pagamento: React.FC = () => {
                 <input
                   type="text"
                   name="estado"
+                  readOnly
                   value={endereco.estado}
                   onChange={handleEnderecoChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
-                />
+                  className="w-full px-4 py-3 border cursor-not-allowed border-gray-300 rounded-lg bg-gray-100 text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Cidade</label>
                 <input
                   type="text"
                   name="cidade"
+                  readOnly
                   value={endereco.cidade}
                   onChange={handleEnderecoChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                  className="w-full px-4 py-3 border cursor-not-allowed border-gray-300 rounded-lg bg-gray-100 text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -373,9 +381,10 @@ const Pagamento: React.FC = () => {
                 <input
                   type="text"
                   name="bairro"
+                  readOnly
                   value={endereco.bairro}
                   onChange={handleEnderecoChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                  className="w-full px-4 py-3 border cursor-not-allowed border-gray-300 rounded-lg bg-gray-100 text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
@@ -383,9 +392,10 @@ const Pagamento: React.FC = () => {
                 <input
                   type="text"
                   name="logradouro"
+                  readOnly
                   value={endereco.logradouro}
                   onChange={handleEnderecoChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500"
+                  className="w-full px-4 py-3 border cursor-not-allowed border-gray-300 rounded-lg bg-gray-100 text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
@@ -450,7 +460,9 @@ const Pagamento: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">Produtos na sacola</h2>
           <div className="space-y-3 sm:space-y-4">
             {loading ? (
-              <div className="text-center py-4 sm:py-8">Carregando...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              </div>
             ) : (
               produtos.map((p) => (
                 <div key={p.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">

@@ -12,6 +12,7 @@ import br.com.derich.Venda.processamento.IEtapaProcessamento;
 import br.com.derich.Venda.repository.IVendaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.*;
@@ -32,6 +33,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -144,7 +146,6 @@ public class VendaService {
 
     public PaymentResponseDTO processarPagamento(PagamentoCartaoRequestDTO pagamentoCartaoRequestDTO) throws Exception {
 
-        System.out.println("Transaction Amount backend: " + pagamentoCartaoRequestDTO.getTransactionAmount());
         try {
             MercadoPagoConfig.setAccessToken(mercadoPagoAccessToken);
 
@@ -172,12 +173,11 @@ public class VendaService {
 
             venda.setStatus("Aprovado");
             System.out.println("Status setado para aprovado");
-            venda.setMetodoPagamento(createdPayment.getPaymentTypeId()); // Agora ele pega "credit_card", "debit_card" ou "pix"
+            venda.setMetodoPagamento(createdPayment.getPaymentTypeId());
             System.out.println("Método de pagamento setado");
             venda.setStatusPagamento(createdPayment.getStatus());
             System.out.println("Status do pagamento setado para aprovado");
 
-            // Salva as alterações no banco de dados
             vendaRepository.save(venda);
 
             return new PaymentResponseDTO(
@@ -250,25 +250,19 @@ public class VendaService {
         jsonMap.put("from", Collections.singletonMap("postal_code", fromPostalCode));
         jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.getToPostalCode()));
 
-        // Constrói a lista de produtos
-        List<Map<String, Object>> productsList = new ArrayList<>();
-        for (ProdutoFrete produto : freteRequest.getProducts()) {
-            Map<String, Object> produtoMap = new HashMap<>();
-            produtoMap.put("id", produto.getId());
-            produtoMap.put("width", produto.getWidth());
-            produtoMap.put("height", produto.getHeight());
-            produtoMap.put("length", produto.getLength());
-            produtoMap.put("weight", produto.getWeight());
-            // Divide o valor do seguro por 100, conforme a API do Melhor Envio
-            produtoMap.put("insurance_value", produto.getPrecoEmCentavos() / 100);
-            produtoMap.put("quantity", produto.getQuantidade());
-            productsList.add(produtoMap);
-        }
-        jsonMap.put("products", productsList);
+        Map<String, Object> packageMap = new HashMap<>();
+        packageMap.put("height", freteRequest.getHeight());
+        packageMap.put("width", freteRequest.getWidth());
+        packageMap.put("length", freteRequest.getLength());
+        packageMap.put("weight", freteRequest.getWeight());
+        jsonMap.put("package", packageMap);
 
         // Serializa o objeto para JSON
         ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
         String jsonBody = mapper.writeValueAsString(jsonMap);
+        System.out.println("Payload (packageMap):");
+        System.out.println(mapper.writeValueAsString(packageMap)); // 👈 Log do package
 
         // Cria e envia a requisição HTTP
         HttpRequest request = HttpRequest.newBuilder()
@@ -341,7 +335,9 @@ public class VendaService {
             Map<String, Object> product = new HashMap<>();
             product.put("name", entregaRequest.getProductName().get(i));
             product.put("quantity", entregaRequest.getProductQuantity().get(i));
-            product.put("unitary_value", entregaRequest.getProductUnitaryValue().get(i));
+            BigDecimal unitaryValueReais = new BigDecimal(entregaRequest.getProductUnitaryValue().get(i))
+                    .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+            product.put("unitary_value", unitaryValueReais);
             productsList.add(product);
         }
         jsonMap.put("products", productsList);
@@ -356,10 +352,14 @@ public class VendaService {
         volumesList.add(volume);
         jsonMap.put("volumes", volumesList);
 
+        System.out.println("Dimensões do Volume (cm):");
+        System.out.println("Altura: " + entregaRequest.getVolumeHeight());
+        System.out.println("Largura: " + entregaRequest.getVolumeWidth());
+        System.out.println("Comprimento: " + entregaRequest.getVolumeLength());
         // Converte o mapa em uma string JSON
         ObjectMapper mapper = new ObjectMapper();
         String jsonBody = mapper.writeValueAsString(jsonMap);
-        System.out.println("JSON Enviado: " + jsonBody);
+        System.out.println("JSON Enviado inserir fretes no carrinho: " + jsonBody);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
@@ -445,5 +445,4 @@ public class VendaService {
         vendaRepository.save(venda);
         logger.info("Status atualizado para {} na venda {}", status, venda.getId());
     }
-
 }
