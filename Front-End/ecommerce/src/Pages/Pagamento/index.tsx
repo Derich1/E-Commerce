@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import axios from "axios";
 import InputMask from "react-input-mask";
 import { toast } from "react-toastify";
+import { clearCart } from "../../Redux/cartSlice";
 
 declare global {
   interface Window {
@@ -262,7 +263,7 @@ const Pagamento: React.FC = () => {
                 ownHand: false,
                 reverse: false,
                 nonCommercial: false,     
-                insuranceValue: 0,
+                insuranceValue: totalVenda,
                 service: freteSelecionado?.id,
                 productName: produtos.map(p => p.nome),
                 productQuantity: produtos.map(p => p.quantidade),
@@ -278,7 +279,7 @@ const Pagamento: React.FC = () => {
               console.log("Enviando para o backend: " + entregaRequest)
           
               await axios.post("http://localhost:8083/venda/inserirFrete", entregaRequest)
-
+              dispatch(clearCart())
               navigate(`/status/${status}`);
             } catch (error) {
               console.error("Erro no pagamento:", error);

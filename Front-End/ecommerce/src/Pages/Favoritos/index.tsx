@@ -179,63 +179,65 @@ const Favoritos = () => {
       {/* Lista de favoritos */}
       {!loading && !error && favoritos.length > 0 && (
         <ul className="max-w-4xl mx-auto space-y-4">
-          {favoritos.map((product) => (
-            <li
-              key={product.id}
-              className="group flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
-            >
-              {/* Conteúdo do produto */}
-              <div className="flex items-start w-full md:w-auto">
+        {favoritos.map((product) => (
+          <li
+            key={product.id}
+            className="flex flex-col p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-4 w-full">
+              {/* Seção de informações do produto */}
+              <div className="flex flex-1 min-w-0">
                 <img
                   src={product.imagemUrl}
                   alt={product.nome}
-                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
                 />
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-800">{product.nome}</h3>
-                  <p className="text-xl font-bold text-green-600 mt-1">
+                <div className="ml-3 md:ml-4 min-w-0 flex flex-col">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                    {product.nome}
+                  </h3>
+                  <p className="text-lg md:text-xl font-bold text-green-600 mt-1">
                     R$ {(product.precoEmCentavos / 100).toFixed(2).replace('.', ',')}
                   </p>
                 </div>
               </div>
-
-              {/* Botões de ação */}
-              <div className="w-full md:w-auto mt-4 md:mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <button
-                    onClick={() => handleToggleFavorite(product)}
-                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                    </svg>
-                    Remover
-                  </button>
-                  
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Carrinho
-                  </button>
-
-                  <button
-                    onClick={() => handleBuyNow(product)}
-                    className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                    </svg>
-                    Comprar
-                  </button>
-                </div>
+  
+              {/* Botões alinhados horizontalmente em telas grandes */}
+              <div className="flex flex-col md:flex-row gap-2 flex-wrap md:flex-nowrap">
+                <button
+                  onClick={() => handleToggleFavorite(product)}
+                  className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center md:min-w-[120px]"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                  Remover
+                </button>
+                
+                <button
+                  onClick={() => handleAddToCart(product)}
+                  className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center md:min-w-[120px]"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Carrinho
+                </button>
+  
+                <button
+                  onClick={() => handleBuyNow(product)}
+                  className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center md:min-w-[120px]"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                  </svg>
+                  Comprar
+                </button>
               </div>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </li>
+        ))}
+      </ul>
       )}
     </div>
   )
