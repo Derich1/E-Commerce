@@ -17,7 +17,7 @@ interface ChangePasswordFormData {
 
 interface Produto {
   nome: string;
-  precoEmCentavos: number;
+  precoUnitario: number;
   quantidade: number;
   imagemUrl: string;
 }
@@ -323,9 +323,13 @@ const Perfil: React.FC = () => {
                             <p className="text-sm text-gray-600">
                               Quantidade: {produto.quantidade}
                             </p>
-                            <p className="text-sm text-gray-600">
-                              Preço: R$ {produto.precoEmCentavos}
-                            </p>
+                            <span className="text-sm text-gray-600">Preço: </span>
+                            <span className="text-sm text-gray-600">
+                            {new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                            }).format(produto.precoUnitario)}
+                            </span>
                           </div>
                         </li>
                       ))}
