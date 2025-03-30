@@ -8,6 +8,9 @@ type CartItem = {
   imagemUrl: string;
   weight: number;
   estoque: number;
+  width: number;
+  height: number;
+  length: number;
 };
 
 type CartState = {
@@ -37,10 +40,19 @@ const cartSlice = createSlice({
       state,
       action: PayloadAction<{ id: string; newQuantity: number }>
     ) => {
-      const item = state.items.find((item) => item.id === action.payload.id);
-      if (item) {
-        item.quantidade = action.payload.newQuantity;
-      }
+      state.items = state.items
+        .map(item => {
+          if (item.id === action.payload.id) {
+            // Atualiza a quantidade primeiro
+            return { 
+              ...item, 
+              quantidade: Math.max(0, action.payload.newQuantity)
+            };
+          }
+          return item;
+        })
+        // Remove itens com quantidade 0 após atualização
+        .filter(item => item.quantidade > 0);
     },
     removeItemFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);

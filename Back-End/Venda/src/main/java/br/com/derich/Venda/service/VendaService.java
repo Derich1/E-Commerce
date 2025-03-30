@@ -5,6 +5,7 @@ import br.com.derich.Venda.DTO.PagamentoCartaoRequestDTO;
 import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.DTO.melhorenvio.*;
+import br.com.derich.Venda.DTO.melhorenvio.Package;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.exception.ApiException;
 import br.com.derich.Venda.handler.CompraFreteHandler;
@@ -245,26 +246,31 @@ public class VendaService {
     public String calcularFrete(FreteRequest freteRequest) throws IOException, InterruptedException {
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate";
 
-        // Cria o mapa para a estrutura do JSON
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("from", Collections.singletonMap("postal_code", fromPostalCode));
         jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.getToPostalCode()));
 
-        Map<String, Object> packageMap = new HashMap<>();
-        packageMap.put("height", freteRequest.getHeight());
-        packageMap.put("width", freteRequest.getWidth());
-        packageMap.put("length", freteRequest.getLength());
-        packageMap.put("weight", freteRequest.getWeight());
-        jsonMap.put("package", packageMap);
+        // Corrigindo a estrutura dos pacotes
+        List<Map<String, Object>> packagesList = new ArrayList<>();
+        for (Package p : freteRequest.getPackages()) {
+            Map<String, Object> pkg = new HashMap<>();
+            pkg.put("height", p.getHeight());
+            pkg.put("width", p.getWidth());
+            pkg.put("length", p.getLength());
+            pkg.put("weight", p.getWeight());
+            packagesList.add(pkg);
+        }
 
-        // Serializa o objeto para JSON
+        // A API do Melhor Envio usa "packages" no plural para múltiplos volumes
+        jsonMap.put("packages", packagesList);  // 👈 Campo correto: "packages"
+
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         String jsonBody = mapper.writeValueAsString(jsonMap);
-        System.out.println("Payload (packageMap):");
-        System.out.println(mapper.writeValueAsString(packageMap)); // 👈 Log do package
 
-        // Cria e envia a requisição HTTP
+        System.out.println("Payload completo:");
+        System.out.println(jsonBody); // 👈 Log do payload completo
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
                 .header("Accept", "application/json")
@@ -275,8 +281,6 @@ public class VendaService {
                 .build();
 
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-
         return response.body();
     }
 
@@ -342,20 +346,29 @@ public class VendaService {
         }
         jsonMap.put("products", productsList);
 
-        // Monta o array de volumes – geralmente pode ser apenas um volume, mas a API espera um array
         List<Map<String, Object>> volumesList = new ArrayList<>();
-        Map<String, Object> volume = new HashMap<>();
-        volume.put("height", entregaRequest.getVolumeHeight());
-        volume.put("width", entregaRequest.getVolumeWidth());
-        volume.put("length", entregaRequest.getVolumeLength());
-        volume.put("weight", entregaRequest.getVolumeWeight());
-        volumesList.add(volume);
+
+        if (entregaRequest.getVolumes() != null && !entregaRequest.getVolumes().isEmpty()) {
+            for (VolumeDTO volumeDTO : entregaRequest.getVolumes()) {
+                Map<String, Object> volume = new HashMap<>();
+                volume.put("height", volumeDTO.getHeight());
+                volume.put("width", volumeDTO.getWidth());
+                volume.put("length", volumeDTO.getLength());
+                volume.put("weight", volumeDTO.getWeight());
+                volumesList.add(volume);
+
+                System.out.println("\n📦 Volume Adicionado:");
+                System.out.println("Altura: " + volumeDTO.getHeight() + "cm");
+                System.out.println("Largura: " + volumeDTO.getWidth() + "cm");
+                System.out.println("Comprimento: " + volumeDTO.getLength() + "cm");
+                System.out.println("Peso: " + volumeDTO.getWeight() + "kg");
+            }
+        } else {
+            System.out.println("⚠️ Nenhum volume recebido na requisição");
+        }
+
         jsonMap.put("volumes", volumesList);
 
-        System.out.println("Dimensões do Volume (cm):");
-        System.out.println("Altura: " + entregaRequest.getVolumeHeight());
-        System.out.println("Largura: " + entregaRequest.getVolumeWidth());
-        System.out.println("Comprimento: " + entregaRequest.getVolumeLength());
         // Converte o mapa em uma string JSON
         ObjectMapper mapper = new ObjectMapper();
         String jsonBody = mapper.writeValueAsString(jsonMap);
@@ -386,29 +399,6 @@ public class VendaService {
             System.out.println("Venda não encontrada com o ID: " + entregaRequest.getVendaId());
         }
 
-        return response.body();
-    }
-
-
-    public String rastrearEnvio(String id) throws IOException, InterruptedException {
-        String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/tracking";
-
-        String jsonBody = String.format("""
-            {
-                "orders": "%s"
-            }
-        """, id);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(urlRequisicao))
-                .header("Accept", "application/json")
-                .header("Content-type", "application/json")
-                .header("Authorization", "Bearer" + tokenMelhorEnvio)
-                .header("User-Agent", nomeAplicacao + (emailParaContato))
-                .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
         return response.body();
     }
 

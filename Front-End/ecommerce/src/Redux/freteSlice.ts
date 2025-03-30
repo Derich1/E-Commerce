@@ -15,6 +15,7 @@ interface Frete {
     id: number;
     name: string;
     picture: string;
+    has_grouped_volumes: number;
   };
 }
 

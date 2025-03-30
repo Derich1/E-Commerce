@@ -141,6 +141,9 @@ export default function Produto() {
           imagemUrl: product.imagemUrl,
           weight: product.weight,
           estoque: product.estoque,
+          width: product.width,
+          height: product.height,
+          length: product.length
         })
       );
     } else {

@@ -17,7 +17,7 @@ interface ChangePasswordFormData {
 
 interface Produto {
   nome: string;
-  precoUnitario: number;
+  precoEmCentavos: number;
   quantidade: number;
   imagemUrl: string;
 }
@@ -50,7 +50,6 @@ const Perfil: React.FC = () => {
     const telefone = useSelector((state: RootState) => state.user.user?.telefone)
     const { token } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const tokennn = useSelector((state: RootState) => state.user.token)
 
     const paymentMethods: any = {
       credit_card: "Cartão de Crédito",
@@ -131,11 +130,6 @@ const Perfil: React.FC = () => {
     useEffect(() => {
       handlePedidos();
     }, [page]);
-
-    useEffect(() => {
-      console.log("Token perfil: " + token)
-      console.log("Tokennnnn perfil: " + tokennn)
-    }, [token]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -330,7 +324,7 @@ const Perfil: React.FC = () => {
                               Quantidade: {produto.quantidade}
                             </p>
                             <p className="text-sm text-gray-600">
-                              Preço: R$ {produto.precoUnitario}
+                              Preço: R$ {produto.precoEmCentavos}
                             </p>
                           </div>
                         </li>

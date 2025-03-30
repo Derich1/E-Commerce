@@ -7,6 +7,8 @@ import { useDispatch } from "react-redux";
 import { setPesoTotal, setPreferenceId, setProdutos, setTotal, setVendaId } from "../../Redux/vendaSlice";
 import { setCep } from "../../Redux/enderecoSlice";
 import { setFretes } from "../../Redux/freteSlice";
+import { useBoxPacking } from "../../Hooks/useBoxPacking";
+import { setPackages } from "../../Redux/packageSlice";
 
 interface Box {
   id: number;
@@ -14,6 +16,14 @@ interface Box {
   height: number; // em cm
   width: number;  // em cm
   length: number; // em cm
+}
+
+interface ProductDimensions {
+  length: number;
+  width: number;
+  height: number;
+  weight: number;
+  quantity: number;
 }
 
 const Compra: React.FC = () => {
@@ -24,12 +34,22 @@ const Compra: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch()
+  const products: ProductDimensions[] = itemsToCheckout.map(item => ({
+    length: item.length,
+    width: item.width,
+    height: item.height,
+    weight: item.weight,
+    quantity: item.quantidade
+  }));
 
   const boxes: Box[] = [
-    { id: 1, name: "Pequena", height: 10, width: 15, length: 20 },
-    { id: 2, name: "Média", height: 20, width: 30, length: 40 },
-    { id: 3, name: "Grande", height: 30, width: 40, length: 50 },
+    { id: 1, name: "Pequena", height: 6, width: 11, length: 16 },
+    { id: 2, name: "Média", height: 20, width: 13, length: 6 },
+    { id: 3, name: "Grande", height: 20, width: 14, length: 8 },
   ];
+
+  const { packProducts } = useBoxPacking(products, boxes);
+  const result = packProducts();
 
   const [formData, setFormData] = useState({
     address: "",
@@ -84,7 +104,9 @@ const Compra: React.FC = () => {
     // Montagem dos dados
     const vendaDTO = {
       clienteId: user.user?.id,
-      produtos: itemsToCheckout.map(item => ({
+      produtos: itemsToCheckout
+      .filter(item => item.quantidade > 0) // 👈 Filtra produtos com quantidade > 0
+      .map(item => ({
         produtoId: item.id,
         quantidade: item.quantidade,
         nome: item.nome,
@@ -112,23 +134,89 @@ const Compra: React.FC = () => {
   
       const peso = vendaResponse.vendaPeso
       dispatch(setVendaId(vendaResponse.id));
-      dispatch(setProdutos(itemsToCheckout.map(item => ({
-        produtoId: item.id,
-        quantidade: item.quantidade,
-        nome: item.nome,
-        precoEmCentavos: item.precoEmCentavos,
-        imagemUrl: item.imagemUrl,
-        weight: item.weight}))))
+      dispatch(setProdutos(itemsToCheckout
+        .filter(item => item.quantidade > 0)
+        .map(item => ({
+          produtoId: item.id,
+          quantidade: item.quantidade,
+          nome: item.nome,
+          precoEmCentavos: item.precoEmCentavos / 100,
+          imagemUrl: item.imagemUrl,
+          weight: item.weight
+        }))))
       dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
       dispatch(setPesoTotal(peso))
 
+        // Adicione no seu componente, antes do if (!result...)
+console.log("🔍 Debug do Empacotamento:");
+
+        // 1. Verificar produtos
+        console.log("📋 Produtos:", products.map(p => 
+          `${p.length}x${p.width}x${p.height} (${p.weight}kg)`
+        ));
+        
+        // 2. Verificar caixas disponíveis
+        console.log("📦 Caixas Disponíveis:", boxes.map(b => 
+          `${b.name}: ${b.length}x${b.width}x${b.height}cm (Vol: ${b.length * b.width * b.height}cm³)`
+        ));
+        
+        // 3. Calcular métricas críticas
+        const totalProductsVolume = products.reduce((acc, p) => acc + (p.length * p.width * p.height), 0);
+        const largestBoxVolume = Math.max(...boxes.map(b => b.length * b.width * b.height));
+        const maxProductLength = Math.max(...products.map(p => Math.max(p.length, p.width, p.height)));
+        
+        console.log("📊 Métricas Críticas:");
+        console.log(`- Volume Total Produtos: ${totalProductsVolume}cm³`);
+        console.log(`- Maior Volume de Caixa: ${largestBoxVolume}cm³`);
+        console.log(`- Maior Dimensão de Produto: ${maxProductLength}cm`);
+        
+        // 4. Verificar causas comuns
+        if (totalProductsVolume > largestBoxVolume) {
+          console.log("❌ CAUSA: Volume total dos produtos excede todas as caixas!");
+        }
+        
+        if (maxProductLength > Math.max(...boxes.map(b => Math.max(b.length, b.width, b.height)))) {
+          console.log("❌ CAUSA: Um produto tem dimensão maior que todas as caixas!");
+        }
+        
+        // Sua validação original
+        if (!result || result.length === 0) {
+          alert("Erro no cálculo de empacotamento!\nVerifique o console para detalhes.");
+          return;
+        }
+
+      if (!result || result.length === 0) {
+        alert("Erro no cálculo de empacotamento!");
+        return;
+      }
+
+      // Montar array de pacotes para o frete
+      // Se tiver acesso aos produtos por caixa:
+      const packages = result.map(({box, products}) => {
+        const pesoCaixa = products.reduce((acc, produto) => acc + (produto.weight * produto.quantity), 0);
+        
+        return {
+          height: box.height,
+          width: box.width,
+          length: box.length,
+          weight: pesoCaixa
+        };
+      });
+
+      dispatch(setPackages(packages))
+
+      console.log("\n📤 Payload para envio à API de fretes:");
+      console.log(JSON.stringify({
+        toPostalCode: formData.address,
+        packages: packages,
+        totalWeight: packages.reduce((acc, p) => acc + p.weight, 0)
+      }, null, 2));
+
       const freteRequest = {
         toPostalCode: formData.address,
-        height: boxes.find(b => b.id == 1)?.height,
-        width: boxes.find(b => b.id == 1)?.width,
-        length: boxes.find(b => b.id == 1)?.length,
-        weight: peso
+        packages: packages, // Array de pacotes
+        totalWeight: peso // Peso total opcional
       };
   
       const response = await axios.post(
@@ -160,7 +248,6 @@ const Compra: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {itemsToCheckout.map((item) => (
-              item.quantidade > 0 &&
               <div 
                 key={item.id} 
                 className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100"

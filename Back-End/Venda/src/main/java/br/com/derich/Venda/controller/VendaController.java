@@ -277,12 +277,4 @@ public class VendaController {
                     ));
         }
     }
-
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping("/rastrearEnvio")
-    public ResponseEntity<?> rastrearEnvio(@RequestBody String id) throws IOException, InterruptedException {
-        String resposta = vendaService.rastrearEnvio(id);
-
-        return ResponseEntity.ok(resposta);
-    }
 }

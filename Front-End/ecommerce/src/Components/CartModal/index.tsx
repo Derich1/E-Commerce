@@ -118,7 +118,6 @@ const CartModal: React.FC<CartModalProps> = ({ isCartOpen, onClose, cartItems, u
                           ) : (
                               <ul className="space-y-4 mb-8">
                                   {cartItems.map((item) => (
-                                    item.quantidade > 0 &&
                                       <li
                                           key={item.id}
                                           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 p-3 bg-gray-50 rounded-lg"

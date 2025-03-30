@@ -17,14 +17,6 @@ declare global {
   }
 }
 
-interface Box {
-  id: number;
-  name: string;
-  height: number; // em cm
-  width: number;  // em cm
-  length: number; // em cm
-}
-
 // Logradouro é Rua
 interface Endereco {
   cep: string;
@@ -37,12 +29,6 @@ interface Endereco {
 }
 
 const Pagamento: React.FC = () => {
-
-  const boxes: Box[] = [
-    { id: 1, name: "Pequena", height: 10, width: 15, length: 20 },
-    { id: 2, name: "Média", height: 20, width: 30, length: 40 },
-    { id: 3, name: "Grande", height: 30, width: 40, length: 50 },
-  ];
 
   const [endereco, setEndereco] = useState<Endereco>({
     cep: "",
@@ -59,10 +45,25 @@ const Pagamento: React.FC = () => {
   const navigate = useNavigate();
   const cardFormRef = useRef<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const packages = useSelector((state: RootState) => state.package.packages)
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentMethod>();
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
-  const fretes = useSelector((state: RootState) => state.frete.fretes).filter(frete => !frete.error);
+
+  const fretes = useSelector((state: RootState) => state.frete.fretes)
+    .filter(frete => {
+      if (frete.error) return false;
+
+      // Segundo filtro condicional: múltiplos volumes
+      if (packages.length > 1) {
+        // Verifica se a transportadora aceita múltiplos volumes
+        return frete.company?.has_grouped_volumes === 1
+      }
+      
+      // Se tiver apenas 1 volume, não precisa filtrar por has_grouped_volumes
+      return true;
+  });
+
   const freteSelecionado = useSelector((state: RootState) => state.frete.freteSelecionado);
   const dispatch = useDispatch()  
   const cep = useSelector((state: RootState) => state.endereco.cep)
@@ -71,7 +72,6 @@ const Pagamento: React.FC = () => {
   const totalVenda = Number(useSelector((state: RootState) => state.venda.total) || 0)
   const valorFrete = Number(freteSelecionado?.price) || 0
   const totalComFrete = Math.round((totalVenda + valorFrete) * 100) / 100; 
-  const pesoTotal = useSelector((state: RootState) => state.venda.totalPeso);
   const [loading, setLoading] = useState<boolean>(true);
   const [maskedValue, setMaskedValue] = useState("");
   const [cleanValue, setCleanValue] = useState("");
@@ -124,6 +124,7 @@ const Pagamento: React.FC = () => {
 
   useEffect(() => {
     buscarEndereco(cep)
+    console.log("Dados dos produtos:", produtos);
   }, []);
 
   useEffect(() => {
@@ -261,15 +262,17 @@ const Pagamento: React.FC = () => {
                 ownHand: false,
                 reverse: false,
                 nonCommercial: false,     
-                insuranceValue: totalVenda,
+                insuranceValue: 0,
                 service: freteSelecionado?.id,
                 productName: produtos.map(p => p.nome),
                 productQuantity: produtos.map(p => p.quantidade),
                 productUnitaryValue: produtos.map(p => p.precoEmCentavos),
-                volumeHeight: boxes.find(b => b.id == 1)?.height,
-                volumeWidth: boxes.find(b => b.id == 1)?.width,
-                volumeLength: boxes.find(b => b.id == 1)?.length,
-                volumeWeight: pesoTotal,
+                volumes: packages.map(pkg => ({
+                  height: pkg.height,
+                  width: pkg.width,
+                  length: pkg.length,
+                  weight: pkg.weight
+                })),
                 vendaId: vendaId
               };
               console.log("Enviando para o backend: " + entregaRequest)
@@ -479,7 +482,7 @@ const Pagamento: React.FC = () => {
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(p.precoEmCentavos / 100)}
+                        }).format(p.precoEmCentavos)}
                       </span>
                 </div>
                 </div>

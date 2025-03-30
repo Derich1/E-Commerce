@@ -28,11 +28,7 @@ public class EntregaRequest {
     private List<Integer> productQuantity;
     private List<Double> productUnitaryValue;
 
-    // Volumes
-    private int volumeHeight;
-    private int volumeWidth;
-    private int volumeLength;
-    private double volumeWeight;
+    private List<VolumeDTO> volumes;
 
     private String vendaId;
 
@@ -172,36 +168,12 @@ public class EntregaRequest {
         this.productUnitaryValue = productUnitaryValue;
     }
 
-    public int getVolumeHeight() {
-        return volumeHeight;
+    public List<VolumeDTO> getVolumes() {
+        return volumes;
     }
 
-    public void setVolumeHeight(int volumeHeight) {
-        this.volumeHeight = volumeHeight;
-    }
-
-    public int getVolumeWidth() {
-        return volumeWidth;
-    }
-
-    public void setVolumeWidth(int volumeWidth) {
-        this.volumeWidth = volumeWidth;
-    }
-
-    public int getVolumeLength() {
-        return volumeLength;
-    }
-
-    public void setVolumeLength(int volumeLength) {
-        this.volumeLength = volumeLength;
-    }
-
-    public double getVolumeWeight() {
-        return volumeWeight;
-    }
-
-    public void setVolumeWeight(double volumeWeight) {
-        this.volumeWeight = volumeWeight;
+    public void setVolumes(List<VolumeDTO> volumes) {
+        this.volumes = volumes;
     }
 
     public String getVendaId() {

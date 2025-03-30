@@ -7,6 +7,7 @@ import userReducer from "./userSlice"
 import enderecoReducer from "./enderecoSlice"
 import freteReducer from "./freteSlice"
 import { persistReducer, persistStore } from "redux-persist";
+import packageReducer from "./packageSlice"
 
 const persistConfig = {
   key: 'root', // chave de persistência
@@ -20,7 +21,8 @@ const rootReducer = combineReducers({
   venda: vendaReducer,
   user: userReducer,
   endereco: enderecoReducer,
-  frete: freteReducer
+  frete: freteReducer,
+  package: packageReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
