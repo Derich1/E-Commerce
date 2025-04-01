@@ -1,8 +1,11 @@
 package br.com.derich.Venda.handler;
 
+import br.com.derich.Venda.DTO.melhorenvio.Package;
+import br.com.derich.Venda.entity.Frete;
 import br.com.derich.Venda.processamento.IEtapaProcessamento;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.exception.ApiException;
+import br.com.derich.Venda.repository.IFreteRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -22,6 +25,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Order(3)
@@ -31,6 +36,9 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
 
     @Autowired
     private JavaMailSender emailSender;
+
+    @Autowired
+    private IFreteRepository freteRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ImprimirEtiquetaHandler.class);
     private final ErrorHandler errorHandler;
@@ -84,7 +92,10 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
 
         // Extrai e formata a URL
         String urlFormatada = formatarUrl(resposta);
-        enviarEmailComUrl(urlFormatada, "derich.rosario22@gmail.com");
+        Frete frete = freteRepository.findByIdEtiqueta(id)
+                .orElseThrow(() -> new RuntimeException("Frete não encontrado para o ID: " + id));
+
+        enviarEmailComUrl(urlFormatada, "derich.rosario22@gmail.com", frete);
         System.out.println(response.body());
         return resposta;
     }
@@ -98,21 +109,85 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
         return url.replace("\\/", "/");
     }
 
-    public void enviarEmailComUrl(String etiqueta, String destinatario) {
-
+    public void enviarEmailComUrl(String etiqueta, String destinatario, Frete frete) {
         try {
-            // Cria a mensagem
             MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom("Ecommerce");
             helper.setTo(destinatario);
             helper.setSubject("Url para imprimir etiqueta");
-            helper.setText(
-                    "<p>Clique no link para imprimir a etiqueta:</p>" +
-                            "<a href='" + etiqueta + "'>" + etiqueta + "</a>",
-                    true // "true" indica que o conteúdo é HTML
+
+            // Extrai dados do objeto Frete
+            String idEtiqueta = frete.getIdEtiqueta();
+            Package pacote = frete.getPacote();
+            List<Venda.ProdutoComprado> produtos = frete.getProdutos();
+            String codigoEnvio = frete.getCodigoEnvio();
+
+            // Constrói a seção de dimensões
+            String dimensoes = String.format(
+                    "<div style='margin: 15px 0;'>" +
+                            "<h3 style='color: #333; margin-bottom: 10px;'>Dimensões da Caixa</h3>" +
+                            "<ul style='list-style: none; padding: 0;'>" +
+                            "<li><strong>Altura:</strong> %.2f cm</li>" +
+                            "<li><strong>Largura:</strong> %.2f cm</li>" +
+                            "<li><strong>Comprimento:</strong> %.2f cm</li>" +
+                            "<li><strong>Peso total:</strong> %.2f kg</li>" +
+                            "</ul>" +
+                            "</div>",
+                    pacote.getHeight(),
+                    pacote.getWidth(),
+                    pacote.getLength(),
+                    pacote.getWeight()
             );
 
+            // Constrói a tabela de produtos
+            StringBuilder produtosHtml = new StringBuilder()
+                    .append("<div style='margin: 20px 0;'>")
+                    .append("<h3 style='color: #333; margin-bottom: 10px;'>Produtos</h3>")
+                    .append("<table style='width: 100%; border-collapse: collapse;'>")
+                    .append("<tr style='background-color: #f5f5f5;'>")
+                    .append("<th style='padding: 10px; border: 1px solid #ddd;'>Produto</th>")
+                    .append("<th style='padding: 10px; border: 1px solid #ddd;'>Quantidade</th>")
+                    .append("</tr>");
+
+            for (Venda.ProdutoComprado produto : produtos) {
+                produtosHtml
+                        .append("<tr>")
+                        .append(String.format("<td style='padding: 10px; border: 1px solid #ddd;'>%s</td>", produto.getNome()))
+                        .append(String.format("<td style='padding: 10px; border: 1px solid #ddd; text-align: center;'>%d</td>", produto.getQuantidade()))
+                        .append("</tr>");
+            }
+
+            produtosHtml.append("</table></div>");
+
+            // Corpo completo do e-mail
+            String corpoEmail = String.format(
+                    "<html>" +
+                            "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+                            "<div style='max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #eee;'>" +
+                            "<h2 style='color: #0066cc;'>Código do Envio #%s</h2>" +
+                            "%s" + // Dimensões
+                            "%s" + // Produtos
+                            "<div style='margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;'>" +
+                            "<p>Clique abaixo para imprimir sua etiqueta:</p>" +
+                            "<a href='%s' style='display: inline-block; padding: 10px 20px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 3px;'>" +
+                            "🖨️ Imprimir Etiqueta</a>" +
+                            "<p style='margin-top: 15px; font-size: 0.9em; color: #666;'>" +
+                            "Caso o botão não funcione, copie e cole este link no navegador:<br>" +
+                            "<span style='word-break: break-all; color: #004499;'>%s</span>" +
+                            "</p>" +
+                            "</div>" +
+                            "</div>" +
+                            "</body>" +
+                            "</html>",
+                    codigoEnvio,
+                    dimensoes,
+                    produtosHtml,
+                    etiqueta,
+                    etiqueta
+            );
+
+            helper.setText(corpoEmail, true);
             emailSender.send(message);
             System.out.println("E-mail enviado com sucesso!");
 

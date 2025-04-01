@@ -7,6 +7,13 @@ public class Package {
     private double length;
     private double weight;
 
+    public Package(double height, double width, double length, double weight) {
+        this.height = height;
+        this.width = width;
+        this.length = length;
+        this.weight = weight;
+    }
+
     public double getHeight() {
         return height;
     }

@@ -5,7 +5,7 @@ import java.util.List;
 public class FreteRequest {
 
     private String toPostalCode;
-    private List<Package> packages;
+    private Package pacote;
 
     public String getToPostalCode() {
         return toPostalCode;
@@ -15,12 +15,12 @@ public class FreteRequest {
         this.toPostalCode = toPostalCode;
     }
 
-    public List<Package> getPackages() {
-        return packages;
+    public Package getPacote() {
+        return pacote;
     }
 
-    public void setPackages(List<Package> packages) {
-        this.packages = packages;
+    public void setPacote(Package pacote) {
+        this.pacote = pacote;
     }
 }
 

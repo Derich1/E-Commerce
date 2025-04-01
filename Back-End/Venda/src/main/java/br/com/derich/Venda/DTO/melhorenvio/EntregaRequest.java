@@ -28,7 +28,7 @@ public class EntregaRequest {
     private List<Integer> productQuantity;
     private List<Double> productUnitaryValue;
 
-    private List<VolumeDTO> volumes;
+    private VolumeDTO volume;
 
     private String vendaId;
 
@@ -168,12 +168,12 @@ public class EntregaRequest {
         this.productUnitaryValue = productUnitaryValue;
     }
 
-    public List<VolumeDTO> getVolumes() {
-        return volumes;
+    public VolumeDTO getVolume() {
+        return volume;
     }
 
-    public void setVolumes(List<VolumeDTO> volumes) {
-        this.volumes = volumes;
+    public void setVolume(VolumeDTO volume) {
+        this.volume = volume;
     }
 
     public String getVendaId() {

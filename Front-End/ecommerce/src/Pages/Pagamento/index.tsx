@@ -46,22 +46,17 @@ const Pagamento: React.FC = () => {
   const navigate = useNavigate();
   const cardFormRef = useRef<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const packages = useSelector((state: RootState) => state.package.packages)
+  const packages = useSelector((state: RootState) => state.package.package)
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentMethod>();
   const vendaId = useSelector((state: RootState) => state.venda.vendaId);
   const mercadoPagoTeste = import.meta.env.VITE_MERCADOPAGO;
 
+  if (!packages) return
+
   const fretes = useSelector((state: RootState) => state.frete.fretes)
     .filter(frete => {
       if (frete.error) return false;
-
-      // Segundo filtro condicional: múltiplos volumes
-      if (packages.length > 1) {
-        // Verifica se a transportadora aceita múltiplos volumes
-        return frete.company?.has_grouped_volumes === 1
-      }
       
-      // Se tiver apenas 1 volume, não precisa filtrar por has_grouped_volumes
       return true;
   });
 
@@ -263,17 +258,18 @@ const Pagamento: React.FC = () => {
                 ownHand: false,
                 reverse: false,
                 nonCommercial: false,     
-                insuranceValue: totalVenda,
+                insuranceValue: 0,
                 service: freteSelecionado?.id,
                 productName: produtos.map(p => p.nome),
                 productQuantity: produtos.map(p => p.quantidade),
                 productUnitaryValue: produtos.map(p => p.precoEmCentavos),
-                volumes: packages.map(pkg => ({
-                  height: pkg.height,
-                  width: pkg.width,
-                  length: pkg.length,
-                  weight: pkg.weight
-                })),
+                volume: {
+                  height: packages.height,
+                  width: packages.width,
+                  length: packages.length,
+                  weight: packages.weight
+                }
+                ,
                 vendaId: vendaId
               };
               console.log("Enviando para o backend: " + entregaRequest)
@@ -479,11 +475,18 @@ const Pagamento: React.FC = () => {
                       <span className="text-sm text-gray-500">
                         Quantidade: {p.quantidade}
                       </span>
+                      <span className="text-sm text-gray-500">Subtotal:</span>
+                      <span className="text-sm text-gray-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format((p.quantidade * p.precoEmCentavos) / 100)}
+                      </span>
                       <span className="font-medium text-gray-700">
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(p.precoEmCentavos)}
+                        }).format(p.precoEmCentavos / 100)}
                       </span>
                 </div>
                 </div>
@@ -493,6 +496,15 @@ const Pagamento: React.FC = () => {
             </div>
             <div className="mt-6 pt-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
+              <span className="text-xl font-bold text-gray-800">Frete:</span>
+              <span className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(valorFrete)}
+                </span>
+                </div>
+                <div className="flex justify-between mt-2 items-center">
                 <span className="text-xl font-bold text-gray-800">Total:</span>
                 <span className="text-2xl font-bold text-green-600">
                   {new Intl.NumberFormat('pt-BR', {
@@ -500,7 +512,7 @@ const Pagamento: React.FC = () => {
                           currency: 'BRL'
                         }).format(totalComFrete)}
                 </span>
-              </div>
+                </div>
             </div>
         </div>
 

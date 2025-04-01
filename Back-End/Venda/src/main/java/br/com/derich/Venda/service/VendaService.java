@@ -6,10 +6,12 @@ import br.com.derich.Venda.DTO.PaymentPixRequestDTO;
 import br.com.derich.Venda.DTO.PaymentResponseDTO;
 import br.com.derich.Venda.DTO.melhorenvio.*;
 import br.com.derich.Venda.DTO.melhorenvio.Package;
+import br.com.derich.Venda.entity.Frete;
 import br.com.derich.Venda.entity.Venda;
 import br.com.derich.Venda.exception.ApiException;
 import br.com.derich.Venda.handler.CompraFreteHandler;
 import br.com.derich.Venda.processamento.IEtapaProcessamento;
+import br.com.derich.Venda.repository.IFreteRepository;
 import br.com.derich.Venda.repository.IVendaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +51,9 @@ public class VendaService {
 
     @Autowired
     private IVendaRepository vendaRepository;
+
+    @Autowired
+    private IFreteRepository freteRepository;
 
     @Value("${mercadopago.access.token}")
     private String mercadoPagoAccessToken;
@@ -250,26 +255,23 @@ public class VendaService {
         jsonMap.put("from", Collections.singletonMap("postal_code", fromPostalCode));
         jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.getToPostalCode()));
 
-        // Corrigindo a estrutura dos pacotes
-        List<Map<String, Object>> packagesList = new ArrayList<>();
-        for (Package p : freteRequest.getPackages()) {
-            Map<String, Object> pkg = new HashMap<>();
-            pkg.put("height", p.getHeight());
-            pkg.put("width", p.getWidth());
-            pkg.put("length", p.getLength());
-            pkg.put("weight", p.getWeight());
-            packagesList.add(pkg);
-        }
-
-        // A API do Melhor Envio usa "packages" no plural para múltiplos volumes
-        jsonMap.put("packages", packagesList);  // 👈 Campo correto: "packages"
+        // Trabalhando com um único pacote
+        Package p = freteRequest.getPacote();
+        Map<String, Object> pkg = new HashMap<>();
+        pkg.put("height", p.getHeight());
+        pkg.put("width", p.getWidth());
+        pkg.put("length", p.getLength());
+        pkg.put("weight", p.getWeight());
+        // A API do Melhor Envio usa "packages" no plural, mesmo para um único pacote, enviamos uma lista com um item
+        List<Map<String, Object>> packagesList = Collections.singletonList(pkg);
+        jsonMap.put("packages", packagesList);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         String jsonBody = mapper.writeValueAsString(jsonMap);
 
         System.out.println("Payload completo:");
-        System.out.println(jsonBody); // 👈 Log do payload completo
+        System.out.println(jsonBody); // Log do payload completo
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
@@ -284,11 +286,14 @@ public class VendaService {
         return response.body();
     }
 
+
     public String inserirFretesNoCarrinhoMelhorEnvio(EntregaRequest entregaRequest) throws IOException, InterruptedException {
         String urlRequisicao = "https://sandbox.melhorenvio.com.br/api/v2/me/cart";
 
         // Cria um mapa para representar a estrutura do JSON
         Map<String, Object> jsonMap = new HashMap<>();
+
+        VolumeDTO volume = entregaRequest.getVolume(); // Pega o único volume
 
         // Dados do remetente ("from") – usando variáveis de ambiente
         Map<String, Object> fromMap = new HashMap<>();
@@ -346,26 +351,14 @@ public class VendaService {
         }
         jsonMap.put("products", productsList);
 
+        // Mapeamento do único volume
         List<Map<String, Object>> volumesList = new ArrayList<>();
-
-        if (entregaRequest.getVolumes() != null && !entregaRequest.getVolumes().isEmpty()) {
-            for (VolumeDTO volumeDTO : entregaRequest.getVolumes()) {
-                Map<String, Object> volume = new HashMap<>();
-                volume.put("height", volumeDTO.getHeight());
-                volume.put("width", volumeDTO.getWidth());
-                volume.put("length", volumeDTO.getLength());
-                volume.put("weight", volumeDTO.getWeight());
-                volumesList.add(volume);
-
-                System.out.println("\n📦 Volume Adicionado:");
-                System.out.println("Altura: " + volumeDTO.getHeight() + "cm");
-                System.out.println("Largura: " + volumeDTO.getWidth() + "cm");
-                System.out.println("Comprimento: " + volumeDTO.getLength() + "cm");
-                System.out.println("Peso: " + volumeDTO.getWeight() + "kg");
-            }
-        } else {
-            System.out.println("⚠️ Nenhum volume recebido na requisição");
-        }
+        Map<String, Object> volumeMap = new HashMap<>();
+        volumeMap.put("height", volume.getHeight());
+        volumeMap.put("width", volume.getWidth());
+        volumeMap.put("length", volume.getLength());
+        volumeMap.put("weight", volume.getWeight());
+        volumesList.add(volumeMap);
 
         jsonMap.put("volumes", volumesList);
 
@@ -387,6 +380,34 @@ public class VendaService {
 
         JSONObject jsonResponse = new JSONObject(response.body());
         String idEtiqueta = jsonResponse.getString("id");
+        String codigoEnvio = jsonResponse.getString("protocol");
+
+        Package pacote = new Package(
+                entregaRequest.getVolume().getHeight(),
+                entregaRequest.getVolume().getWidth(),
+                entregaRequest.getVolume().getLength(),
+                entregaRequest.getVolume().getWeight()
+        );
+
+        List<Venda.ProdutoComprado> produtos = new ArrayList<>();
+        int productCounts = entregaRequest.getProductName().size();
+        for (int i = 0; i < productCounts; i++) {
+            Venda.ProdutoComprado produto = new Venda.ProdutoComprado();
+            produto.setNome(entregaRequest.getProductName().get(i));
+            produto.setQuantidade(entregaRequest.getProductQuantity().get(i));
+            produtos.add(produto);
+        }
+
+
+        Frete frete = new Frete(
+                entregaRequest.getVendaId(),
+                idEtiqueta,
+                codigoEnvio,
+                pacote,
+                produtos
+        );
+
+        freteRepository.save(frete);
 
         // Busca a venda existente no banco de dados
         Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.getVendaId());

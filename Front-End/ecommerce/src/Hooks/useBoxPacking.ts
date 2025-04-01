@@ -1,196 +1,140 @@
 // useBoxPacking.ts
 import { useMemo } from 'react';
 
-interface Box {
-    id: number;
-    name: string;
-    height: number; // em cm
-    width: number;  // em cm
-    length: number; // em cm
+export interface Product {
+  id: string;
+  nome: string;
+  length: number;
+  width: number;
+  height: number;
+  weight: number;
+  quantity: number;
 }
 
-interface ProductDimensions {
-    length: number;
-    width: number;
-    height: number;
-    weight: number;
-    quantity: number;
+export interface Box {
+  id: number;
+  name: string;
+  height: number;
+  width: number;
+  length: number;
 }
 
-type PackagingResult = {
-    box: Box;
-    products: ProductDimensions[]; // Produtos nesta caixa
-  }[];
-  
+export type PackProduct = {
+  product: Product;
+  quantity: number;
+  orientation: [number, number, number];
+};
 
-const generatePermutations = (dimensions: number[]): number[][] => {
-  const result: number[][] = [];
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 2; j++) {
-      const permutation = [...dimensions];
-      [permutation[0], permutation[i]] = [permutation[i], permutation[0]];
-      [permutation[1], permutation[j]] = [permutation[j], permutation[1]];
-      result.push(permutation);
+export type PackBox = {
+  box: Box;
+  products: PackProduct[];
+};
+
+export type PackagingResult = PackBox[];
+
+const calculateBoxFit = (product: Product, box: Box) => {
+  const boxDims = [box.length, box.width, box.height].sort((a, b) => a - b);
+  let maxFit = 0;
+  let bestOrientation: [number, number, number] = [0, 0, 0];
+
+  const orientations: [number, number, number][] = [
+    [product.length, product.width, product.height],
+    [product.length, product.height, product.width],
+    [product.width, product.length, product.height],
+    [product.width, product.height, product.length],
+    [product.height, product.length, product.width],
+    [product.height, product.width, product.length],
+  ];
+
+  orientations.forEach(([l, w, h]) => {
+    const sortedProd = [l, w, h].sort((a, b) => a - b);
+    const fitX = Math.floor(boxDims[0] / sortedProd[0]);
+    const fitY = Math.floor(boxDims[1] / sortedProd[1]);
+    const fitZ = Math.floor(boxDims[2] / sortedProd[2]);
+    const total = fitX * fitY * fitZ;
+    if (total > maxFit) {
+      maxFit = total;
+      bestOrientation = [l, w, h];
     }
-  }
-  return Array.from(new Set(result.map(p => JSON.stringify(p)))).map(str => JSON.parse(str));
+  });
+
+  return { maxFit, bestOrientation };
 };
 
-const calculateTotalVolume = (products: ProductDimensions[]): number => {
-  return products.reduce((acc, product) => 
-    acc + (product.length * product.width * product.height * product.quantity), 0); // Multiplica pela quantidade
-};
+const getBoxVolume = (box: Box): number => box.length * box.width * box.height;
 
-const findMaxItemsPerBox = (product: ProductDimensions, box: Box) => {
-  const boxDimensions = [box.length, box.width, box.height].sort((a, b) => a - b);
-  let maxQuantity = 0;
+const getProductVolume = (product: Product): number =>
+  product.length * product.width * product.height;
 
-  // Gera todas as permutações possíveis
-  const permutations = generatePermutations([
-    product.length,
-    product.width,
-    product.height,
-  ]);
+const simulatePackingForBox = (products: Product[], box: Box): { result: PackagingResult; totalBoxes: number } => {
+  let remainingProducts = products.map(p => ({ ...p }));
+  const result: PackagingResult = [];
+  const boxVolume = getBoxVolume(box);
 
-  for (const [l, w, h] of permutations) {
-    // Calcula quantos cabem em cada dimensão
-    const fitX = Math.floor(boxDimensions[2] / l);
-    const fitY = Math.floor(boxDimensions[1] / w);
-    const fitZ = Math.floor(boxDimensions[0] / h);
-    
-    const totalFit = fitX * fitY * fitZ;
-    if (totalFit > maxQuantity) {
-      maxQuantity = totalFit;
-    }
-  }
+  while (remainingProducts.some(p => p.quantity > 0)) {
+    let usedVolume = 0;
+    const currentBox: PackBox = { box, products: [] };
 
-  return maxQuantity;
-};
+    const sortedProducts = [...remainingProducts].sort((a, b) =>
+      getProductVolume(b) - getProductVolume(a)
+    );
 
-const findMinHeight = (product: ProductDimensions, box: Box): number | null => {
-  const boxDimensions = [box.length, box.width].sort((a, b) => a - b);
-  let minHeight = Infinity;
+    sortedProducts.forEach(product => {
+      if (product.quantity <= 0) return;
 
-  const permutations = generatePermutations([
-    product.length,
-    product.width,
-    product.height,
-  ]);
+      const { maxFit, bestOrientation } = calculateBoxFit(product, box);
+      if (maxFit <= 0) return;
 
-  for (const [l, w, h] of permutations) {
-    const productBase = [l, w].sort((a, b) => a - b);
-    if (productBase[0] <= boxDimensions[0] && productBase[1] <= boxDimensions[1]) {
-      if (h < minHeight) {
-        minHeight = h;
-      }
-    }
-  }
+      const prodVolume = getProductVolume(product);
+      const availableVolumeUnits = Math.floor((boxVolume - usedVolume) / prodVolume);
+      const qtyToPack = Math.min(product.quantity, maxFit, availableVolumeUnits);
 
-  return minHeight === Infinity ? null : minHeight;
-};
-
-const checkSingleBox = (products: ProductDimensions[], box: Box): boolean => {
-  const totalVolume = calculateTotalVolume(products);
-  const boxVolume = box.length * box.width * box.height;
-
-  if (totalVolume > boxVolume) return false;
-
-  let remainingHeight = box.height;
-  
-  for (const product of products) {
-    const maxPerBox = findMaxItemsPerBox(product, box);
-    if (maxPerBox < product.quantity) return false;
-    
-    const productHeight = findMinHeight(product, box)! * Math.ceil(product.quantity / maxPerBox);
-    if (productHeight > remainingHeight) return false;
-    
-    remainingHeight -= productHeight;
-  }
-
-  return true;
-};
-
-const sortBoxesByVolume = (boxes: Box[]): Box[] => {
-  return [...boxes].sort((a, b) => 
-    (a.length * a.width * a.height) - (b.length * b.width * b.height));
-};
-
-export const useBoxPacking = (products: ProductDimensions[], boxes: Box[]) => {
-  const sortedBoxes = useMemo(() => sortBoxesByVolume(boxes), [boxes]);
-
-  const packProducts = (): PackagingResult | null => {
-    // Agrupa produtos idênticos
-    const groupedProductsMap = products.reduce((acc, product) => {
-      const key = `${product.length}-${product.width}-${product.height}-${product.weight}`;
-      if (acc[key]) {
-        acc[key].quantity += product.quantity;
-      } else {
-        acc[key] = { ...product };
-      }
-      return acc;
-    }, {} as Record<string, ProductDimensions>);
-
-    const groupedProducts = Object.values(groupedProductsMap);
-
-    // Tenta encontrar uma única caixa
-    for (const box of sortedBoxes) {
-      if (checkSingleBox(groupedProducts, box)) {
-        return [{ box, products: groupedProducts }];
-      }
-    }
-
-    // Bin packing para múltiplas caixas
-    const remainingProducts = [...groupedProducts];
-    const usedBoxes: PackagingResult = [];
-
-    while (remainingProducts.length > 0) {
-      let bestBox: Box | null = null;
-      let bestProductIndex = -1;
-      let maxQuantity = 0;
-
-      // Encontra a melhor combinação caixa/produto
-      for (const box of sortedBoxes) {
-        remainingProducts.forEach((product, index) => {
-          const quantityPerBox = findMaxItemsPerBox(product, box);
-          const possibleQuantity = Math.min(quantityPerBox, product.quantity);
-          
-          if (possibleQuantity > maxQuantity) {
-            maxQuantity = possibleQuantity;
-            bestBox = box;
-            bestProductIndex = index;
-          }
+      if (qtyToPack > 0) {
+        currentBox.products.push({
+          product: { ...product },
+          quantity: qtyToPack,
+          orientation: bestOrientation,
         });
+        product.quantity -= qtyToPack;
+        usedVolume += qtyToPack * prodVolume;
       }
+    });
 
-      if (!bestBox || bestProductIndex === -1) return null;
+    result.push(currentBox);
+    remainingProducts = remainingProducts.filter(p => p.quantity > 0);
+  }
 
-      const productToPack = remainingProducts[bestProductIndex];
-      const quantityToPack = Math.min(
-        maxQuantity,
-        productToPack.quantity
-      );
+  return { result, totalBoxes: result.length };
+};
 
-      // Adiciona ao resultado
-      usedBoxes.push({
-        box: bestBox,
-        products: [{
-          ...productToPack,
-          quantity: quantityToPack
-        }]
-      });
+export const useBoxPacking = (products: Product[], boxes: Box[]) => {
+  const candidateBoxes = useMemo(() => 
+    boxes.filter(box =>
+      products.every(product => calculateBoxFit(product, box).maxFit > 0)
+    ), [boxes, products]);
 
-      // Atualiza a quantidade restante
-      if (productToPack.quantity === quantityToPack) {
-        remainingProducts.splice(bestProductIndex, 1);
-      } else {
-        remainingProducts[bestProductIndex] = {
-          ...productToPack,
-          quantity: productToPack.quantity - quantityToPack
-        };
-      }
+  const packingOptions = candidateBoxes.map(box => {
+    const { result, totalBoxes } = simulatePackingForBox(products, box);
+    return {
+      box,
+      result,
+      totalBoxes,
+      boxVolume: getBoxVolume(box)
+    };
+  });
+
+  const validOptions = packingOptions.filter(option => option.totalBoxes === 1);
+
+  const bestOption = validOptions.length > 0 
+    ? validOptions.reduce((best, current) => 
+        current.boxVolume < best.boxVolume ? current : best, validOptions[0])
+    : null;
+
+  const packProducts = (): PackagingResult => {
+    if (!bestOption) {
+      throw new Error('Nenhuma caixa disponível para conter todos os produtos.');
     }
-
-    return usedBoxes;
+    return bestOption.result;
   };
 
   return { packProducts };

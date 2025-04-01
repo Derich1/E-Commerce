@@ -9,28 +9,28 @@ export interface Package {
 }
 
 interface PackagesState {
-  packages: Package[];
+  package: Package | null;
 }
 
 const initialState: PackagesState = {
-  packages: [],
+  package: null
 };
 
 const packagesSlice = createSlice({
   name: 'packages',
   initialState,
   reducers: {
-    setPackages: (state, action: PayloadAction<Package[]>) => {
-      state.packages = action.payload;
+    setPackage: (state, action: PayloadAction<Package>) => {
+      state.package = action.payload;
     },
     clearPackages: (state) => {
-      state.packages = [];
+      state.package = null;
     }
   },
 });
 
-export const { setPackages, clearPackages } = packagesSlice.actions;
+export const { setPackage, clearPackages } = packagesSlice.actions;
 export default packagesSlice.reducer;
 
 // Seletor para acessar os pacotes
-export const selectPackages = (state: { packages: PackagesState }) => state.packages.packages;
+export const selectPackages = (state: { packages: PackagesState }) => state.packages.package;

@@ -1,29 +1,51 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../Redux/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
 import { setPesoTotal, setPreferenceId, setProdutos, setTotal, setVendaId } from "../../Redux/vendaSlice";
 import { setCep } from "../../Redux/enderecoSlice";
 import { setFretes } from "../../Redux/freteSlice";
 import { useBoxPacking } from "../../Hooks/useBoxPacking";
-import { setPackages } from "../../Redux/packageSlice";
+import { setPackage } from "../../Redux/packageSlice";
 
 interface Box {
   id: number;
   name: string;
-  height: number; // em cm
+  height: number; // em cm  
   width: number;  // em cm
   length: number; // em cm
 }
 
 interface ProductDimensions {
+  id: string;
+  nome: string;
   length: number;
   width: number;
   height: number;
   weight: number;
   quantity: number;
+}
+
+interface Package {
+  boxId: number;
+  boxNumber: number;
+  height: number;
+  width: number;
+  length: number;
+  weight: number;
+  volume: number;
+  products: {
+    productName: string;
+    quantity: number;
+    weight: number;
+    dimensions: {
+      length: number;
+      width: number;
+      height: number;
+    };
+    orientation: [number, number, number];
+  }[];
 }
 
 const Compra: React.FC = () => {
@@ -32,9 +54,12 @@ const Compra: React.FC = () => {
   const itemsToCheckout = immediatePurchase ? [immediatePurchase] : cartItems;
   const totalPrice = itemsToCheckout.reduce((acc, item) => acc + item.precoEmCentavos * item.quantidade, 0);
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user)
-  const dispatch = useDispatch()
+  const user = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+
   const products: ProductDimensions[] = itemsToCheckout.map(item => ({
+    id: item.id,
+    nome: item.nome,
     length: item.length,
     width: item.width,
     height: item.height,
@@ -48,8 +73,52 @@ const Compra: React.FC = () => {
     { id: 3, name: "Grande", height: 20, width: 14, length: 8 },
   ];
 
+  const [packagingResult, setPackagingResult] = useState<Package | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { packProducts } = useBoxPacking(products, boxes);
-  const result = packProducts();
+
+  useEffect(() => {
+    const calculatePackaging = () => {
+      try {
+        // packProducts retorna um PackagingResult (array de PackBox)
+        const result = packProducts();
+        if (result && result.length > 0) {
+          // Como sempre haverá apenas um item, extraímos o primeiro
+          const pack = result[0];
+          const pkg: Package = {
+            boxId: pack.box.id,
+            boxNumber: 1, // Apenas um pacote
+            height: pack.box.height,
+            width: pack.box.width,
+            length: pack.box.length,
+            weight: pack.products.reduce(
+              (acc, prod) => acc + prod.product.weight * prod.quantity,
+              0
+            ),
+            volume: pack.box.height * pack.box.width * pack.box.length,
+            products: pack.products.map((prod) => ({
+              productName: prod.product.nome,
+              quantity: prod.quantity,
+              weight: prod.product.weight,
+              dimensions: {
+                length: prod.product.length,
+                width: prod.product.width,
+                height: prod.product.height,
+              },
+              orientation: prod.orientation,
+            })),
+          };
+          setPackagingResult(pkg);
+        } else {
+          setPackagingResult(null);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+
+    calculatePackaging();
+  }, []); // Se necessário, adicione dependências
 
   const [formData, setFormData] = useState({
     address: "",
@@ -57,12 +126,12 @@ const Compra: React.FC = () => {
 
   const [cepError, setCepError] = useState("");
 
-  // Formatar CEP automaticamente (XXXXX-XXX)
+  // Função para formatar CEP automaticamente (XXXXX-XXX)
   const formatCep = (cep: string) => {
     return cep
-      .replace(/\D/g, "") // Remove caracteres não numéricos
-      .replace(/^(\d{5})(\d)/, "$1-$2") // Adiciona o traço após os primeiros 5 dígitos
-      .slice(0, 9); // Limita o tamanho máximo
+      .replace(/\D/g, "")
+      .replace(/^(\d{5})(\d)/, "$1-$2")
+      .slice(0, 9);
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,8 +141,8 @@ const Compra: React.FC = () => {
     setFormData({ ...formData, [name]: formattedCep });
 
     if (formattedCep.length === 9) {
-      validarCep(formattedCep)
-      dispatch(setCep(formattedCep))
+      validarCep(formattedCep);
+      dispatch(setCep(formattedCep));
     } else {
       setCepError("Digite um CEP válido.");
     }
@@ -85,7 +154,7 @@ const Compra: React.FC = () => {
       if (response.data.erro) {
         setCepError("CEP inválido.");
       } else {
-        setCepError(""); // Remove o erro se o CEP for válido
+        setCepError("");
       }
     } catch (error) {
       setCepError("Erro ao validar CEP.");
@@ -95,25 +164,25 @@ const Compra: React.FC = () => {
   const finalizarCompra = async () => {
     // Validações iniciais
     if (cepError || formData.address.length < 9) return;
-    
+
     if (!user.user) {
-      alert("Conect-se a uma conta para poder prosseguir com a compra");
+      alert("Conecte-se a uma conta para prosseguir com a compra");
       return navigate("/login");
     }
-  
-    // Montagem dos dados
+
+    // Montagem dos dados para a venda
     const vendaDTO = {
       clienteId: user.user?.id,
       produtos: itemsToCheckout
-      .filter(item => item.quantidade > 0) // 👈 Filtra produtos com quantidade > 0
-      .map(item => ({
-        produtoId: item.id,
-        quantidade: item.quantidade,
-        nome: item.nome,
-        precoUnitario: item.precoEmCentavos / 100,
-        imagemUrl: item.imagemUrl,
-        weight: item.weight
-      })),
+        .filter(item => item.quantidade > 0)
+        .map(item => ({
+          produtoId: item.id,
+          quantidade: item.quantidade,
+          nome: item.nome,
+          precoUnitario: item.precoEmCentavos / 100,
+          imagemUrl: item.imagemUrl,
+          weight: item.weight
+        })),
       total: totalPrice / 100,
       status: "Pendente",
       metodoPagamento: "",
@@ -123,116 +192,105 @@ const Compra: React.FC = () => {
       emailCliente: user.user?.email,
       statusEtiqueta: "Pendente"
     };
-  
+
     try {
-      // Chamada para criar a venda
+      // Criação da venda
       const { data: vendaResponse } = await axios.post(
         "http://localhost:8083/venda/criar",
         vendaDTO,
         { headers: { "Content-Type": "application/json" } }
       );
-  
-      const peso = vendaResponse.vendaPeso
+
+      const peso = vendaResponse.vendaPeso;
       dispatch(setVendaId(vendaResponse.id));
-      dispatch(setProdutos(itemsToCheckout
-        .filter(item => item.quantidade > 0)
-        .map(item => ({
-          produtoId: item.id,
-          quantidade: item.quantidade,
-          nome: item.nome,
-          precoEmCentavos: item.precoEmCentavos / 100,
-          imagemUrl: item.imagemUrl,
-          weight: item.weight
-        }))))
+      dispatch(setProdutos(
+        itemsToCheckout
+          .filter(item => item.quantidade > 0)
+          .map(item => ({
+            produtoId: item.id,
+            quantidade: item.quantidade,
+            nome: item.nome,
+            precoEmCentavos: item.precoEmCentavos,
+            imagemUrl: item.imagemUrl,
+            weight: item.weight
+          }))
+      ));
       dispatch(setPreferenceId(vendaResponse.preferenceId));
       dispatch(setTotal(totalPrice / 100));
-      dispatch(setPesoTotal(peso))
+      dispatch(setPesoTotal(peso));
 
-        // Adicione no seu componente, antes do if (!result...)
-console.log("🔍 Debug do Empacotamento:");
+      console.log("🔍 Debug do Empacotamento:");
+      console.log("📋 Produtos:", products.map(p => `${p.length}x${p.width}x${p.height} (${p.weight}kg)`));
+      console.log("📦 Caixas Disponíveis:", boxes.map(b => `${b.name}: ${b.length}x${b.width}x${b.height}cm (Vol: ${b.length * b.width * b.height}cm³)`));
 
-        // 1. Verificar produtos
-        console.log("📋 Produtos:", products.map(p => 
-          `${p.length}x${p.width}x${p.height} (${p.weight}kg)`
-        ));
-        
-        // 2. Verificar caixas disponíveis
-        console.log("📦 Caixas Disponíveis:", boxes.map(b => 
-          `${b.name}: ${b.length}x${b.width}x${b.height}cm (Vol: ${b.length * b.width * b.height}cm³)`
-        ));
-        
-        // 3. Calcular métricas críticas
-        const totalProductsVolume = products.reduce((acc, p) => acc + (p.length * p.width * p.height), 0);
-        const largestBoxVolume = Math.max(...boxes.map(b => b.length * b.width * b.height));
-        const maxProductLength = Math.max(...products.map(p => Math.max(p.length, p.width, p.height)));
-        
-        console.log("📊 Métricas Críticas:");
-        console.log(`- Volume Total Produtos: ${totalProductsVolume}cm³`);
-        console.log(`- Maior Volume de Caixa: ${largestBoxVolume}cm³`);
-        console.log(`- Maior Dimensão de Produto: ${maxProductLength}cm`);
-        
-        // 4. Verificar causas comuns
-        if (totalProductsVolume > largestBoxVolume) {
-          console.log("❌ CAUSA: Volume total dos produtos excede todas as caixas!");
-        }
-        
-        if (maxProductLength > Math.max(...boxes.map(b => Math.max(b.length, b.width, b.height)))) {
-          console.log("❌ CAUSA: Um produto tem dimensão maior que todas as caixas!");
-        }
-        
-        // Sua validação original
-        if (!result || result.length === 0) {
-          alert("Erro no cálculo de empacotamento!\nVerifique o console para detalhes.");
-          return;
-        }
+      const totalProductsVolume = products.reduce((acc, p) => acc + (p.length * p.width * p.height), 0);
+      const largestBoxVolume = Math.max(...boxes.map(b => b.length * b.width * b.height));
+      const maxProductLength = Math.max(...products.map(p => Math.max(p.length, p.width, p.height)));
 
-      if (!result || result.length === 0) {
-        alert("Erro no cálculo de empacotamento!");
+      console.log("📊 Métricas Críticas:");
+      console.log(`- Volume Total Produtos: ${totalProductsVolume}cm³`);
+      console.log(`- Maior Volume de Caixa: ${largestBoxVolume}cm³`);
+      console.log(`- Maior Dimensão de Produto: ${maxProductLength}cm`);
+
+      if (totalProductsVolume > largestBoxVolume) {
+        console.log("❌ CAUSA: Volume total dos produtos excede todas as caixas!");
+      }
+
+      if (maxProductLength > Math.max(...boxes.map(b => Math.max(b.length, b.width, b.height)))) {
+        console.log("❌ CAUSA: Um produto tem dimensão maior que todas as caixas!");
+      }
+
+      // Validação do empacotamento
+      if (!packagingResult) {
+        alert("Erro no cálculo de empacotamento!\nVerifique o console para detalhes.");
         return;
       }
 
-      // Montar array de pacotes para o frete
-      // Se tiver acesso aos produtos por caixa:
-      const packages = result.map(({box, products}) => {
-        const pesoCaixa = products.reduce((acc, produto) => acc + (produto.weight * produto.quantity), 0);
-        
-        return {
-          height: box.height,
-          width: box.width,
-          length: box.length,
-          weight: pesoCaixa
-        };
-      });
+      // Envia o pacote único para o Redux e para o payload do frete
+      dispatch(setPackage(packagingResult));
 
-      dispatch(setPackages(packages))
+      console.log("🔍 Debug completo do pacote:", JSON.stringify(packagingResult, null, 2));
 
       console.log("\n📤 Payload para envio à API de fretes:");
       console.log(JSON.stringify({
         toPostalCode: formData.address,
-        packages: packages,
-        totalWeight: packages.reduce((acc, p) => acc + p.weight, 0)
+        package: packagingResult,
+        totalWeight: packagingResult.weight
       }, null, 2));
 
       const freteRequest = {
         toPostalCode: formData.address,
-        packages: packages, // Array de pacotes
-        totalWeight: peso // Peso total opcional
+        pacote: packagingResult, // Objeto único
+        totalWeight: peso
       };
-  
+
       const response = await axios.post(
         "http://localhost:8083/venda/calcularFrete",
         freteRequest,
         { headers: { "Content-Type": "application/json" } }
       );
       console.log("Resposta do backend:", response.data);
-      // Navega para a página de pagamento após a conclusão de tudo
-      dispatch(setFretes(response.data))
+      dispatch(setFretes(response.data));
       navigate("/pagamento");
     } catch (error: any) {
       setCepError("Erro ao processar a compra. Tente novamente.");
       console.error("Erro ao calcular frete:", error.response?.data || error.message);
     }
-  };  
+  };
+
+  if (error) {
+    return (
+      <div className="p-4 text-red-600 text-center flex flex-col bg-red-100 rounded-lg max-w-md mx-auto mt-8">
+        ❌ Erro: {error}
+        <button 
+          onClick={() => window.history.back()}
+          className="mt-4 bg-gray-200 cursor-pointer hover:bg-gray-300 px-4 py-2 rounded"
+        >
+          Voltar ao Carrinho
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-10 max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-xl shadow-lg">
