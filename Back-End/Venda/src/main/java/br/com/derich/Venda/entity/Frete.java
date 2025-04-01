@@ -11,13 +11,15 @@ public class Frete {
     private String idEtiqueta;
     private String vendaId;
     private String codigoEnvio;
+    private String emailCliente;
     private br.com.derich.Venda.DTO.melhorenvio.Package pacote;
     private List<Venda.ProdutoComprado> produtos;
 
-    public Frete(String vendaId, String idEtiqueta, String codigoEnvio, br.com.derich.Venda.DTO.melhorenvio.Package pacote, List<Venda.ProdutoComprado> produtos) {
+    public Frete(String vendaId, String idEtiqueta, String codigoEnvio, String emailCliente, br.com.derich.Venda.DTO.melhorenvio.Package pacote, List<Venda.ProdutoComprado> produtos) {
         this.vendaId = vendaId;
         this.idEtiqueta = idEtiqueta; // ou outro nome, se necessário
         this.codigoEnvio = codigoEnvio;
+        this.emailCliente = emailCliente;
         this.pacote = pacote;
         this.produtos = produtos;
     }
@@ -44,6 +46,14 @@ public class Frete {
 
     public void setCodigoEnvio(String codigoEnvio) {
         this.codigoEnvio = codigoEnvio;
+    }
+
+    public String getEmailCliente() {
+        return emailCliente;
+    }
+
+    public void setEmailCliente(String emailCliente) {
+        this.emailCliente = emailCliente;
     }
 
     public Package getPacote() {

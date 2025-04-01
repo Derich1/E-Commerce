@@ -3,6 +3,7 @@ package br.com.derich.Venda.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ public class Venda {
     private String id;
     private String clienteId;
     private List<ProdutoComprado> produtos;
-    private Long total;
+    private BigDecimal total;
     private String status; // PENDENTE, APROVADO, CANCELADO
     private String metodoPagamento; // CARTAO_CREDITO, PIX, BOLETO
     private String statusPagamento; // AGUARDANDO, PAGO, CANCELADO
@@ -23,6 +24,7 @@ public class Venda {
     private String emailCliente;
     private String statusEtiqueta;
     private String idEtiqueta;
+    private Integer installments;
 
     public static class ProdutoComprado {
         private String produtoId;
@@ -110,11 +112,11 @@ public class Venda {
         this.produtos = produtos;
     }
 
-    public Long getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
-    public void setTotal(Long total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
@@ -188,5 +190,13 @@ public class Venda {
 
     public void setIdEtiqueta(String idEtiqueta) {
         this.idEtiqueta = idEtiqueta;
+    }
+
+    public Integer getInstallments() {
+        return installments;
+    }
+
+    public void setInstallments(Integer installments) {
+        this.installments = installments;
     }
 }

@@ -122,6 +122,7 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
             Package pacote = frete.getPacote();
             List<Venda.ProdutoComprado> produtos = frete.getProdutos();
             String codigoEnvio = frete.getCodigoEnvio();
+            String emailCliente = frete.getEmailCliente();
 
             // Constrói a seção de dimensões
             String dimensoes = String.format(
@@ -160,6 +161,17 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
 
             produtosHtml.append("</table></div>");
 
+            String notificacao = String.format(
+                    "<div style='margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; border: 1px solid #ffeeba;'>" +
+                            "<p style='color: #856404; margin: 0;'>" +
+                            "Após postar a encomenda, entre no Melhor Rastreio, encontre a etiqueta com código de envio <strong>%s</strong> " +
+                            "e ative as notificações da entrega para este email: <strong>%s</strong>" +
+                            "</p>" +
+                            "</div>",
+                    codigoEnvio,
+                    emailCliente
+            );
+
             // Corpo completo do e-mail
             String corpoEmail = String.format(
                     "<html>" +
@@ -168,6 +180,7 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
                             "<h2 style='color: #0066cc;'>Código do Envio #%s</h2>" +
                             "%s" + // Dimensões
                             "%s" + // Produtos
+                            "%s" + // Notificação
                             "<div style='margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;'>" +
                             "<p>Clique abaixo para imprimir sua etiqueta:</p>" +
                             "<a href='%s' style='display: inline-block; padding: 10px 20px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 3px;'>" +
@@ -183,6 +196,7 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
                     codigoEnvio,
                     dimensoes,
                     produtosHtml,
+                    notificacao,
                     etiqueta,
                     etiqueta
             );

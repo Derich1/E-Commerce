@@ -73,6 +73,8 @@ const Pagamento: React.FC = () => {
   const [cleanValue, setCleanValue] = useState("");
   const [mask, setMask] = useState("999.999.999-99"); // Começa com a máscara de CPF
   const [cleanValueType, setCleanValueType] = useState("")
+  const [selectedInstallment, setSelectedInstallment] = useState<{ parcelas: string; valorTotal: string } | null>(null);
+  const selectedInstallmentRef = useRef<{ parcelas: string; valorTotal: string } | null>(null);
 
   // "Produto A (Quantidade: 2), Produto B (Quantidade: 1), Produto C (Quantidade: 5)"
   const description = produtos.map(produto => `${produto.nome} (Quantidade: ${produto.quantidade})`).join(', ');
@@ -153,8 +155,65 @@ const Pagamento: React.FC = () => {
     }
   }
 
-  
+  useEffect(() => {
+    console.log("Método de pagamento: " + selectedPaymentType)
+  }, [selectedPaymentType])
 
+  
+  useEffect(() => {
+    const installmentsElement = document.getElementById("form-checkout__installments") as HTMLSelectElement;
+    if (!installmentsElement) return;
+    
+    const handleChange = () => {
+      const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
+      console.log("Opção selecionada:", selectedOption);
+      
+      const match = selectedOption?.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
+      if (match) {
+        const numParcelas = match[1]; // Número de parcelas
+        const valorTotalStr = match[2]; // Valor total como string
+
+        console.log("Valor total extraído antes da conversão:", valorTotalStr);
+
+        const valorTotal = valorTotalStr.replace(',', '.');
+
+        console.log("Valor total convertido para número:", Number(valorTotal));
+        setSelectedInstallment({
+          parcelas: numParcelas,
+          valorTotal: valorTotalStr,
+        });
+      }
+    };
+    
+    installmentsElement.addEventListener("change", function () {
+      const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
+      console.log("Opção selecionada:", selectedOption);
+    
+      const match = selectedOption.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
+    
+      if (match) {
+        const numParcelas = match[1]; // Número de parcelas
+        const valorTotal = match[2]; // Valor total
+    
+        console.log("Número de Parcelas:", numParcelas);
+        console.log("Valor Total:", valorTotal);
+    
+        const installmentData = { parcelas: numParcelas, valorTotal: valorTotal };
+    
+        // Atualiza o state
+        setSelectedInstallment(installmentData);
+    
+        // Atualiza o ref para garantir o valor atualizado
+        selectedInstallmentRef.current = installmentData;
+      }
+    });
+    
+    
+    return () => {
+      installmentsElement.removeEventListener("change", handleChange);
+    };
+  }, [mercadoPagoTeste]);
+  
 
   // Inicializa o cardForm apenas para crédito ou débito
   useLayoutEffect(() => {
@@ -198,9 +257,36 @@ const Pagamento: React.FC = () => {
           onFormMounted: (error: any) => {
             if (error) return console.warn("Erro ao montar o formulário:", error);
             console.log("Formulário montado");
+
+            // const installmentsElement = document.getElementById('form-checkout__installments') as HTMLSelectElement
+            
+            // if (installmentsElement) {
+            //   installmentsElement.addEventListener('change', function() {
+            //     // Captura o valor da opção selecionada
+            //     const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
+            //     console.log("Opção selecionada:", selectedOption);
+                
+            //     const match = selectedOption.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
+                
+            //     if (match) {
+            //       const numParcelas = match[1]; // Número de parcelas
+            //       const valorTotal = match[2]; // Valor total em reais
+            
+            //       console.log("Número de Parcelas:", numParcelas);
+            //       console.log("Valor Total:", valorTotal);
+            
+            //       setSelectedInstallment({
+            //         parcelas: numParcelas,
+            //         valorTotal: valorTotal,
+            //       });
+            //     }
+            //   });
+            // }
+
           },
           onSubmit: async (event: React.FormEvent) => {
             event.preventDefault();
+            console.log("Xesque" + selectedInstallment?.valorTotal)
 
             if (!freteSelecionado) {
               toast.error("Por favor, selecione uma opção de frete");
@@ -215,7 +301,7 @@ const Pagamento: React.FC = () => {
               return;
             }
 
-            console.log("Total Calculado:", totalComFrete.toFixed(2)); // Deve mostrar 2 casas
+            console.log("Total Calculado:", totalComFrete.toFixed(2))
 
             const {
               paymentMethodId: payment_method_id,
@@ -227,23 +313,56 @@ const Pagamento: React.FC = () => {
               identificationNumber, // valor do cardForm
             } = cardFormData;
 
+            const totalComFreteNumber = isNaN(Number(totalComFrete)) ? 0 : Number(totalComFrete);
+            const valorTotalNumber = Number(
+              (selectedInstallment?.valorTotal || selectedInstallmentRef.current?.valorTotal || "0").replace(",", ".")
+            );
+            
+            const installmentsNumber = isNaN(Number(installments)) ? 1 : Number(installments);
+
+            // Verifique no console antes de enviar:
+            console.log("Valores enviados:", { totalComFreteNumber, valorTotalNumber, installmentsNumber });
+
+
             try {
-              const response = await postCredit(
-                token,
-                issuer_id,
-                payment_method_id,
-                totalComFrete,
-                Number(installments),
-                description,
-                email,
-                identificationType,
-                identificationNumber,
-                selectedPaymentType,
-                vendaId,
-              );
-              console.log("Resposta recebida:", response.data);
-              const status = response.data.status;
-              console.log("Status recebido:", status);
+              let status = ""
+              if (selectedPaymentType === 'credit_card'){
+                const response = await postCredit(
+                  token,
+                  issuer_id,
+                  payment_method_id,
+                  valorTotalNumber,
+                  Number(installments),
+                  description,
+                  email,
+                  identificationType,
+                  identificationNumber,
+                  selectedPaymentType,
+                  vendaId,
+                );
+                console.log("Resposta recebida:", response.data);
+                status = response.data.status;
+                console.log("Status recebido:", status);
+              }
+              
+              if (selectedPaymentType === 'debit_card'){
+                const response = await postCredit(
+                  token,
+                  issuer_id,
+                  payment_method_id,
+                  totalComFrete,
+                  Number(installments),
+                  description,
+                  email,
+                  identificationType,
+                  identificationNumber,
+                  selectedPaymentType,
+                  vendaId,
+                );
+                console.log("Resposta recebida:", response.data);
+                status = response.data.status;
+                console.log("Status recebido:", status);
+              }
 
               const entregaRequest = {
                 toPostalCode: cep,
@@ -273,6 +392,8 @@ const Pagamento: React.FC = () => {
                 vendaId: vendaId
               };
               console.log("Enviando para o backend: " + entregaRequest)
+              console.log("Método de pagamento enviado:", selectedPaymentType);
+
           
               await axios.post("http://localhost:8083/venda/inserirFrete", entregaRequest)
               dispatch(clearCart())

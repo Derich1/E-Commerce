@@ -99,7 +99,7 @@ public class VendaService {
         }
 
         venda.setClienteId(vendaDTO.getClienteId());
-        venda.setTotal(vendaDTO.getTotal());
+        venda.setTotal(BigDecimal.valueOf(vendaDTO.getTotal()));
         venda.setStatus(vendaDTO.getStatus());
         venda.setMetodoPagamento(vendaDTO.getMetodoPagamento());
         venda.setStatusPagamento(vendaDTO.getStatusPagamento());
@@ -179,11 +179,12 @@ public class VendaService {
 
             venda.setStatus("Aprovado");
             System.out.println("Status setado para aprovado");
-            venda.setMetodoPagamento(createdPayment.getPaymentTypeId());
+            venda.setMetodoPagamento(pagamentoCartaoRequestDTO.getPayment_type_id());
             System.out.println("Método de pagamento setado");
             venda.setStatusPagamento(createdPayment.getStatus());
             System.out.println("Status do pagamento setado para aprovado");
-
+            venda.setInstallments(pagamentoCartaoRequestDTO.getInstallments());
+            venda.setTotal(pagamentoCartaoRequestDTO.getTransactionAmount());
             vendaRepository.save(venda);
 
             return new PaymentResponseDTO(
@@ -399,26 +400,27 @@ public class VendaService {
         }
 
 
+
+
+        // Busca a venda existente no banco de dados
+        Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.getVendaId());
+
+        Venda venda = vendaOptional.get();
+        venda.setIdEtiqueta(idEtiqueta); // Atualiza a venda com o ID do frete
+        String emailCliente = venda.getEmailCliente();
+        vendaRepository.save(venda); // Salva no banco
+        System.out.println("Venda atualizada com ID da etiqueta: " + idEtiqueta);
+
         Frete frete = new Frete(
                 entregaRequest.getVendaId(),
                 idEtiqueta,
                 codigoEnvio,
+                emailCliente,
                 pacote,
                 produtos
         );
 
         freteRepository.save(frete);
-
-        // Busca a venda existente no banco de dados
-        Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.getVendaId());
-        if (vendaOptional.isPresent()) {
-            Venda venda = vendaOptional.get();
-            venda.setIdEtiqueta(idEtiqueta); // Atualiza a venda com o ID do frete
-            vendaRepository.save(venda); // Salva no banco
-            System.out.println("Venda atualizada com ID da etiqueta: " + idEtiqueta);
-        } else {
-            System.out.println("Venda não encontrada com o ID: " + entregaRequest.getVendaId());
-        }
 
         return response.body();
     }
