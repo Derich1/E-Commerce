@@ -438,7 +438,13 @@ public class VendaService {
                     int quantidade = produto.getQuantidade();
 
                     // Chamar o microsserviço de produto para atualizar o estoque
-                    produtoServiceClient.atualizarEstoque(produtoId, quantidade);
+                    try {
+                        logger.info("🔄 Chamando serviço de produto para atualizar estoque de " + produtoId);
+                        produtoServiceClient.atualizarEstoque(produtoId, quantidade);
+                        logger.info("✅ Estoque atualizado com sucesso para o produto: " + produtoId);
+                    } catch (Exception e) {
+                        logger.error("❌ Erro ao atualizar estoque do produto " + produtoId + ": " + e.getMessage());
+                    }
                 }
             } catch (ApiException e) {
                 logger.error("Falha crítica no processamento da venda {}: {}", venda.getId(), e.getMessage());

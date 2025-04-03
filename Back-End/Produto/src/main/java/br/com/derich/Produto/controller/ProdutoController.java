@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/produto")
 public class ProdutoController {
@@ -47,6 +48,17 @@ public class ProdutoController {
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build(); // Trate exceções específicas
+        }
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PutMapping("/{id}")
+    public ResponseEntity<String> atualizarProduto(@PathVariable String id, @RequestBody Produto produtoAtualizado) {
+        try {
+            produtoService.atualizarProduto(id, produtoAtualizado);
+            return ResponseEntity.ok("Produto atualizado com sucesso");
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 

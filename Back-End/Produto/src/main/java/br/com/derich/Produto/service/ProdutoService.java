@@ -42,4 +42,14 @@ public class ProdutoService {
         produtoRepository.save(produto);
     }
 
+    public void atualizarProduto(String id, Produto produtoAtualizado) {
+        Produto produtoExistente = produtoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+
+        produtoExistente.setPrecoEmCentavos(produtoAtualizado.getPrecoEmCentavos());
+        produtoExistente.setEstoque(produtoAtualizado.getEstoque());
+
+        produtoRepository.save(produtoExistente);
+    }
+
 }
