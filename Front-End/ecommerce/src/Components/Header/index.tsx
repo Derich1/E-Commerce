@@ -31,6 +31,7 @@ const Header: React.FC<HeaderProps> = () => {
     dispatch(updateSearchQuery(e.target.value));
     dispatch(applyFilters()); // Aplica os filtros imediatamente
   };
+  
 
   return (
     <header className="bg-white shadow-md py-4">
@@ -58,7 +59,10 @@ const Header: React.FC<HeaderProps> = () => {
           <Link to={isAuthenticated ? "/perfil" : "/login"} className="icon text-gray-700 hover:text-blue-500">
             <CgProfile className="text-[1.5rem] md:text-[2rem]" />
           </Link>
-          <Link to="/favoritos" className="icon text-gray-700 hover:text-blue-500">
+          <Link 
+            to="/favoritos" 
+            className="icon text-gray-700 hover:text-blue-500"
+          >
             <MdOutlineFavoriteBorder className="text-[1.5rem] md:text-[2rem]"/>
           </Link>
           <Link to="#" className="icon text-gray-700 hover:text-blue-500">

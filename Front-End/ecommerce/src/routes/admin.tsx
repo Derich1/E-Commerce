@@ -5,6 +5,8 @@ import { ProdutoList } from "../Components/Admin/ProdutoList";
 import { ProdutoEdit } from "../Components/Admin/ProdutoEdit";
 import { ProdutoCreate } from "../Components/Admin/ProdutoCreate";
 import { DataProvider, UpdateParams, UpdateResult, RaRecord } from "react-admin";
+import { authProvider } from "../AuthProvider";
+import CustomLoginPage from "../CustomLandingPage";
 
 const apiUrl = "http://localhost:8082/produto";
 
@@ -14,6 +16,8 @@ const dataProvider: DataProvider = {
   getList: async () => {
     const response = await fetch(`${apiUrl}`);
     const data = await response.json();
+    console.log(data)
+    console.log(response)
     return { data, total: data.length };
   },
 
@@ -49,9 +53,26 @@ const dataProvider: DataProvider = {
 };
 
 export const AdminPanel = () => {
+
+  
+
   return (
-    <Admin basename="/admin" dataProvider={dataProvider}>
-      <Resource name="produto" list={ProdutoList} edit={ProdutoEdit} create={ProdutoCreate} />
+    <Admin basename="/admin" loginPage={CustomLoginPage} authProvider={authProvider} requireAuth dataProvider={dataProvider}>
+      
+      {(permissions) => (
+        
+        <>
+        
+        {(permissions.includes('ADMIN') || permissions.includes('superadmin')) && (
+          <Resource 
+            name="produto"
+            list={ProdutoList}
+            edit={ProdutoEdit}
+            create={ProdutoCreate}
+          />
+        )}
+      </>
+      )}
     </Admin>
   );
 }

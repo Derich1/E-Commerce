@@ -23,6 +23,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        // Ignora verificação JWT para rotas públicas
+        if (isPublicEndpoint(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -53,6 +59,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             System.out.println("Nenhum token recebido.");
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/cliente/login") ||
+                path.startsWith("/cliente/cadastrar") ||
+                path.startsWith("/cliente/perfil") ||
+                path.startsWith("/cliente/favoritos");
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

@@ -314,10 +314,13 @@ const Pagamento: React.FC = () => {
             } = cardFormData;
 
             const totalComFreteNumber = isNaN(Number(totalComFrete)) ? 0 : Number(totalComFrete);
+
+            // Levando em consideração o parcelamento também.
             const valorTotalNumber = Number(
-              (selectedInstallment?.valorTotal || selectedInstallmentRef.current?.valorTotal || "0").replace(",", ".")
+              (selectedInstallment?.valorTotal || selectedInstallmentRef.current?.valorTotal || totalComFreteNumber)
             );
             
+            // Quantidade de parcelas
             const installmentsNumber = isNaN(Number(installments)) ? 1 : Number(installments);
 
             // Verifique no console antes de enviar:

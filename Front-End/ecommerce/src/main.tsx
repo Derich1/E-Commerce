@@ -16,11 +16,11 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <PersistGate loading={<div>Carregando...</div>} persistor={persistor}>
         {/* <QueryClientProvider client={queryClient}> */}
-          <StrictMode>
+          {/* <StrictMode> */}
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>
-          </StrictMode>
+          {/* </StrictMode> */}
         {/* </QueryClientProvider> */}
         </PersistGate>
       </AuthProvider>

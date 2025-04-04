@@ -1,9 +1,6 @@
 package br.com.derich.Cliente.service;
 
-import br.com.derich.Cliente.dto.ClienteRequestDTO;
-import br.com.derich.Cliente.dto.LoginRequestDTO;
-import br.com.derich.Cliente.dto.LoginResponseDTO;
-import br.com.derich.Cliente.dto.ProdutoDTO;
+import br.com.derich.Cliente.dto.*;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,18 +37,18 @@ public class ClienteService {
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
 
-        Cliente cliente = clienteRepository.findByEmail(loginRequest.getEmail())
+        Cliente cliente = clienteRepository.findByEmail(loginRequest.email())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         if (cliente == null) {
             throw new RuntimeException("Cliente não encontrado.");
         }
 
-        if (!passwordEncoder.matches(loginRequest.getSenha(), cliente.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.senha(), cliente.getPassword())) {
             throw new RuntimeException("Senha incorreta.");
         }
 
-        String token = jwtService.generateToken(cliente.getEmail());
+        String token = jwtService.generateToken(cliente);
 
         System.out.println("Enviando o numeroDocumento do backend: " + cliente.getNumeroDocumento());
 
@@ -152,4 +149,16 @@ public class ClienteService {
                 .collect(Collectors.toList());
     }
 
+    public Cliente criarAdmin(AdminCreateDTO dto) throws Exception {
+        if (clienteRepository.existsByEmail(dto.getEmail())) {
+            throw new Exception();
+        }
+
+        Cliente admin = new Cliente();
+        admin.setEmail(dto.getEmail());
+        admin.setPassword(passwordEncoder.encode(dto.getPassword()));
+        admin.setRoles(List.of("ROLE_ADMIN", "ROLE_USER"));
+
+        return clienteRepository.save(admin);
+    }
 }

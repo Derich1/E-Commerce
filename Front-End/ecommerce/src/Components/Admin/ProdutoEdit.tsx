@@ -8,6 +8,7 @@ export const ProdutoEdit = (props: any) => {
             <TextInput source="id" disabled />
             <TextInput source="nome" />
             <NumberInput source="precoEmCentavos" />
+            <TextInput source="estoque" />
             </SimpleForm>
         </Edit>
     )

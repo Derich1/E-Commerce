@@ -5,13 +5,16 @@ import br.com.derich.Cliente.dto.*;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
 import br.com.derich.Cliente.service.JwtService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,13 +40,12 @@ public class ClienteController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
         try {
-            // Chama o serviço para realizar o login
             LoginResponseDTO response = clienteService.login(loginRequest);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // Caso haja erro, retorna erro de autorização (401)
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(401).body(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null); // 400 para dados inválidos
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(null); // 401 para credenciais inválidas
         }
     }
 
@@ -62,8 +64,9 @@ public class ClienteController {
 
             emailSender.sendVerificationEmail(email, codigo);
 
+
             // Gerar token JWT após o cadastro
-            String token = jwtService.generateToken(cliente.getEmail());
+            String token = jwtService.generateToken(cliente);
 
             // Retornar o token no JSON de resposta
             Map<String, String> response = new HashMap<>();
@@ -141,6 +144,13 @@ public class ClienteController {
         List<ProdutoDTO> favoritos = clienteService.listarProdutosFavoritos(email);
 
         return ResponseEntity.ok(favoritos);
+    }
+
+    @PostMapping("/admin/criar-admin")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Cliente> criarAdmin(@RequestBody @Valid AdminCreateDTO dto) throws Exception {
+        Cliente admin = clienteService.criarAdmin(dto);
+        return ResponseEntity.created(URI.create("/clientes/" + admin.getId())).body(admin);
     }
 
     private String gerarCodigoAleatorio() {

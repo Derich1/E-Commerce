@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/cliente/login", "/cliente/cadastrar", "/cliente/perfil", "/cliente/favoritos").permitAll() // Permite login sem autenticação
+                        .requestMatchers("/cliente/login", "/cliente/cadastrar", "/cliente/perfil", "/cliente/favoritos", "/admin/login").permitAll() // Permite login sem autenticação
                         .anyRequest().authenticated() // Todas as outras rotas precisam de autenticação
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro apenas em rotas protegidas

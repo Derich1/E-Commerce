@@ -7,6 +7,8 @@ import { RootState } from "../../Redux/store";
 import { useAuth } from "../../Hooks/useAuth";
 import { useHandleBuyNow } from "../../Hooks/buyNow";
 import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 type Product = {
   id: string;
@@ -35,6 +37,7 @@ const Favoritos = () => {
   const dispatch = useDispatch()
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const handleBuyNow = useHandleBuyNow();
+  const navigate = useNavigate()
 
   const { token } = useAuth()
   let email = "";
@@ -43,6 +46,13 @@ const Favoritos = () => {
     const decoded: any = jwtDecode(token);
     email = decoded.sub;
   }
+
+  useEffect(() => {
+    if (!token) {
+      alert("Você precisa estar logado para acessar os favoritos!")
+      navigate("/login")
+    }
+  }, [])
 
   const fetchFavoritos = async () => {
     if (!token) {
@@ -71,10 +81,6 @@ const Favoritos = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    console.log("Token Favoritos: ", token)
-  }, [token])
 
   useEffect(() => {
     fetchFavoritos();

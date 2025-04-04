@@ -1,12 +1,14 @@
 package br.com.derich.Cliente.entity;
 
 import br.com.derich.Cliente.dto.ClienteRequestDTO;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Document(collection = "cliente")
 public class Cliente {
@@ -19,8 +21,22 @@ public class Cliente {
     private String telefone;
     private String email;
     private String password;
+    private List<String> roles;
 
     private Set<String> favoritos = new HashSet<>();
+
+    public Cliente(String email, String password, List<String> roles) {
+        this.email = email;
+        this.password = password;
+        this.roles = roles;
+    }
+
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (roles == null) return Collections.emptyList();
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
+    }
 
     public void adicionarFavorito(String produtoId) {
         favoritos.add(produtoId);
@@ -88,6 +104,14 @@ public class Cliente {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public Cliente() {

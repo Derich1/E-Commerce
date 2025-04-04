@@ -1,5 +1,7 @@
 package br.com.derich.Cliente.service;
 
+import br.com.derich.Cliente.entity.Cliente;
+import br.com.derich.Cliente.repository.IClienteRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -7,12 +9,16 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,16 +26,19 @@ public class JwtService {
 
     Dotenv dotenv = Dotenv.load();
     private final String secretKey = dotenv.get("SECRET_KEY");
-    private Key key;  // Não é final agora, pois será inicializado no construtor
-    private static final long EXPIRATION_TIME = 86400000; // 1 dia em milissegundos
+    private Key key;
+    private static final long EXPIRATION_TIME = 86400000;
+    private IClienteRepository clienteRepository;
 
-    public JwtService() {
+    public JwtService(IClienteRepository clienteRepository) {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.clienteRepository = clienteRepository;
     }
 
-    public String generateToken(String email) {
+    public String generateToken(Cliente cliente) {
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(cliente.getEmail())
+                .claim("roles", cliente.getRoles())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -38,8 +47,14 @@ public class JwtService {
 
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
-        String username = claims.getSubject();
-        return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+        String email = claims.getSubject();
+        List<String> roles = claims.get("roles", List.class);
+
+        List<GrantedAuthority> authorities = roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
+
+        return new UsernamePasswordAuthenticationToken(email, null, authorities);
     }
 
     public boolean validateToken(String token) {

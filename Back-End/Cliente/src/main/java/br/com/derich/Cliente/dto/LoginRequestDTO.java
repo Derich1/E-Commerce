@@ -1,23 +1,11 @@
 package br.com.derich.Cliente.dto;
 
-public class LoginRequestDTO {
+import jakarta.validation.constraints.NotBlank;
 
-    private String email;
-    private String senha;
+public record LoginRequestDTO(
+        @NotBlank(message = "Email é obrigatório")
+        String email,
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-}
+        @NotBlank(message = "Senha é obrigatória") // Adicione esta validação
+        String senha
+) {}

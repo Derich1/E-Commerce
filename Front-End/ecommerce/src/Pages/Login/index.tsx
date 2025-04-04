@@ -41,10 +41,6 @@ export default function Login(){
             // Armazena no Redux
             dispatch(loginSuccess({ token, user: { id, nome, email, numeroDocumento, telefone, datanascimento } }));
       
-            // Salva no localStorage para manter login persistente
-            localStorage.setItem("token", token);
-            localStorage.setItem("user", JSON.stringify({ id, nome, email, numeroDocumento }));
-      
             navigate("/");
           }
         } catch (error) {

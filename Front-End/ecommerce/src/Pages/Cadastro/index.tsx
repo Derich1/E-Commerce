@@ -260,8 +260,8 @@ export default function Cadastro() {
                   Cadastrar
               </button>
           </form>
-          <div className="-mt-6">
-            <Link to="/login" className="text-blue-500 hover:text-blue-700 text-center">
+          <div className="-mt-6 text-center">
+            <Link to="/login" className="text-blue-500 hover:text-blue-700">
               Já possui conta? Faça o login
             </Link>
           </div>
