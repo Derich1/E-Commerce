@@ -22,6 +22,7 @@ Este projeto é um e-commerce desenvolvido com foco em escalabilidade e desempen
 - **React Icons** – Conjunto de ícones prontos para uso em componentes React.
 - **Zod** – Biblioteca para validação de esquemas e dados.
 - **Hookform** – Gerenciamento e validação de formulários de forma simples e eficaz.
+- **React-Admin** - Criação rápida e simples de uma interface de administrador.
 
 ## Funcionalidades
 
