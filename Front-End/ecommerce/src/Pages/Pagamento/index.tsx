@@ -111,10 +111,6 @@ const Pagamento: React.FC = () => {
   useEffect(() => {
     updateMask(); // Garante que a máscara inicial esteja correta com base no select
   }, []);
-
-  useEffect(() => {
-    console.log(cleanValueType)
-  }, [cleanValueType])
   
   const selecionarFrete = (frete: any) => {
     dispatch(setFreteSelecionado(frete));
@@ -122,16 +118,7 @@ const Pagamento: React.FC = () => {
 
   useEffect(() => {
     buscarEndereco(cep)
-    console.log("Dados dos produtos:", produtos);
   }, []);
-
-  useEffect(() => {
-    console.log(endereco.bairro)
-    console.log(endereco.logradouro)
-    console.log(endereco.cidade)
-    console.log(endereco.estado)
-    console.log(endereco.numero)
-  }, [endereco])
 
   const buscarEndereco = async (cep: string) => {
     try {
@@ -238,6 +225,8 @@ const Pagamento: React.FC = () => {
 
       if (!isMounted || !formRef.current) return;
 
+      if (!endereco.numero) return;
+
       cardFormRef.current = mp.cardForm({
         amount: totalComFrete.toString(),
         iframe: true,
@@ -256,33 +245,6 @@ const Pagamento: React.FC = () => {
         callbacks: {
           onFormMounted: (error: any) => {
             if (error) return console.warn("Erro ao montar o formulário:", error);
-            console.log("Formulário montado");
-
-            // const installmentsElement = document.getElementById('form-checkout__installments') as HTMLSelectElement
-            
-            // if (installmentsElement) {
-            //   installmentsElement.addEventListener('change', function() {
-            //     // Captura o valor da opção selecionada
-            //     const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
-            //     console.log("Opção selecionada:", selectedOption);
-                
-            //     const match = selectedOption.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
-                
-            //     if (match) {
-            //       const numParcelas = match[1]; // Número de parcelas
-            //       const valorTotal = match[2]; // Valor total em reais
-            
-            //       console.log("Número de Parcelas:", numParcelas);
-            //       console.log("Valor Total:", valorTotal);
-            
-            //       setSelectedInstallment({
-            //         parcelas: numParcelas,
-            //         valorTotal: valorTotal,
-            //       });
-            //     }
-            //   });
-            // }
-
           },
           onSubmit: async (event: React.FormEvent) => {
             event.preventDefault();
@@ -433,6 +395,28 @@ const Pagamento: React.FC = () => {
       }
     }
   }, [selectedPaymentType, totalComFrete, vendaId, mercadoPagoTeste, navigate]);
+
+  type PaymentType = 'credit_card' | 'debit_card' | 'pix';
+
+  const handleSetPaymentType = (type: PaymentType) => {
+    const errors: string[] = [];
+
+    if (!freteSelecionado) {
+      errors.push("Selecione uma opção de frete primeiro");
+    }
+
+    if (!endereco?.numero) {
+      errors.push("Preencha o número da sua residência");
+    }
+
+    if (errors.length > 0) {
+      errors.forEach(msg => toast.error(msg));
+      return;
+    }
+
+    setSelectedPaymentType(type);
+  };
+
 
   // Handler genérico para alteração dos campos (exceto número)
   const handleEnderecoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -600,20 +584,22 @@ const Pagamento: React.FC = () => {
                       <span className="text-sm text-gray-500">
                         Quantidade: {p.quantidade}
                       </span>
-                      <span className="text-sm text-gray-500">Subtotal:</span>
-                      <span className="text-sm text-gray-500">
-                        {new Intl.NumberFormat('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL'
-                              }).format((p.quantidade * p.precoEmCentavos) / 100)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">Subtotal:</span>
+                        <span className="text-sm text-gray-500">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format((p.quantidade * p.precoEmCentavos) / 100)}
+                        </span>
+                      </div>
                       <span className="font-medium text-gray-700">
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
                         }).format(p.precoEmCentavos / 100)}
                       </span>
-                </div>
+                    </div>
                 </div>
                 </div>
               ))
@@ -648,7 +634,7 @@ const Pagamento: React.FC = () => {
             {(['credit_card', 'debit_card', 'pix'] as const).map((type) => (
             <button
               key={type}
-              onClick={() => setSelectedPaymentType(type)}
+              onClick={() => handleSetPaymentType(type)}
               className={`p-3 rounded-lg text-sm font-medium transition-colors ${
                 selectedPaymentType === type
                   ? 'bg-blue-600 text-white'
