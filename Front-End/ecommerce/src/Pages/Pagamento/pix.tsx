@@ -103,7 +103,7 @@ const Pagamento: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-100 flex items-center justify-center p-4">
+    <div className="h-fit bg-gray-100 flex items-center justify-center p-4">
 
             <div className="flex flex-col items-center">
               {error && <p>{error}</p>}

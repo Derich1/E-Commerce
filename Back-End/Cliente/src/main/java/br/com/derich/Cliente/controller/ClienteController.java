@@ -38,14 +38,18 @@ public class ClienteController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
         try {
             LoginResponseDTO response = clienteService.login(loginRequest);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null); // 400 para dados inválidos
+            e.printStackTrace();
+            System.out.println("Dados vindos do request: " + loginRequest.email() + loginRequest.senha());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (RuntimeException e) {
-            return ResponseEntity.status(401).body(null); // 401 para credenciais inválidas
+            e.printStackTrace();
+            System.out.println("Dados vindos do request: " + loginRequest.email() + loginRequest.senha());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
 
@@ -133,17 +137,22 @@ public class ClienteController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/favoritos")
-    public ResponseEntity<List<ProdutoDTO>> listarFavoritos(@RequestHeader("Authorization") String token) {
-        // Removendo "Bearer " do token
-        String jwt = token.substring(7);
-        logger.info("Token recebido: {}", token);
-        // Extrai o e-mail do usuário autenticado
-        String email = jwtService.extractEmail(jwt);
+    public ResponseEntity<?> listarFavoritos(@RequestHeader("Authorization") String token) {
+        try {// Removendo "Bearer " do token
+            String jwt = token.substring(7);
+            logger.info("Token recebido: {}", token);
+            // Extrai o e-mail do usuário autenticado
+            String email = jwtService.extractEmail(jwt);
 
-        // Busca os favoritos do usuário autenticado
-        List<ProdutoDTO> favoritos = clienteService.listarProdutosFavoritos(email);
+            // Busca os favoritos do usuário autenticado
+            List<ProdutoDTO> favoritos = clienteService.listarProdutosFavoritos(email);
 
-        return ResponseEntity.ok(favoritos);
+            return ResponseEntity.ok(favoritos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
     }
 
     @PostMapping("/admin/criar-admin")

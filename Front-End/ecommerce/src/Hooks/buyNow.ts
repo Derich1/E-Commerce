@@ -35,7 +35,7 @@ type Product = {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const user = useSelector((state: RootState) => state.user);
-
+// verificar se tem estoque
     const handleBuyNow = (product: Product) => {
         if (!user.user) {
             alert("Conecte-se a uma conta para prosseguir com a compra");

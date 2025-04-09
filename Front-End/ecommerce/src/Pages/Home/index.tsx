@@ -17,6 +17,7 @@ type Product = {
     height: number;
     length: number;
     weight: number;
+    estoque: number;
 };
 
 export default function Home() {
@@ -109,6 +110,7 @@ export default function Home() {
                     <div className="w-full mx-auto px-4 sm:px-6 lg:px-0">
                         <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 justify-items-start w-full">
                             {products.map((product) => (
+                                product.estoque > 0 ? (
                                 <li 
                                     key={product.id}
                                     className="w-full pb-2 border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-lg transition-all duration-300"
@@ -124,6 +126,20 @@ export default function Home() {
                                         </p>
                                     </Link>
                                 </li>
+                                ) : (
+                                    <li 
+                                    key={product.id}
+                                    className="w-full pb-2 border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-lg transition-all duration-300"
+                                >
+                                    <Link to={`/produto/${product.id}`}>
+                                        <img src={product.imagemUrl} alt={product.nome} className="w-full h-48 object-contain mb-4"/>
+                                        <h3 className="text-lg font-semibold text-center mb-2 line-clamp-2">{product.nome}</h3>
+                                        <p className="text-center text-xl font-bold text-gray-800">
+                                            Esgotado
+                                        </p>
+                                    </Link>
+                                </li>
+                                )
                             ))}
                         </ul>
                     </div>

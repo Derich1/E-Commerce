@@ -7,8 +7,7 @@ import { RootState } from "../../Redux/store";
 import { useAuth } from "../../Hooks/useAuth";
 import { useHandleBuyNow } from "../../Hooks/buyNow";
 import { jwtDecode } from "jwt-decode";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type Product = {
   id: string;
@@ -186,6 +185,7 @@ const Favoritos = () => {
       {!loading && !error && favoritos.length > 0 && (
         <ul className="max-w-4xl mx-auto space-y-4">
         {favoritos.map((product) => (
+          product.estoque > 0 ? (
           <li
             key={product.id}
             className="flex flex-col p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
@@ -242,6 +242,50 @@ const Favoritos = () => {
               </div>
             </div>
           </li>
+          ) : (
+            <li
+            key={product.id}
+            className="flex flex-col p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-4 w-full">
+              {/* Seção de informações do produto */}
+              <div className="flex flex-1 min-w-0">
+                <img
+                  src={product.imagemUrl}
+                  alt={product.nome}
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
+                />
+                <div className="ml-3 md:ml-4 min-w-0 flex flex-col">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                    {product.nome}
+                  </h3>
+                  <p className="text-lg md:text-xl font-bold text-gray-800 mt-1">
+                    Esgotado
+                  </p>
+                </div>
+              </div>
+  
+              {/* Botões alinhados horizontalmente em telas grandes */}
+              <div className="flex flex-col md:flex-row gap-2 flex-wrap md:flex-nowrap">
+                <button
+                  onClick={() => handleToggleFavorite(product)}
+                  className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center md:min-w-[120px]"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                  Remover
+                </button>
+                <Link 
+                  to={`/produto/${product.id}`} 
+                  className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center md:min-w-[120px]"
+                >
+                  Visualizar produto
+                </Link>
+              </div>
+            </div>
+          </li>
+          )
         ))}
       </ul>
       )}

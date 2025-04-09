@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -33,7 +34,7 @@ public class ClienteService {
     private RestTemplate restTemplate;
 
     // Usando Spring Cloud ou LoadBalancer não precisa especificar a porta
-    private final String produtoServiceUrl = "http://produto/produto/";
+    private final String produtoServiceUrl = "http://produto:8082/produto/";
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
 
@@ -43,6 +44,8 @@ public class ClienteService {
         if (cliente == null) {
             throw new RuntimeException("Cliente não encontrado.");
         }
+        System.out.println("Senha da requisicao: "+ loginRequest.senha());
+        System.out.println("Senha do banco de dados: " + cliente.getPassword());
 
         if (!passwordEncoder.matches(loginRequest.senha(), cliente.getPassword())) {
             throw new RuntimeException("Senha incorreta.");

@@ -184,9 +184,10 @@ export default function Produto() {
                   currency: "BRL",
                 }).format(product.precoEmCentavos / 100)}
               </p>
+              
             </div>
 
-            {/* Ações mobile primeiro */}
+            {/* Ações mobile */}
             <div className="lg:hidden flex flex-col gap-3 mt-6">
               <div className="flex justify-between items-center">
                 <button
@@ -201,19 +202,31 @@ export default function Produto() {
                     <MdOutlineFavoriteBorder size={32} />
                   )}
                 </button>
+                
                 <div className="flex gap-3 flex-1 justify-end">
-                  <button
-                    className="flex-1 cursor-pointer bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    Adicionar ao carrinho
-                  </button>
-                  <button
-                    onClick={() => handleBuyNow(product)}
-                    className="flex-1 cursor-pointer bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold"
-                  >
-                    Comprar agora
-                  </button>
+                  {product.estoque > 0 ? (
+                    <>
+                      <button
+                        className="flex-1 cursor-pointer bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        Adicionar ao carrinho
+                      </button>
+                      <button
+                        onClick={() => handleBuyNow(product)}
+                        className="flex-1 cursor-pointer bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold"
+                      >
+                        Comprar agora
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="flex-1 cursor-not-allowed bg-gray-400 text-white px-6 py-3 rounded-lg text-sm font-semibold"
+                      disabled
+                    >
+                      Esgotado
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -237,18 +250,30 @@ export default function Produto() {
                 <MdOutlineFavoriteBorder size={32} />
               )}
             </button>
-            <button
-              className="bg-blue-500 cursor-pointer text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors text-base font-semibold"
-              onClick={() => handleAddToCart(product)}
-            >
-              Adicionar ao carrinho
-            </button>
-            <button
-              onClick={() => handleBuyNow(product)}
-              className="bg-green-500 cursor-pointer text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors text-base font-semibold"
-            >
-              Comprar agora
-            </button>
+            
+            {product.estoque > 0 ? (
+              <>
+                <button
+                  className="bg-blue-500 cursor-pointer text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors text-base font-semibold"
+                  onClick={() => handleAddToCart(product)}
+                >
+                  Adicionar ao carrinho
+                </button>
+                <button
+                  onClick={() => handleBuyNow(product)}
+                  className="bg-green-500 cursor-pointer text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors text-base font-semibold"
+                >
+                  Comprar agora
+                </button>
+              </>
+            ) : (
+              <button
+                className="bg-gray-400 cursor-not-allowed text-white px-8 py-3 rounded-lg text-base font-semibold"
+                disabled
+              >
+                Produto esgotado
+              </button>
+            )}
           </div>
         </div>
       </div>

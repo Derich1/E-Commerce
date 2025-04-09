@@ -6,6 +6,7 @@ public class EntregaRequest {
 
     private String toPostalCode;
     private String toName;
+    private String toPhone;
     private String toAddress;
     private String toCity;
     private String toDocument;
@@ -46,6 +47,14 @@ public class EntregaRequest {
 
     public void setToName(String toName) {
         this.toName = toName;
+    }
+
+    public String getToPhone() {
+        return toPhone;
+    }
+
+    public void setToPhone(String toPhone) {
+        this.toPhone = toPhone;
     }
 
     public String getToAddress() {

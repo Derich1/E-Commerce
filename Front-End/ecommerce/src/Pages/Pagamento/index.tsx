@@ -370,6 +370,7 @@ const Pagamento: React.FC = () => {
               const entregaRequest = {
                 toPostalCode: cep,
                 toName: usuario?.nome,
+                toPhone: usuario?.telefone,
                 toAddress: endereco.logradouro,
                 toCity: endereco.cidade,
                 toDocument: usuario?.numeroDocumento,
@@ -380,7 +381,7 @@ const Pagamento: React.FC = () => {
                 ownHand: false,
                 reverse: false,
                 nonCommercial: false,     
-                insuranceValue: 0,
+                insuranceValue: 1,
                 service: freteSelecionado?.id,
                 productName: produtos.map(p => p.nome),
                 productQuantity: produtos.map(p => p.quantidade),
@@ -394,7 +395,7 @@ const Pagamento: React.FC = () => {
                 ,
                 vendaId: vendaId
               };
-              console.log("Enviando para o backend: " + entregaRequest)
+              console.log("Enviando para o backend: " + entregaRequest.toPhone)
               console.log("Método de pagamento enviado:", selectedPaymentType);
 
           

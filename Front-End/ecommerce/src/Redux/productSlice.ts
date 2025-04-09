@@ -11,6 +11,7 @@ type Product = {
   height: number;
   length: number;
   weight: number;
+  estoque: number;
 };
 
 type ProductState = {

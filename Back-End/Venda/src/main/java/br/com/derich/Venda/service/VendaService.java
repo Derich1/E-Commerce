@@ -49,28 +49,23 @@ import java.util.stream.Collectors;
 @Service
 public class VendaService {
 
+    Dotenv dotenv = Dotenv.load();
+
     @Autowired
     private IVendaRepository vendaRepository;
 
     @Autowired
     private IFreteRepository freteRepository;
 
-    @Value("${mercadopago.access.token}")
-    private String mercadoPagoAccessToken;
+    private String mercadoPagoAccessToken = dotenv.get("tokenMP");
 
-    @Value("${melhorenvio.token}")
-    private String tokenMelhorEnvio;
+    private String tokenMelhorEnvio = dotenv.get("tokenME");
 
-    @Value("${melhorenvio.email.contato}")
-    private String emailParaContato;
+    private String emailParaContato = dotenv.get("emailContato");
 
     private String nomeAplicacao = "Ecommerce";
 
-    Dotenv dotenv = Dotenv.load();
-
     private String fromPostalCode = dotenv.get("POSTAL_CODE");
-
-    private String etiquetaId;
 
     private static final Logger logger = LoggerFactory.getLogger(CompraFreteHandler.class);
 
@@ -305,6 +300,7 @@ public class VendaService {
         fromMap.put("district", dotenv.get("DISTRICT"));
         fromMap.put("city", dotenv.get("CITY"));
         fromMap.put("document", dotenv.get("DOCUMENT"));
+        fromMap.put("phone", dotenv.get("PHONE"));
 
         System.out.println("Document enviado: " + dotenv.get("DOCUMENT"));
 
@@ -318,6 +314,7 @@ public class VendaService {
         toMap.put("city", entregaRequest.getToCity());
         toMap.put("document", entregaRequest.getToDocument());
         toMap.put("complemento", entregaRequest.getToComplemento());
+        toMap.put("phone", entregaRequest.getToPhone());
 
         System.out.println("Dados do backend: " + entregaRequest.getToAddress() + entregaRequest.getToNumber() + entregaRequest.getToDistrict() + entregaRequest.getToCity() + entregaRequest.getToComplemento());
 

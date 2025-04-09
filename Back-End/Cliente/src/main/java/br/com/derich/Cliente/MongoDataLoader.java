@@ -15,8 +15,8 @@ public class MongoDataLoader {
     private final IClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
     Dotenv dotenv = Dotenv.load();
-    private String emailAdmin = dotenv.get("emailAdmin");
-    private String senhaAdmin = dotenv.get("senhaAdmin");
+    private String emailAdmin = dotenv.get("emailAdministrador");
+    private String senhaAdmin = dotenv.get("senhaAdministrador");
 
     public MongoDataLoader(IClienteRepository clienteRepository, PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
@@ -26,6 +26,7 @@ public class MongoDataLoader {
     @PostConstruct
     public void initAdminUser() {
         if (!clienteRepository.existsByEmail(emailAdmin)) {
+            System.out.println("Senha do amigo" + senhaAdmin);
             Cliente admin = new Cliente(
                     emailAdmin,
                     passwordEncoder.encode(senhaAdmin),

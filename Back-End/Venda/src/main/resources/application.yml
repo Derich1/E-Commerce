@@ -32,12 +32,3 @@ eureka:
   client:
     service-url:
       defaultZone: http://service-discovery:8761/eureka/
-
-mercadopago:
-  access:
-    token: ${tokenMP}
-
-melhorenvio:
-  token: ${tokenME}
-  email:
-    contato: ${emailContato}
