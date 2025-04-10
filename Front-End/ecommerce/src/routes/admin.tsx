@@ -16,8 +16,6 @@ const dataProvider: DataProvider = {
   getList: async () => {
     const response = await fetch(`${apiUrl}`);
     const data = await response.json();
-    console.log(data)
-    console.log(response)
     return { data, total: data.length };
   },
 
@@ -28,12 +26,9 @@ const dataProvider: DataProvider = {
   },
 
   update: async <RecordType extends RaRecord>(
-    resource: string,
+    _resource: string,
     params: UpdateParams<RecordType>
   ): Promise<UpdateResult<RecordType>> => {
-    console.log("✏️ Atualizando:", resource);
-    console.log("✏️ Atualizando:", params.id);
-    console.log("✏️ Atualizando:", params.data);
 
     const response = await fetch(`${apiUrl}/${params.id}`, {
       method: "PUT",

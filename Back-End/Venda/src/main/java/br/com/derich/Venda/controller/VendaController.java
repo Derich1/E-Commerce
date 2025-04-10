@@ -114,19 +114,16 @@ public class VendaController {
                     .mapToDouble(p -> p.getWeight() * p.getQuantidade())
                     .sum();
 
-            System.out.println("Peso total no controller: " + pesoTotal);
             return ResponseEntity.ok(Map.of(
                     "id", venda.getId(),
                     "preferenceId", response.getId(),
                     "vendaPeso", pesoTotal
             ));
 
-        } catch (MPApiException ex) {
-            System.out.printf(
-                    "MercadoPago Error. Status: %s, Content: %s%n",
-                    ex.getApiResponse().getStatusCode(), ex.getApiResponse().getContent());
         } catch (MPException ex) {
             ex.printStackTrace();
+        } catch (MPApiException e) {
+            throw new RuntimeException(e);
         }
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -166,22 +163,15 @@ public class VendaController {
     public ResponseEntity<?> pix(@RequestBody PaymentPixRequestDTO request) {
 
         try {
-            System.out.println("Método de pagamento recebido: " + request.getPaymentMethodId());
-
             Payment pagamento = vendaService.pix(request);
-            System.out.println("Pagamento criado: " + pagamento);
 
 
             // Valide se os dados do Pix existem
             if (pagamento.getPointOfInteraction() == null ||
                     pagamento.getPointOfInteraction().getTransactionData() == null) {
-                System.out.println("Dados do Pix não encontrados na resposta do Mercado Pago");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "Dados do Pix não gerados"));
             }
-
-                System.out.println("QR Code: " + pagamento.getPointOfInteraction().getTransactionData().getQrCode());
-                System.out.println("QR Code Base64: " + pagamento.getPointOfInteraction().getTransactionData().getQrCodeBase64());
 
                 return ResponseEntity.ok(Map.of(
                         "status", pagamento.getStatus(),
@@ -191,12 +181,9 @@ public class VendaController {
                         )
                 ));
         } catch (MPApiException ex) {
-            System.out.println("Erro MP API - Status: " + ex.getStatusCode());
-            System.out.println("Conteúdo: " + ex.getApiResponse().getContent());
             return ResponseEntity.status(ex.getStatusCode())
             .body(Map.of("error", ex.getMessage()));
             } catch (Exception ex) {
-            System.out.println("Erro inesperado: " + ex.getMessage());
             ex.printStackTrace(); // Isso aparecerá nos logs do servidor
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "Erro interno: " + ex.getMessage()));

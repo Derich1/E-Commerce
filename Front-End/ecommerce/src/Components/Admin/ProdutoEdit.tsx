@@ -1,7 +1,6 @@
 import { Edit, SimpleForm, TextInput, NumberInput } from "react-admin";
 
-export const ProdutoEdit = (props: any) => {
-    console.log("🔍 ProdutoEdit props:", props)
+export const ProdutoEdit = () => {
     return (
         <Edit>
             <SimpleForm>

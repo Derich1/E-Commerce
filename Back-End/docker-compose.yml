@@ -23,15 +23,6 @@ services:
     volumes:
       - mongo_data:/data/db  # Volume persistente
 
-#  rabbitmq:
-#    image: rabbitmq:3-management
-#    container_name: "ecommerce-rabbitmq"
-#    networks:
-#      - ecommerce-net
-#    ports:
-#      - "5672:5672"    # Porta de comunicação dos clientes RabbitMQ
-#      - "15672:15672"  # Porta para a interface de gerenciamento
-
   frontend:
     build:
       context: ../Front-End/ecommerce
@@ -51,8 +42,6 @@ services:
       - spring.data.mongodb.uri=${mongoDBCliente}
       - PORT=8081
       - DISCOVERY_HOST=service-discovery
-#      - RABBITMQ_HOST=rabbitmq
-#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -62,7 +51,6 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-#      - rabbitmq
 
   produto:
     image: produto
@@ -72,8 +60,6 @@ services:
       - spring.data.mongodb.uri=${mongoDBProduto}
       - PORT=8082
       - DISCOVERY_HOST=service-discovery
-#      - RABBITMQ_HOST=rabbitmq
-#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -83,8 +69,6 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-#      - rabbitmq
-
 
   venda:
     image: venda
@@ -94,8 +78,6 @@ services:
       - spring.data.mongodb.uri=${mongoDBVenda}
       - PORT=8083
       - DISCOVERY_HOST=service-discovery
-#      - RABBITMQ_HOST=rabbitmq
-#      - RABBITMQ_PORT=5672
     networks:
       - ecommerce-net
     ports:
@@ -105,7 +87,6 @@ services:
     depends_on:
       - service-discovery
       - ecommerce-mongo-database
-#      - rabbitmq
 
 volumes:
   mongo_data:

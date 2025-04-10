@@ -74,7 +74,6 @@ public class CompraFreteHandler implements IEtapaProcessamento {
                 .method("POST", HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
         return response.body();
     }
 }

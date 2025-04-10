@@ -44,16 +44,12 @@ public class ClienteService {
         if (cliente == null) {
             throw new RuntimeException("Cliente não encontrado.");
         }
-        System.out.println("Senha da requisicao: "+ loginRequest.senha());
-        System.out.println("Senha do banco de dados: " + cliente.getPassword());
 
         if (!passwordEncoder.matches(loginRequest.senha(), cliente.getPassword())) {
             throw new RuntimeException("Senha incorreta.");
         }
 
         String token = jwtService.generateToken(cliente);
-
-        System.out.println("Enviando o numeroDocumento do backend: " + cliente.getNumeroDocumento());
 
         return new LoginResponseDTO(cliente.getId(),
                 cliente.getName(),
@@ -102,7 +98,6 @@ public class ClienteService {
 
     public Cliente getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        System.out.println("Tentando buscar usuário com username: " + email);
         return clienteRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
@@ -110,10 +105,8 @@ public class ClienteService {
     public boolean verifyPassword(String senhaAtual) {
         try {
             Cliente cliente = getAuthenticatedUser();
-            System.out.println("Comparando senha: senhaAtual=" + senhaAtual + " | senha armazenada=" + cliente.getPassword());
             return passwordEncoder.matches(senhaAtual, cliente.getPassword());
         } catch (Exception e) {
-            System.out.println("Erro na verificação de senha: " + e.getMessage());
             throw e;
         }
     }
@@ -153,13 +146,13 @@ public class ClienteService {
     }
 
     public Cliente criarAdmin(AdminCreateDTO dto) throws Exception {
-        if (clienteRepository.existsByEmail(dto.getEmail())) {
+        if (clienteRepository.existsByEmail(dto.email())) {
             throw new Exception();
         }
 
         Cliente admin = new Cliente();
-        admin.setEmail(dto.getEmail());
-        admin.setPassword(passwordEncoder.encode(dto.getPassword()));
+        admin.setEmail(dto.email());
+        admin.setPassword(passwordEncoder.encode(dto.password()));
         admin.setRoles(List.of("ROLE_ADMIN", "ROLE_USER"));
 
         return clienteRepository.save(admin);

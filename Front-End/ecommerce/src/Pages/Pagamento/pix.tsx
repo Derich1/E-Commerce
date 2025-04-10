@@ -40,8 +40,6 @@ const Pagamento: React.FC = () => {
   useEffect(() => {
     setLoading(true)
 
-    console.log("Total com frete pix frontend: " + totalComFrete)
-
     const gerarPix = async () => {
       try {
         const dateOfExpiration = new Date();
@@ -61,7 +59,6 @@ const Pagamento: React.FC = () => {
           },
           dateOfExpiration: dateOfExpiration.toISOString(),
         };
-        console.log("Payload enviado:", payload);
         const response = await axios.post(`http://localhost:8083/venda/pix`, payload);
     
         setPixData({

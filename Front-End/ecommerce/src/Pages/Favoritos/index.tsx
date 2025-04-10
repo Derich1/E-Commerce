@@ -76,7 +76,6 @@ const Favoritos = () => {
       setLoading(false);
     } catch (err) {
       setError("Erro ao buscar favoritos");
-      console.log("Erro recebido: ", err)
       setLoading(false);
     }
   };

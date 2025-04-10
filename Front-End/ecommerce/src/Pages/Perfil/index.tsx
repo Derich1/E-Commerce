@@ -114,7 +114,6 @@ const Perfil: React.FC = () => {
             size: 10,
           },
         });
-        console.log("Resposta pedidos: ", response.data)
         // Atualiza o estado com as vendas carregadas
         setVendas((prevVendas) => [...prevVendas, ...response.data.content]);
 
@@ -149,8 +148,6 @@ const Perfil: React.FC = () => {
         setError("A nova senha não pode ser a mesma que a senha atual.");
         return;
       }
-
-      console.log("Token enviado:", token);
   
       try {
         setLoading(true);

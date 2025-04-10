@@ -219,27 +219,6 @@ const Compra: React.FC = () => {
       dispatch(setTotal(totalPrice / 100));
       dispatch(setPesoTotal(peso));
 
-      console.log("🔍 Debug do Empacotamento:");
-      console.log("📋 Produtos:", products.map(p => `${p.length}x${p.width}x${p.height} (${p.weight}kg)`));
-      console.log("📦 Caixas Disponíveis:", boxes.map(b => `${b.name}: ${b.length}x${b.width}x${b.height}cm (Vol: ${b.length * b.width * b.height}cm³)`));
-
-      const totalProductsVolume = products.reduce((acc, p) => acc + (p.length * p.width * p.height), 0);
-      const largestBoxVolume = Math.max(...boxes.map(b => b.length * b.width * b.height));
-      const maxProductLength = Math.max(...products.map(p => Math.max(p.length, p.width, p.height)));
-
-      console.log("📊 Métricas Críticas:");
-      console.log(`- Volume Total Produtos: ${totalProductsVolume}cm³`);
-      console.log(`- Maior Volume de Caixa: ${largestBoxVolume}cm³`);
-      console.log(`- Maior Dimensão de Produto: ${maxProductLength}cm`);
-
-      if (totalProductsVolume > largestBoxVolume) {
-        console.log("❌ CAUSA: Volume total dos produtos excede todas as caixas!");
-      }
-
-      if (maxProductLength > Math.max(...boxes.map(b => Math.max(b.length, b.width, b.height)))) {
-        console.log("❌ CAUSA: Um produto tem dimensão maior que todas as caixas!");
-      }
-
       // Validação do empacotamento
       if (!packagingResult) {
         alert("Erro no cálculo de empacotamento!\nVerifique o console para detalhes.");
@@ -248,15 +227,6 @@ const Compra: React.FC = () => {
 
       // Envia o pacote único para o Redux e para o payload do frete
       dispatch(setPackage(packagingResult));
-
-      console.log("🔍 Debug completo do pacote:", JSON.stringify(packagingResult, null, 2));
-
-      console.log("\n📤 Payload para envio à API de fretes:");
-      console.log(JSON.stringify({
-        toPostalCode: formData.address,
-        package: packagingResult,
-        totalWeight: packagingResult.weight
-      }, null, 2));
 
       const freteRequest = {
         toPostalCode: formData.address,
@@ -269,7 +239,6 @@ const Compra: React.FC = () => {
         freteRequest,
         { headers: { "Content-Type": "application/json" } }
       );
-      console.log("Resposta do backend:", response.data);
       dispatch(setFretes(response.data));
       navigate("/pagamento");
     } catch (error: any) {

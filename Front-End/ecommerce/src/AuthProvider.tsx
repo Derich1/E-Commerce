@@ -16,12 +16,9 @@ export const authProvider: AuthProvider = {
       body: JSON.stringify({ email, senha }),
       headers: { 'Content-Type': 'application/json' },
     });
-    console.log(response)
-    console.log(JSON.stringify({ email, senha }))
 
     if (!response.ok) throw new Error('Login falhou');
     const responseBody = await response.json();
-    console.log(responseBody); // <-- só pra debug
 
     const token = responseBody.token;
     localStorage.setItem('token', token);

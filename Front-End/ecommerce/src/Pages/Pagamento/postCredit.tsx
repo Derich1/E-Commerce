@@ -31,8 +31,6 @@ export async function postCredit(
         vendaId,
     }
 
-    console.log("Payload enviado:", JSON.stringify(body));
-
 
     return await axios.post("http://localhost:8083/venda/processarPagamento", body, {
         headers: {

@@ -1,4 +1,4 @@
-package br.com.derich.Cliente;
+package br.com.derich.Cliente.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

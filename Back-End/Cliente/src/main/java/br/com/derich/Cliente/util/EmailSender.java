@@ -1,4 +1,4 @@
-package br.com.derich.Cliente;
+package br.com.derich.Cliente.util;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
@@ -23,7 +23,6 @@ public class EmailSender {
             helper.setText("Seu código de verificação é: " + verificationCode);
 
             emailSender.send(message);
-            System.out.println("E-mail enviado com sucesso!");
         } catch (Exception e) {
             e.printStackTrace();
         }

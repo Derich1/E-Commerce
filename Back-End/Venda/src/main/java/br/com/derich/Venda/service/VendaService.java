@@ -113,7 +113,6 @@ public class VendaService {
                     produto.setPrecoUnitario(dto.getPrecoUnitario());
                     produto.setImagemUrl(dto.getImagemUrl());
                     produto.setWeight(dto.getWeight());
-                    System.out.println("Peso no backend: " + dto.getWeight());
                     return produto;
                 })
                 .collect(Collectors.toList());
@@ -153,33 +152,30 @@ public class VendaService {
             PaymentClient paymentClient = new PaymentClient();
 
             PaymentCreateRequest paymentCreateRequest = PaymentCreateRequest.builder()
-                            .transactionAmount(pagamentoCartaoRequestDTO.getTransactionAmount())
-                            .token(pagamentoCartaoRequestDTO.getToken())
-                            .description(pagamentoCartaoRequestDTO.getProductDescription())
-                            .installments(pagamentoCartaoRequestDTO.getInstallments())
-                            .paymentMethodId(pagamentoCartaoRequestDTO.getPaymentMethodId())
+                            .transactionAmount(pagamentoCartaoRequestDTO.transactionAmount())
+                            .token(pagamentoCartaoRequestDTO.token())
+                            .description(pagamentoCartaoRequestDTO.productDescription())
+                            .installments(pagamentoCartaoRequestDTO.installments())
+                            .paymentMethodId(pagamentoCartaoRequestDTO.paymentMethodId())
                             .payer(PaymentPayerRequest.builder()
-                                    .email(pagamentoCartaoRequestDTO.getPayer().getEmail())
+                                    .email(pagamentoCartaoRequestDTO.payer().email())
                                     .identification(IdentificationRequest.builder()
-                                            .type(pagamentoCartaoRequestDTO.getPayer().getIdentification().getType())
-                                            .number(pagamentoCartaoRequestDTO.getPayer().getIdentification().getNumber())
+                                            .type(pagamentoCartaoRequestDTO.payer().identification().type())
+                                            .number(pagamentoCartaoRequestDTO.payer().identification().number())
                                             .build())
                                     .build())
                     .build();
 
             Payment createdPayment = paymentClient.create(paymentCreateRequest);
 
-            Venda venda = vendaRepository.findById(pagamentoCartaoRequestDTO.getVendaId())
+            Venda venda = vendaRepository.findById(pagamentoCartaoRequestDTO.vendaId())
                     .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
             venda.setStatus("Aprovado");
-            System.out.println("Status setado para aprovado");
-            venda.setMetodoPagamento(pagamentoCartaoRequestDTO.getPayment_type_id());
-            System.out.println("Método de pagamento setado");
+            venda.setMetodoPagamento(pagamentoCartaoRequestDTO.payment_type_id());
             venda.setStatusPagamento(createdPayment.getStatus());
-            System.out.println("Status do pagamento setado para aprovado");
-            venda.setInstallments(pagamentoCartaoRequestDTO.getInstallments());
-            venda.setTotal(pagamentoCartaoRequestDTO.getTransactionAmount());
+            venda.setInstallments(pagamentoCartaoRequestDTO.installments());
+            venda.setTotal(pagamentoCartaoRequestDTO.transactionAmount());
             vendaRepository.save(venda);
 
             return new PaymentResponseDTO(
@@ -187,10 +183,8 @@ public class VendaService {
                     String.valueOf(createdPayment.getStatus()),
                     createdPayment.getStatusDetail());
         } catch (MPApiException apiException) {
-            System.out.println(apiException.getApiResponse().getContent());
             throw new RuntimeException(apiException.getApiResponse().getContent());
         } catch (MPException exception) {
-            System.out.println(exception.getMessage());
             throw new RuntimeException(exception.getMessage());
         }
     }
@@ -209,33 +203,30 @@ public class VendaService {
 
         PaymentCreateRequest paymentCreateRequest =
                 PaymentCreateRequest.builder()
-                        .transactionAmount(request.getTransactionAmount())
-                        .description(request.getDescription())
+                        .transactionAmount(request.transactionAmount())
+                        .description(request.description())
                         .paymentMethodId("pix")
-                        .dateOfExpiration(OffsetDateTime.of(request.getDateOfExpiration(), ZoneOffset.UTC))
+                        .dateOfExpiration(OffsetDateTime.of(request.dateOfExpiration(), ZoneOffset.UTC))
                         .payer(
                                 PaymentPayerRequest.builder()
-                                        .email(request.getPayer().getEmail())
-                                        .firstName(request.getPayer().getFirstName())
+                                        .email(request.payer().email())
+                                        .firstName(request.payer().firstName())
                                         .identification(
                                                 IdentificationRequest.builder()
-                                                        .type(request.getPayer().getIdentification().getType())
-                                                        .number(request.getPayer().getIdentification().getNumber())
+                                                        .type(request.payer().identification().type())
+                                                        .number(request.payer().identification().number())
                                                         .build())
                                         .build())
                         .build();
 
         Payment createdPayment = client.create(paymentCreateRequest, requestOptions);
 
-        Venda venda = vendaRepository.findById(request.getVendaId())
+        Venda venda = vendaRepository.findById(request.vendaId())
                 .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
 
         venda.setStatus("Aprovado");
-        System.out.println("Status setado para aprovado");
         venda.setMetodoPagamento("Pix");
-        System.out.println("Método de pagamento setado");
         venda.setStatusPagamento(createdPayment.getStatus());
-        System.out.println("Status do pagamento setado");
 
         // Salva as alterações no banco de dados
         vendaRepository.save(venda);
@@ -249,15 +240,15 @@ public class VendaService {
 
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("from", Collections.singletonMap("postal_code", fromPostalCode));
-        jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.getToPostalCode()));
+        jsonMap.put("to", Collections.singletonMap("postal_code", freteRequest.toPostalCode()));
 
         // Trabalhando com um único pacote
-        Package p = freteRequest.getPacote();
+        Package p = freteRequest.pacote();
         Map<String, Object> pkg = new HashMap<>();
-        pkg.put("height", p.getHeight());
-        pkg.put("width", p.getWidth());
-        pkg.put("length", p.getLength());
-        pkg.put("weight", p.getWeight());
+        pkg.put("height", p.height());
+        pkg.put("width", p.width());
+        pkg.put("length", p.length());
+        pkg.put("weight", p.weight());
         // A API do Melhor Envio usa "packages" no plural, mesmo para um único pacote, enviamos uma lista com um item
         List<Map<String, Object>> packagesList = Collections.singletonList(pkg);
         jsonMap.put("packages", packagesList);
@@ -266,8 +257,6 @@ public class VendaService {
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         String jsonBody = mapper.writeValueAsString(jsonMap);
 
-        System.out.println("Payload completo:");
-        System.out.println(jsonBody); // Log do payload completo
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
@@ -289,7 +278,7 @@ public class VendaService {
         // Cria um mapa para representar a estrutura do JSON
         Map<String, Object> jsonMap = new HashMap<>();
 
-        VolumeDTO volume = entregaRequest.getVolume(); // Pega o único volume
+        VolumeDTO volume = entregaRequest.volume(); // Pega o único volume
 
         // Dados do remetente ("from") – usando variáveis de ambiente
         Map<String, Object> fromMap = new HashMap<>();
@@ -302,47 +291,43 @@ public class VendaService {
         fromMap.put("document", dotenv.get("DOCUMENT"));
         fromMap.put("phone", dotenv.get("PHONE"));
 
-        System.out.println("Document enviado: " + dotenv.get("DOCUMENT"));
-
         // Dados do destinatário ("to")
         Map<String, Object> toMap = new HashMap<>();
-        toMap.put("postal_code", entregaRequest.getToPostalCode());
-        toMap.put("name", entregaRequest.getToName());
-        toMap.put("address", entregaRequest.getToAddress());
-        toMap.put("number", entregaRequest.getToNumber());
-        toMap.put("district", entregaRequest.getToDistrict());
-        toMap.put("city", entregaRequest.getToCity());
-        toMap.put("document", entregaRequest.getToDocument());
-        toMap.put("complemento", entregaRequest.getToComplemento());
-        toMap.put("phone", entregaRequest.getToPhone());
-
-        System.out.println("Dados do backend: " + entregaRequest.getToAddress() + entregaRequest.getToNumber() + entregaRequest.getToDistrict() + entregaRequest.getToCity() + entregaRequest.getToComplemento());
+        toMap.put("postal_code", entregaRequest.toPostalCode());
+        toMap.put("name", entregaRequest.toName());
+        toMap.put("address", entregaRequest.toAddress());
+        toMap.put("number", entregaRequest.toNumber());
+        toMap.put("district", entregaRequest.toDistrict());
+        toMap.put("city", entregaRequest.toCity());
+        toMap.put("document", entregaRequest.toDocument());
+        toMap.put("complemento", entregaRequest.toComplemento());
+        toMap.put("phone", entregaRequest.toPhone());
 
         // Opções ("options")
         Map<String, Object> optionsMap = new HashMap<>();
-        optionsMap.put("receipt", entregaRequest.isReceipt());
-        optionsMap.put("own_hand", entregaRequest.isOwnHand());
-        optionsMap.put("reverse", entregaRequest.isReverse());
-        optionsMap.put("non_commercial", entregaRequest.isNonCommercial());
-        optionsMap.put("insurance_value", entregaRequest.getInsuranceValue());
+        optionsMap.put("receipt", entregaRequest.receipt());
+        optionsMap.put("own_hand", entregaRequest.ownHand());
+        optionsMap.put("reverse", entregaRequest.reverse());
+        optionsMap.put("non_commercial", entregaRequest.nonCommercial());
+        optionsMap.put("insurance_value", entregaRequest.insuranceValue());
 
         jsonMap.put("from", fromMap);
         jsonMap.put("to", toMap);
         jsonMap.put("options", optionsMap);
 
         // Serviço (pode ser um id ou outro tipo, conforme sua API)
-        jsonMap.put("service", entregaRequest.getService());
+        jsonMap.put("service", entregaRequest.service());
 
         // Monta o array de produtos
         List<Map<String, Object>> productsList = new ArrayList<>();
         // Supondo que entregaRequest possua listas para cada propriedade de produto
         // Ex.: List<String> productName, List<Integer> productQuantity, List<String> productUnitaryValue
-        int productCount = entregaRequest.getProductName().size();
+        int productCount = entregaRequest.productName().size();
         for (int i = 0; i < productCount; i++) {
             Map<String, Object> product = new HashMap<>();
-            product.put("name", entregaRequest.getProductName().get(i));
-            product.put("quantity", entregaRequest.getProductQuantity().get(i));
-            BigDecimal unitaryValueReais = new BigDecimal(entregaRequest.getProductUnitaryValue().get(i))
+            product.put("name", entregaRequest.productName().get(i));
+            product.put("quantity", entregaRequest.productQuantity().get(i));
+            BigDecimal unitaryValueReais = new BigDecimal(entregaRequest.productUnitaryValue().get(i))
                     .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
             product.put("unitary_value", unitaryValueReais);
             productsList.add(product);
@@ -352,10 +337,10 @@ public class VendaService {
         // Mapeamento do único volume
         List<Map<String, Object>> volumesList = new ArrayList<>();
         Map<String, Object> volumeMap = new HashMap<>();
-        volumeMap.put("height", volume.getHeight());
-        volumeMap.put("width", volume.getWidth());
-        volumeMap.put("length", volume.getLength());
-        volumeMap.put("weight", volume.getWeight());
+        volumeMap.put("height", volume.height());
+        volumeMap.put("width", volume.width());
+        volumeMap.put("length", volume.length());
+        volumeMap.put("weight", volume.weight());
         volumesList.add(volumeMap);
 
         jsonMap.put("volumes", volumesList);
@@ -363,7 +348,6 @@ public class VendaService {
         // Converte o mapa em uma string JSON
         ObjectMapper mapper = new ObjectMapper();
         String jsonBody = mapper.writeValueAsString(jsonMap);
-        System.out.println("JSON Enviado inserir fretes no carrinho: " + jsonBody);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlRequisicao))
@@ -374,25 +358,24 @@ public class VendaService {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Resposta da API: " + response.body());
 
         JSONObject jsonResponse = new JSONObject(response.body());
         String idEtiqueta = jsonResponse.getString("id");
         String codigoEnvio = jsonResponse.getString("protocol");
 
         Package pacote = new Package(
-                entregaRequest.getVolume().getHeight(),
-                entregaRequest.getVolume().getWidth(),
-                entregaRequest.getVolume().getLength(),
-                entregaRequest.getVolume().getWeight()
+                entregaRequest.volume().height(),
+                entregaRequest.volume().width(),
+                entregaRequest.volume().length(),
+                entregaRequest.volume().weight()
         );
 
         List<Venda.ProdutoComprado> produtos = new ArrayList<>();
-        int productCounts = entregaRequest.getProductName().size();
+        int productCounts = entregaRequest.productName().size();
         for (int i = 0; i < productCounts; i++) {
             Venda.ProdutoComprado produto = new Venda.ProdutoComprado();
-            produto.setNome(entregaRequest.getProductName().get(i));
-            produto.setQuantidade(entregaRequest.getProductQuantity().get(i));
+            produto.setNome(entregaRequest.productName().get(i));
+            produto.setQuantidade(entregaRequest.productQuantity().get(i));
             produtos.add(produto);
         }
 
@@ -400,16 +383,15 @@ public class VendaService {
 
 
         // Busca a venda existente no banco de dados
-        Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.getVendaId());
+        Optional<Venda> vendaOptional = vendaRepository.findById(entregaRequest.vendaId());
 
         Venda venda = vendaOptional.get();
         venda.setIdEtiqueta(idEtiqueta); // Atualiza a venda com o ID do frete
         String emailCliente = venda.getEmailCliente();
         vendaRepository.save(venda); // Salva no banco
-        System.out.println("Venda atualizada com ID da etiqueta: " + idEtiqueta);
 
         Frete frete = new Frete(
-                entregaRequest.getVendaId(),
+                entregaRequest.vendaId(),
                 idEtiqueta,
                 codigoEnvio,
                 emailCliente,

@@ -142,10 +142,6 @@ const Pagamento: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    console.log("Método de pagamento: " + selectedPaymentType)
-  }, [selectedPaymentType])
-
   
   useEffect(() => {
     const installmentsElement = document.getElementById("form-checkout__installments") as HTMLSelectElement;
@@ -153,18 +149,12 @@ const Pagamento: React.FC = () => {
     
     const handleChange = () => {
       const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
-      console.log("Opção selecionada:", selectedOption);
       
       const match = selectedOption?.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
       if (match) {
         const numParcelas = match[1]; // Número de parcelas
         const valorTotalStr = match[2]; // Valor total como string
 
-        console.log("Valor total extraído antes da conversão:", valorTotalStr);
-
-        const valorTotal = valorTotalStr.replace(',', '.');
-
-        console.log("Valor total convertido para número:", Number(valorTotal));
         setSelectedInstallment({
           parcelas: numParcelas,
           valorTotal: valorTotalStr,
@@ -174,16 +164,12 @@ const Pagamento: React.FC = () => {
     
     installmentsElement.addEventListener("change", function () {
       const selectedOption = installmentsElement.options[installmentsElement.selectedIndex]?.text;
-      console.log("Opção selecionada:", selectedOption);
     
       const match = selectedOption.match(/(\d+) parcelas? de .* \(R\$ ([\d,.]+)\)/);
     
       if (match) {
         const numParcelas = match[1]; // Número de parcelas
         const valorTotal = match[2]; // Valor total
-    
-        console.log("Número de Parcelas:", numParcelas);
-        console.log("Valor Total:", valorTotal);
     
         const installmentData = { parcelas: numParcelas, valorTotal: valorTotal };
     
@@ -212,7 +198,6 @@ const Pagamento: React.FC = () => {
     const initCardForm = async () => {
 
       if (cardFormRef.current) {
-        console.log("Destruindo instância antiga...");
         cardFormRef.current.unmount();
         cardFormRef.current = null;
       }
@@ -248,7 +233,6 @@ const Pagamento: React.FC = () => {
           },
           onSubmit: async (event: React.FormEvent) => {
             event.preventDefault();
-            console.log("Xesque" + selectedInstallment?.valorTotal)
 
             if (!freteSelecionado) {
               toast.error("Por favor, selecione uma opção de frete");
@@ -262,8 +246,6 @@ const Pagamento: React.FC = () => {
               console.warn("Dados do formulário incompletos");
               return;
             }
-
-            console.log("Total Calculado:", totalComFrete.toFixed(2))
 
             const {
               paymentMethodId: payment_method_id,
@@ -283,11 +265,7 @@ const Pagamento: React.FC = () => {
             );
             
             // Quantidade de parcelas
-            const installmentsNumber = isNaN(Number(installments)) ? 1 : Number(installments);
-
-            // Verifique no console antes de enviar:
-            console.log("Valores enviados:", { totalComFreteNumber, valorTotalNumber, installmentsNumber });
-
+            // const installmentsNumber = isNaN(Number(installments)) ? 1 : Number(installments);
 
             try {
               let status = ""
@@ -305,9 +283,7 @@ const Pagamento: React.FC = () => {
                   selectedPaymentType,
                   vendaId,
                 );
-                console.log("Resposta recebida:", response.data);
                 status = response.data.status;
-                console.log("Status recebido:", status);
               }
               
               if (selectedPaymentType === 'debit_card'){
@@ -324,9 +300,7 @@ const Pagamento: React.FC = () => {
                   selectedPaymentType,
                   vendaId,
                 );
-                console.log("Resposta recebida:", response.data);
                 status = response.data.status;
-                console.log("Status recebido:", status);
               }
 
               const entregaRequest = {
@@ -357,10 +331,7 @@ const Pagamento: React.FC = () => {
                 ,
                 vendaId: vendaId
               };
-              console.log("Enviando para o backend: " + entregaRequest.toPhone)
-              console.log("Método de pagamento enviado:", selectedPaymentType);
 
-          
               await axios.post("http://localhost:8083/venda/inserirFrete", entregaRequest)
               dispatch(clearCart())
               navigate(`/status/${status}`);
@@ -368,12 +339,9 @@ const Pagamento: React.FC = () => {
               console.error("Erro no pagamento:", error);
             }
           },
-          onFetching: (resource: any) => {
-            console.log("Fetching resource:", resource);
+          onFetching: () => {
             const progressBar = document.querySelector(".progress-bar");
             progressBar?.removeAttribute("value");
-            const identificationInput = document.getElementById("form-checkout__identificationNumber") as HTMLInputElement;
-            console.log("Número do Documento Enviado:", identificationInput.value);
             return () => {
               progressBar?.setAttribute("value", "0");
             };
@@ -389,7 +357,6 @@ const Pagamento: React.FC = () => {
       
       // 7. Destruir instâncias ao desmontar
       if (cardFormRef.current) {
-        console.log("Limpando instância...");
         cardFormRef.current.unmount();
         cardFormRef.current = null;
       }
@@ -440,7 +407,6 @@ const Pagamento: React.FC = () => {
     if (produtos && produtos.length > 0) {
       setLoading(false);
     }
-    console.log("Produtos: ", produtos)
   }, [produtos]);
 
   return (

@@ -1,4 +1,4 @@
-package br.com.derich.Cliente;
+package br.com.derich.Cliente.config;
 
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.repository.IClienteRepository;
@@ -26,7 +26,6 @@ public class MongoDataLoader {
     @PostConstruct
     public void initAdminUser() {
         if (!clienteRepository.existsByEmail(emailAdmin)) {
-            System.out.println("Senha do amigo" + senhaAdmin);
             Cliente admin = new Cliente(
                     emailAdmin,
                     passwordEncoder.encode(senhaAdmin),

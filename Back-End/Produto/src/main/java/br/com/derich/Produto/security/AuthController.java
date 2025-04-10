@@ -43,7 +43,6 @@ public class AuthController {
                     .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 dia
                     .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                     .compact();
-            System.out.println("Este é o token:" + token);
             return ResponseEntity.ok(token);
         } else {
             return ResponseEntity.status(401).body("Usuário ou senha inválidos");

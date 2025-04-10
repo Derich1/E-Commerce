@@ -1,6 +1,6 @@
 package br.com.derich.Cliente.controller;
 
-import br.com.derich.Cliente.EmailSender;
+import br.com.derich.Cliente.util.EmailSender;
 import br.com.derich.Cliente.dto.*;
 import br.com.derich.Cliente.entity.Cliente;
 import br.com.derich.Cliente.service.ClienteService;
@@ -44,11 +44,9 @@ public class ClienteController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
-            System.out.println("Dados vindos do request: " + loginRequest.email() + loginRequest.senha());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (RuntimeException e) {
             e.printStackTrace();
-            System.out.println("Dados vindos do request: " + loginRequest.email() + loginRequest.senha());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
@@ -105,17 +103,15 @@ public class ClienteController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/verify-password")
     public ResponseEntity<?> verificarSenha(@RequestBody SenhaRequestDTO request) {
-        boolean isValid = clienteService.verifyPassword(request.getSenhaAtual());
-        System.out.println("Senha verificada");
+        boolean isValid = clienteService.verifyPassword(request.senhaAtual());
         return ResponseEntity.ok(Collections.singletonMap("valid", isValid));
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/change-password")
     public ResponseEntity<?> alterarSenha(@RequestBody MudarSenhaRequestDTO request) {
-        boolean changed = clienteService.changePassword(request.getSenhaNova());
+        boolean changed = clienteService.changePassword(request.senhaNova());
         if (changed) {
-            System.out.println("Senha alterada");
             return ResponseEntity.ok(Collections.singletonMap("message", "Senha alterada com sucesso!"));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("error", "Erro ao alterar senha."));
@@ -124,14 +120,14 @@ public class ClienteController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("/favoritos")
     public ResponseEntity<?> adicionarProdutoFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
-        clienteService.adicionarProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
+        clienteService.adicionarProdutoFavorito(favoritoRequest.email(), favoritoRequest.produtoId());
         return ResponseEntity.ok("Produto adicionado aos favoritos!");
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("/favoritos")
     public ResponseEntity<?> removerFavorito(@RequestBody FavoritoRequestDTO favoritoRequest) {
-        clienteService.removerProdutoFavorito(favoritoRequest.getEmail(), favoritoRequest.getProdutoId());
+        clienteService.removerProdutoFavorito(favoritoRequest.email(), favoritoRequest.produtoId());
         return ResponseEntity.ok("Produto removido dos favoritos");
     }
 
@@ -150,7 +146,6 @@ public class ClienteController {
             return ResponseEntity.ok(favoritos);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }

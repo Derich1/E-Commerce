@@ -32,9 +32,6 @@ export default function Home() {
     useEffect(() => {
         dispatch(applyFilters()); // Garante que os filtros são aplicados ao carregar
     }, [dispatch]);
-    
-
-    console.log("Chave MercadoPago:", import.meta.env.VITE_MERCADOPAGO);
 
     const fetchProducts = async () => {
         try {

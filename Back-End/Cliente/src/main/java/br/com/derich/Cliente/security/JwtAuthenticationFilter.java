@@ -1,4 +1,4 @@
-package br.com.derich.Cliente;
+package br.com.derich.Cliente.security;
 
 import br.com.derich.Cliente.service.JwtService;
 import io.jsonwebtoken.JwtException;
@@ -23,10 +23,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        System.out.println("🔍 URI recebida no filtro: " + request.getRequestURI());
         // Ignora verificação JWT para rotas públicas
         if (isPublicEndpoint(request)) {
-            System.out.println("✅ Endpoint público detectado, pulando validação JWT");
             filterChain.doFilter(request, response);
             return;
         }
@@ -37,7 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String header = request.getHeader("Authorization");
-        System.out.println("Cabeçalho Authorization recebido: " + header);
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             try {
@@ -45,20 +42,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Authentication auth = jwtService.getAuthentication(token);
                     // Define a autenticação no contexto do Spring Security
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    System.out.println("Usuário autenticado via JWT: " + auth.getName());
 
                 } else {
-                    System.out.println("Token inválido." + header);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Retorna 401
                     return;
                 }
             } catch (JwtException e) {
                 // Token inválido; você pode tratar a exceção se desejar
-                System.out.println("Erro ao validar token: " + e.getMessage());
                 SecurityContextHolder.clearContext();
             }
-        } else {
-            System.out.println("Nenhum token recebido.");
         }
         filterChain.doFilter(request, response);
     }

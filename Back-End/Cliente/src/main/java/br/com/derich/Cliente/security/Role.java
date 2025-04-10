@@ -1,4 +1,4 @@
-package br.com.derich.Cliente;
+package br.com.derich.Cliente.security;
 
 public enum Role {
     ROLE_USER,

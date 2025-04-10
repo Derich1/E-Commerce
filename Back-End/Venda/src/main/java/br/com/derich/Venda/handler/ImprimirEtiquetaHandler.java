@@ -96,7 +96,6 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
                 .orElseThrow(() -> new RuntimeException("Frete não encontrado para o ID: " + id));
 
         enviarEmailComUrl(urlFormatada, "derich.rosario22@gmail.com", frete);
-        System.out.println(response.body());
         return resposta;
     }
 
@@ -135,10 +134,10 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
                             "<li><strong>Peso total:</strong> %.2f kg</li>" +
                             "</ul>" +
                             "</div>",
-                    pacote.getHeight(),
-                    pacote.getWidth(),
-                    pacote.getLength(),
-                    pacote.getWeight()
+                    pacote.height(),
+                    pacote.width(),
+                    pacote.length(),
+                    pacote.weight()
             );
 
             // Constrói a tabela de produtos
@@ -203,7 +202,6 @@ public class ImprimirEtiquetaHandler implements IEtapaProcessamento {
 
             helper.setText(corpoEmail, true);
             emailSender.send(message);
-            System.out.println("E-mail enviado com sucesso!");
 
         } catch (MessagingException e) {
             throw new RuntimeException("Erro ao enviar e-mail: " + e.getMessage());

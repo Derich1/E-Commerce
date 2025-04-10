@@ -1,6 +1,5 @@
 package br.com.derich.Cliente.security;
 
-import br.com.derich.Cliente.JwtAuthenticationFilter;
 import br.com.derich.Cliente.service.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
