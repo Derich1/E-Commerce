@@ -1,6 +1,6 @@
 import simpleRestProvider from "ra-data-simple-rest";  // ✅ Adicionado corretamente
 
-import { Admin, Resource } from 'react-admin';
+import { Admin, CreateResult, Identifier, Resource } from 'react-admin';
 import { ProdutoList } from "../Components/Admin/ProdutoList";
 import { ProdutoEdit } from "../Components/Admin/ProdutoEdit";
 import { ProdutoCreate } from "../Components/Admin/ProdutoCreate";
@@ -25,6 +25,46 @@ const dataProvider: DataProvider = {
     return { data };
   },
 
+  create: async <RecordType extends Omit<RaRecord, 'id'>, ResultRecordType extends RaRecord = RecordType & { id: Identifier }>(
+    _resource: string,
+    params: { data: RecordType }
+  ): Promise<CreateResult<ResultRecordType>> => {
+    const response = await fetch(`${apiUrl}/cadastrar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params.data),
+    });
+  
+    if (!response.ok) {
+      throw new Error("Erro ao cadastrar o item");
+    }
+  
+    const textResponse = await response.text();
+    console.log("Resposta do Backend:", textResponse);
+  
+    // Retorne um objeto com a string e use type assertion para compatibilizá-lo
+    return { data: { message: textResponse } } as unknown as CreateResult<ResultRecordType>;
+  },
+
+  delete: async <RecordType extends RaRecord>(
+    _resource: string,
+    params: { id: Identifier }
+  ): Promise<{ data: RecordType }> => {
+    const response = await fetch(`${apiUrl}/${params.id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  
+    if (!response.ok) {
+      throw new Error("Erro ao deletar o item");
+    }
+  
+    const data = await response.json();
+    return { data };
+  },
+  
   update: async <RecordType extends RaRecord>(
     _resource: string,
     params: UpdateParams<RecordType>

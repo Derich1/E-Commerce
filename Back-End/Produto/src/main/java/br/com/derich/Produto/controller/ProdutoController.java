@@ -4,6 +4,7 @@ import br.com.derich.Produto.entity.Produto;
 import br.com.derich.Produto.service.ProdutoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,4 +63,15 @@ public class ProdutoController {
         }
     }
 
+    @DeleteMapping("/deletar/{id}")
+    public ResponseEntity<String> deletarProduto(@PathVariable String id) {
+        boolean isDeleted = produtoService.deletarProduto(id);
+
+        if (isDeleted) {
+            return ResponseEntity.ok("Produto deletado com sucesso");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Produto não encontrado");
+        }
+    }
 }

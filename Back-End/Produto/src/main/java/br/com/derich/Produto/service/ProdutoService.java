@@ -9,6 +9,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Optional;
 
 @Validated
 @Service
@@ -52,4 +53,14 @@ public class ProdutoService {
         produtoRepository.save(produtoExistente);
     }
 
+    public boolean deletarProduto(String id) {
+        Optional<Produto> produto = produtoRepository.findById(id);
+
+        if (produto.isPresent()) {
+            produtoRepository.delete(produto.get());
+            return true;
+        } else {
+            return false; // Produto não encontrado
+        }
+    }
 }
