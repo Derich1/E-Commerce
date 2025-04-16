@@ -30,6 +30,12 @@ export const ProdutoCreate = () => (
         validate={[required(), minValue(0)]} 
       />
 
+      <NumberInput 
+        source="ean" 
+        label="EAN"
+        validate={[minValue(0)]} 
+      />
+
       {/* Medidas */}
       <NumberInput 
         source="width" 

@@ -36,6 +36,8 @@ public class Produto {
     @NotBlank(message = "Este é um campo obrigatório")
     private String categoria;
 
+    private String ean;
+
     @NotNull(message = "Este é um campo obrigatório")
     private Double width;
 
@@ -114,6 +116,14 @@ public class Produto {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public String getEan() {
+        return ean;
+    }
+
+    public void setEan(String ean) {
+        this.ean = ean;
     }
 
     public Double getWidth() {

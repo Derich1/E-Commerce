@@ -26,7 +26,7 @@ export default function Home() {
     const products = useSelector((state: RootState) => state.products.filteredProducts);
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
-    const categorias = ["Todos", "Perfumes", "Desodorantes", "Colônias", "Lábios"]
+    const categorias = ["Todos", "Perfume", "Colônia", "Refil", "Sabonete", "Body Splash", "Sabonete Líquido", "Refil", "Creme"]
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
