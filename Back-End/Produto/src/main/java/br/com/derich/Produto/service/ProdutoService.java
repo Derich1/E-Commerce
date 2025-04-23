@@ -5,8 +5,6 @@ import br.com.derich.Produto.repository.IProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,8 +45,12 @@ public class ProdutoService {
         Produto produtoExistente = produtoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
+        System.out.println("Dados: "+ produtoAtualizado.getPromotionStart() + produtoAtualizado.getPromotionEnd() + produtoAtualizado.getPromotionalPrice());
         produtoExistente.setPrecoEmCentavos(produtoAtualizado.getPrecoEmCentavos());
         produtoExistente.setEstoque(produtoAtualizado.getEstoque());
+        produtoExistente.setPromotionStart(produtoAtualizado.getPromotionStart());
+        produtoExistente.setPromotionEnd(produtoAtualizado.getPromotionEnd());
+        produtoExistente.setPromotionalPrice(produtoAtualizado.getPromotionalPrice());
 
         produtoRepository.save(produtoExistente);
     }

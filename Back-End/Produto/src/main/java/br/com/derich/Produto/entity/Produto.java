@@ -1,9 +1,13 @@
 package br.com.derich.Produto.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.sql.Date;
+import java.time.LocalDate;
 
 @Document(collection = "produto")
 public class Produto {
@@ -49,6 +53,14 @@ public class Produto {
 
     @NotNull(message = "Este é um campo obrigatório")
     private Double weight;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate promotionStart;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate promotionEnd;
+
+    private Integer promotionalPrice;
 
     public String getId() {
         return id;
@@ -156,5 +168,29 @@ public class Produto {
 
     public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public LocalDate getPromotionStart() {
+        return promotionStart;
+    }
+
+    public void setPromotionStart(LocalDate promotionStart) {
+        this.promotionStart = promotionStart;
+    }
+
+    public LocalDate getPromotionEnd() {
+        return promotionEnd;
+    }
+
+    public void setPromotionEnd(LocalDate promotionEnd) {
+        this.promotionEnd = promotionEnd;
+    }
+
+    public Integer getPromotionalPrice() {
+        return promotionalPrice;
+    }
+
+    public void setPromotionalPrice(Integer promotionalPrice) {
+        this.promotionalPrice = promotionalPrice;
     }
 }
