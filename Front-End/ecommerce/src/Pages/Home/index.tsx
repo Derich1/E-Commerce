@@ -18,6 +18,7 @@ type Product = {
     length: number;
     weight: number;
     estoque: number;
+    promotionalPrice?: number;
 };
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null)
     const categorias = ["Todos", "Perfume", "Colônia", "Refil", "Sabonete", "Body Splash", "Sabonete Líquido", "Refil", "Creme"]
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    
 
     useEffect(() => {
         dispatch(applyFilters()); // Garante que os filtros são aplicados ao carregar
@@ -57,6 +59,8 @@ export default function Home() {
             </div>)
     }
     if (error) return <p>Erro: {error}</p>;
+
+    
 
     return(
         <main className="flex relative">
@@ -106,38 +110,75 @@ export default function Home() {
                 ) : (
                     <div className="w-full mx-auto px-4 sm:px-6 lg:px-0">
                         <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 justify-items-start w-full">
-                            {products.map((product) => (
-                                product.estoque > 0 ? (
+                        {products.map((product) => {
+                            const now = new Date();
+                            const promoStart = product.promotionStart ? new Date(product.promotionStart) : null;
+                            const promoEnd = product.promotionEnd ? new Date(product.promotionEnd) : null;
+
+                            const isPromoActive = promoStart && promoEnd
+                                ? now >= promoStart && now <= promoEnd
+                                : false;
+
+                            // Cálculo da porcentagem de desconto
+                            const discountPercentage = isPromoActive && product.promotionalPrice
+                                ? Math.round(((product.precoEmCentavos - product.promotionalPrice) / product.precoEmCentavos) * 100)
+                                : null;
+
+                            return (
                                 <li 
                                     key={product.id}
-                                    className="w-full pb-2 border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-lg transition-all duration-300"
+                                    className="w-full pb-2 border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-lg transition-all duration-300 relative"
                                 >
-                                    <Link to={`/produto/${product.id}`}>
-                                        <img src={product.imagemUrl} alt={product.nome} className="w-full h-48 object-contain mb-4"/>
+                                    <Link to={`/produto/${product.id}`} className="block relative">
+                                        <div className="relative">
+                                            <img 
+                                                src={product.imagemUrl} 
+                                                alt={product.nome} 
+                                                className="w-full h-48 object-contain mb-4"
+                                            />
+                                            {/* Badge de desconto */}
+                                            {discountPercentage && (
+                                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                                    -{discountPercentage}%
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <h3 className="text-lg font-semibold text-center mb-2 line-clamp-2">{product.nome}</h3>
-                                        <p className="text-center text-xl font-bold text-gray-800">
-                                            {new Intl.NumberFormat("pt-BR", {
-                                                style: "currency",
-                                                currency: "BRL",
-                                            }).format(product.precoEmCentavos / 100)}
-                                        </p>
+
+                                        {product.estoque > 0 ? (
+                                            <div className="text-center">
+                                                {isPromoActive && product.promotionalPrice ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="text-gray-500 line-through text-sm">
+                                                            {new Intl.NumberFormat("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                            }).format(product.precoEmCentavos / 100)}
+                                                        </span>
+                                                        <span className="text-xl font-bold text-red-600">
+                                                            {new Intl.NumberFormat("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                            }).format(product.promotionalPrice / 100)}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xl font-bold text-gray-800">
+                                                        {new Intl.NumberFormat("pt-BR", {
+                                                            style: "currency",
+                                                            currency: "BRL",
+                                                        }).format(product.precoEmCentavos / 100)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-center text-red-600 text-xl font-bold">Esgotado</p>
+                                        )}
                                     </Link>
                                 </li>
-                                ) : (
-                                    <li 
-                                    key={product.id}
-                                    className="w-full pb-2 border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-lg transition-all duration-300"
-                                >
-                                    <Link to={`/produto/${product.id}`}>
-                                        <img src={product.imagemUrl} alt={product.nome} className="w-full h-48 object-contain mb-4"/>
-                                        <h3 className="text-lg font-semibold text-center mb-2 line-clamp-2">{product.nome}</h3>
-                                        <p className="text-center text-xl font-bold text-gray-800">
-                                            Esgotado
-                                        </p>
-                                    </Link>
-                                </li>
-                                )
-                            ))}
+                            );
+                        })}
                         </ul>
                     </div>
                 )}

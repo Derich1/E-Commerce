@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type Product = {
+  promotionalPrice?: number;
   id: string;
   nome: string;
   precoEmCentavos: number;
@@ -12,6 +13,8 @@ type Product = {
   length: number;
   weight: number;
   estoque: number;
+  promotionStart?: number;
+  promotionEnd?: number;
 };
 
 type ProductState = {
